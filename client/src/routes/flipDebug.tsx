@@ -6,7 +6,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { VertexType, getVertexConfiguration } from '../lib/six-vertex/types';
 import { FlipDirection } from '../lib/six-vertex/physicsFlips';
-import { OptimizedSimulation, generateDWBCHighOptimized } from '../lib/six-vertex/optimizedSimulation';
+import { OptimizedPhysicsSimulation, generateDWBCHighOptimized } from '../lib/six-vertex/optimizedSimulation';
 import { VertexEdgeVisualization, VertexLegend, PlaquetteVisualization } from '../components/VertexEdgeVisualization';
 import { validateLatticeIntegrity } from '../lib/six-vertex/correctedFlipLogic';
 import styles from './flipDebug.module.css';
@@ -78,7 +78,7 @@ interface FlipHistoryEntry {
 
 export function FlipDebug() {
   const [size, setSize] = useState(5); // Small size for debugging
-  const [simulation, setSimulation] = useState<OptimizedSimulation | null>(null);
+  const [simulation, setSimulation] = useState<OptimizedPhysicsSimulation | null>(null);
   const [currentState, setCurrentState] = useState<Uint8Array | null>(null);
   const [flipHistory, setFlipHistory] = useState<FlipHistoryEntry[]>([]);
   const [selectedFlip, setSelectedFlip] = useState<FlipHistoryEntry | null>(null);
@@ -88,7 +88,7 @@ export function FlipDebug() {
 
   // Initialize simulation
   useEffect(() => {
-    const sim = new OptimizedSimulation({
+    const sim = new OptimizedPhysicsSimulation({
       size,
       weights: {
         a1: 1,
