@@ -1,0 +1,41 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(mkdir:*)",
+      "Bash(npm create:*)",
+      "Bash(npm install)",
+      "Bash(npm install:*)",
+      "Bash(npm test:*)",
+      "Bash(npm run typecheck:*)",
+      "Bash(npm run lint:*)",
+      "Bash(npm run format:*)",
+      "Bash(node runBenchmark.js)",
+      "Bash(npm run test:physics:*)",
+      "Bash(chmod:*)",
+      "Bash(touch:*)",
+      "Bash(curl:*)",
+      "Bash(npm run dev:*)",
+      "Bash(npm run build:*)",
+      "Bash(node:*)",
+      "Bash(mv:*)",
+      "Bash(open http://localhost:5173)",
+      "Bash(npx tsx:*)",
+      "Bash(rm:*)",
+      "Bash(screencapture:*)",
+      "Bash(open http://localhost:5176/dwbc-verify)",
+      "Bash(open http://localhost:5176)",
+      "Bash(lsof:*)",
+      "Bash(npx vite:*)",
+      "Bash(open http://localhost:5173/)",
+      "Bash(osascript:*)",
+      "Bash(open:*)",
+      "Bash(npx tsc:*)",
+      "Bash(grep:*)",
+      "Bash(npx eslint:*)",
+      "Bash(git init:*)",
+      "Bash(git add:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

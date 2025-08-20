@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Ice Rule Debug</title>
+    <script type="module">
+        import { generateDWBCHighCorrectIce, generateDWBCLowCorrectIce } from './src/lib/six-vertex/dwbcCorrectIce.js';
+        import { EdgeState } from './src/lib/six-vertex/types.js';
+        
+        function checkIceRule(state, name) {
+            console.log(`\n=== ${name} (${state.width}x${state.height}) ===`);
+            
+            let violations = [];
+            
+            for (let row = 0; row < state.height; row++) {
+                for (let col = 0; col < state.width; col++) {
+                    const vertex = state.vertices[row][col];
+                    const config = vertex.configuration;
+                    
+                    // Count ins and outs
+                    const edges = [config.left, config.right, config.top, config.bottom];
+                    const ins = edges.filter(e => e === EdgeState.In).length;
+                    const outs = edges.filter(e => e === EdgeState.Out).length;
+                    
+                    if (ins !== 2 || outs !== 2) {
+                        violations.push({
+                            row, col,
+                            type: vertex.type,
+                            ins, outs,
+                            config
+                        });
+                    }
+                }
+            }
+            
+            if (violations.length === 0) {
+                console.log('✅ Ice rule satisfied!');
+            } else {
+                console.log(`❌ ${violations.length} violations found`);
+                violations.slice(0, 3).forEach(v => {
+                    console.log(`  (${v.row},${v.col}) type=${v.type}: ${v.ins} ins, ${v.outs} outs`);
+                    console.log(`    Config:`, v.config);
+                });
+            }
+            
+            return violations.length === 0;
+        }
+        
+        // Test
+        const high = generateDWBCHighCorrectIce(8);
+        const low = generateDWBCLowCorrectIce(8);
+        
+        checkIceRule(high, 'DWBC High');
+        checkIceRule(low, 'DWBC Low');
+    </script>
+</head>
+<body>
+    <h1>Ice Rule Debug Test</h1>
+    <p>Check the browser console for results</p>
+</body>
+</html>

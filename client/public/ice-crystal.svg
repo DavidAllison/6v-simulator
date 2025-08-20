@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2">
+  <g transform="translate(12, 12)">
+    <!-- Hexagon -->
+    <polygon points="0,-10 8.66,-5 8.66,5 0,10 -8.66,5 -8.66,-5" fill="rgba(59, 130, 246, 0.1)" />
+    <!-- Central lines forming ice crystal pattern -->
+    <line x1="0" y1="-10" x2="0" y2="10" />
+    <line x1="-8.66" y1="-5" x2="8.66" y2="5" />
+    <line x1="-8.66" y1="5" x2="8.66" y2="-5" />
+    <!-- Small branches -->
+    <line x1="-3" y1="-7" x2="3" y2="-7" stroke-width="1" />
+    <line x1="-3" y1="7" x2="3" y2="7" stroke-width="1" />
+    <line x1="-7" y1="-2" x2="-7" y2="2" stroke-width="1" />
+    <line x1="7" y1="-2" x2="7" y2="2" stroke-width="1" />
+    <line x1="-4" y1="-4" x2="-7" y2="-1" stroke-width="1" />
+    <line x1="4" y1="4" x2="7" y2="1" stroke-width="1" />
+    <line x1="-4" y1="4" x2="-7" y2="1" stroke-width="1" />
+    <line x1="4" y1="-4" x2="7" y2="-1" stroke-width="1" />
+  </g>
+</svg>

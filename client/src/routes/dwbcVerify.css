@@ -1,0 +1,294 @@
+/* DWBC Verify Page Styles */
+
+.dwbc-verify {
+  width: 100%;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 2rem;
+  color: #1f2937; /* Dark text for better contrast */
+  background-color: #ffffff;
+}
+
+.dwbc-verify h1 {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #111827;
+  margin-bottom: 1rem;
+  text-align: center;
+}
+
+.dwbc-verify p {
+  color: #4b5563;
+  font-size: 1rem;
+  line-height: 1.6;
+  margin-bottom: 1.5rem;
+  text-align: center;
+  max-width: 800px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* Controls Section */
+.dwbc-verify .controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  justify-content: center;
+  align-items: center;
+  padding: 1.5rem;
+  background: #f9fafb;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+  margin-bottom: 2rem;
+}
+
+.dwbc-verify .controls label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #374151;
+  font-weight: 500;
+  font-size: 0.875rem;
+}
+
+.dwbc-verify .controls input[type='number'],
+.dwbc-verify .controls select {
+  padding: 0.375rem 0.75rem;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  background: white;
+  color: #111827;
+  font-size: 0.875rem;
+  min-width: 80px;
+}
+
+.dwbc-verify .controls input[type='checkbox'] {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+}
+
+.dwbc-verify .controls button {
+  padding: 0.5rem 1rem;
+  background: #3b82f6;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-weight: 500;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.dwbc-verify .controls button:hover {
+  background: #2563eb;
+}
+
+.dwbc-verify .controls button:active {
+  background: #1d4ed8;
+}
+
+/* States Container */
+.dwbc-verify .states-container {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+  margin-bottom: 2rem;
+}
+
+/* State Display */
+.dwbc-verify .state-display {
+  background: white;
+  border-radius: 8px;
+  padding: 1.5rem;
+  box-shadow:
+    0 1px 3px 0 rgba(0, 0, 0, 0.1),
+    0 1px 2px 0 rgba(0, 0, 0, 0.06);
+  border: 1px solid #e5e7eb;
+}
+
+.dwbc-verify .state-display h2 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #111827;
+  margin-bottom: 0.5rem;
+  text-align: center;
+}
+
+/* Ice Rule Status */
+.dwbc-verify .ice-status {
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  font-weight: 500;
+  font-size: 0.875rem;
+  text-align: center;
+  margin-bottom: 1rem;
+}
+
+.dwbc-verify .ice-status.valid {
+  background: #d1fae5;
+  color: #065f46;
+  border: 1px solid #6ee7b7;
+}
+
+.dwbc-verify .ice-status.invalid {
+  background: #fee2e2;
+  color: #991b1b;
+  border: 1px solid #fca5a5;
+}
+
+/* Canvas Container */
+.dwbc-verify .canvas-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 1rem;
+  background: #f9fafb;
+  border-radius: 6px;
+  min-height: 400px;
+}
+
+.dwbc-verify canvas {
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  background: white;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+}
+
+/* Vertex Statistics */
+.dwbc-verify .vertex-stats {
+  margin-top: 1rem;
+  padding: 1rem;
+  background: #f9fafb;
+  border-radius: 6px;
+  border: 1px solid #e5e7eb;
+}
+
+.dwbc-verify .vertex-stats h3 {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 0.5rem;
+}
+
+.dwbc-verify .vertex-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 0.5rem;
+  font-size: 0.875rem;
+}
+
+.dwbc-verify .vertex-list span {
+  padding: 0.25rem 0.5rem;
+  background: white;
+  border-radius: 4px;
+  color: #4b5563;
+  border: 1px solid #e5e7eb;
+}
+
+/* Physics Test Results */
+.dwbc-verify .physics-test-results {
+  margin-top: 2rem;
+  padding: 1.5rem;
+  background: #fef3c7;
+  border: 1px solid #fcd34d;
+  border-radius: 8px;
+}
+
+.dwbc-verify .physics-test-results h3 {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #92400e;
+  margin-bottom: 1rem;
+}
+
+.dwbc-verify .physics-test-results pre {
+  background: white;
+  padding: 1rem;
+  border-radius: 4px;
+  overflow-x: auto;
+  font-size: 0.875rem;
+  color: #1f2937;
+  border: 1px solid #fbbf24;
+  font-family: 'Courier New', monospace;
+  line-height: 1.5;
+}
+
+/* Test Results */
+.dwbc-verify .test-results {
+  margin-top: 2rem;
+  padding: 1.5rem;
+  background: #f0f9ff;
+  border: 1px solid #93c5fd;
+  border-radius: 8px;
+}
+
+.dwbc-verify .test-results h3 {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #1e40af;
+  margin-bottom: 1rem;
+}
+
+.dwbc-verify .test-results pre {
+  background: white;
+  padding: 1rem;
+  border-radius: 4px;
+  overflow-x: auto;
+  font-size: 0.875rem;
+  color: #1f2937;
+  border: 1px solid #60a5fa;
+  font-family: 'Courier New', monospace;
+  line-height: 1.5;
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+  .dwbc-verify .states-container {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .dwbc-verify {
+    padding: 1rem;
+  }
+
+  .dwbc-verify h1 {
+    font-size: 1.5rem;
+  }
+
+  .dwbc-verify .controls {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .dwbc-verify .controls label {
+    justify-content: space-between;
+  }
+
+  .dwbc-verify .controls button {
+    width: 100%;
+  }
+}
+
+/* Loading State */
+.dwbc-verify .loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 400px;
+  color: #6b7280;
+  font-size: 1.125rem;
+}
+
+/* Error State */
+.dwbc-verify .error {
+  padding: 1rem;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 6px;
+  color: #b91c1c;
+  margin: 1rem 0;
+  text-align: center;
+}

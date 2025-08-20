@@ -1,0 +1,62 @@
+%!PS-Adobe-3.0 EPSF-3.0
+%%Creator: GraphicConverter V5.5 X
+%%Title: s1.eps
+%%CreationDate: 2005-02-10
+%%Pages: 1
+%%BoundingBox: 0 0 36 35
+%%EndComments
+%%BeginProlog
+/rlestr1 1 string def
+/readrlestring {
+/rlestr exch def
+  currentfile rlestr1 readhexstring pop
+  0 get
+  dup 127 le {
+    currentfile rlestr 0
+    4 3 roll
+    1 add  getinterval
+    readhexstring pop
+    length
+  } {
+    256 exch sub dup
+    currentfile rlestr1 readhexstring pop
+    0 get
+    exch 0 exch 1 exch 1 sub {
+      rlestr exch 2 index put
+    } for
+    pop
+  } ifelse
+} bind def
+/readstring {
+  dup length 0 {
+    3 copy exch
+    1 index sub
+    getinterval
+    readrlestring
+    add
+    2 copy le { exit } if
+  } loop
+  pop pop
+} bind def
+/picstr 36 string def
+%%EndProlog
+%%Page: 1 1
+gsave
+0 0 translate
+36 35 scale
+36 35 8
+[ 36 0 0 -35 0 35 ]
+{ picstr readstring }
+image
+dcffdcfff9fffb00f4ff0100fff6fff9fffb00f4ff0100fff6fff9fffb00f4ff0100fff6fff9fffb
+00f4ff0100fff6fff9fffb00f4ff0100fff6fff9fffb00f4ff0100fff6fff9fffb00f4ff0100fff6
+ff00ff01ff00e300fcfff9fffb00f4ff0100fff6fff9fffb00f4ff0100fff6fff9fffb00f4ff0100
+fff6fff9fffb00f4ff0100fff6fff9fffb00f4ff0100fff6fff9fffb00f4ff0100fff6fff9fffb00
+f4ff0100fff6fff9fffb00f4ff0100fff6fff9fffb00f4ff0100fff6fff9fffb00f4ff0100fff6ff
+f9fffb00f4ff0100fff6fff9fffb00f4ff0100fff6fff9ffe700fcfff9ffe700fcff00ff01ff00e3
+00fcfff8ffe800fcfff7ffe900fcfff7ff0100fff3ff0100fff6fff7ff0100fff3ff0100fff6fff7
+ff0100fff3ff0100fff6fff7ff0100fff3ff0100fff6fff7ff0100fff3ff0100fff6ffdcffdcffdc
+ff
+grestore
+showpage
+%%EOF

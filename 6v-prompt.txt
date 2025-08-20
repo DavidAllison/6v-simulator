@@ -1,0 +1,152 @@
+Here’s a single, end-to-end prompt you can paste into a **Claude Code** (or Replit Agent) chat to build the whole app correctly. It assumes the paper and C file are available as `attached_assets/0502314v1.pdf` and `attached_assets/main.c`.
+
+---
+
+**Build a browser-based 6-Vertex Model simulator with paper-accurate DWBC and visualization**
+
+**Context & Inputs**
+
+* You have two ground truths. Read them carefully and base all logic/visuals on them (do not “re-invent” rules):
+
+  1. `attached_assets/0502314v1.pdf` — *Numerical study of the 6-vertex model with DWBC*. Pay special attention to Fig. 1 (vertex drawings), Fig. 2 (DWBC High), Fig. 3 (DWBC Low), and the Monte Carlo/flip rules.
+  2. `attached_assets/main.c` — working reference for selection of flippable sites, up/down/biflip behavior, multi-cell updates, counters (success/failed flips), total height/volume, and periodic progress outputs.
+
+**Goal**
+Create a **TypeScript + React (Vite)** web app that:
+
+1. Implements the same stochastic Monte Carlo (heat-bath/detailed-balance) dynamics as the C code.
+2. Initializes **DWBC High** and **DWBC Low** exactly as in the paper’s Figures 2 & 3.
+3. Renders the lattice **in the paper’s “bold connected segment” style** (no arrowheads), with an optional arrows-mode toggle.
+4. Runs live in the browser with adjustable parameters and **complete tests from low-level to visual checks**.
+
+---
+
+## Deliverables (non-negotiable)
+
+### A. App structure
+
+* `client/` (React + TS + Vite)
+
+  * `src/lib/six-vertex/`
+
+    * `types.ts` — `VertexType` enum matching the paper’s six states (use the paper’s a₁,a₂,b₁,b₂,c₁,c₂ names consistently in code).
+    * `vertexShapes.ts` — **single source of truth** mapping each `VertexType` → which of `{up,down,left,right}` edges are **bold/occupied** in the paper’s Fig. 1 “segment” depiction. Encode exactly what the paper draws (ignore arrow direction in this mode).
+    * `initialStates.ts` — DWBC High / Low generators that **exactly** reproduce Fig. 2 and Fig. 3 for any N (verify at least N=8 and N=24).
+    * `rng.ts` — seeded PRNG so runs are reproducible.
+    * `flips.ts` — flip detection & execution:
+
+      * `isFlippable(i,j)` returns {up\:boolean, down\:boolean}.
+      * `flipUp(i,j)` / `flipDown(i,j)` perform the **multi-vertex update across the 2×2 neighborhood** exactly as in `main.c` (not a single-cell change).
+      * `localWeightRatio(i,j,dir)` computes acceptance probs using the six weights (a₁,a₂,b₁,b₂,c₁,c₂) consistent with the paper/C code “heat-bath” scheme (choose among up/down/no-flip proportional to local Boltzmann weights).
+    * `simulation.ts` — orchestrates the Markov chain:
+
+      * Maintains **flippable list**; selection probability mirrors the C code (include “do nothing” probability when non-flippables exist).
+      * Counters: `flipCompleted`, `flipFailed`, success rate, total height/volume, running Δ parameter, vertex-type counts.
+      * Redraw throttle: render every `stepsPerFrame`.
+    * `renderer/`
+
+      * `pathRenderer.ts` — Canvas 2D renderer that draws **only** the paper’s bold segments per `vertexShapes.ts` (no arrows). Optional `showArrows` draws tiny arrowheads centered on edges.
+    * `dwbcVerify.tsx` — route `/dwbc-verify` that shows DWBC High & Low side-by-side for N=24 in **Paths** mode (paper-style). Include brief caption of the expected pattern (c₂ anti-diagonal in High, etc.).
+  * `src/App.tsx` — UI with:
+
+    * Controls: N (rows/cols), six weights (a₁,a₂,b₁,b₂,c₁,c₂), start/pause/reset, steps-per-frame, redraw interval, seed, initial state (DWBC High/Low/Random), display options (Paths / Arrows, grid on/off, cell size, line width).
+    * Stats panel: FPS, success rate, total height, Δ, vertex-type counts.
+
+* **Optional**: a Web Worker for the simulation loop; start with main-thread TS for debuggability and move to Worker if needed.
+
+### B. Tests (must pass)
+
+Use **Jest + ts-jest**.
+
+1. **Vertex drawing truth table**
+
+   * Unit tests assert `vertexShapes.ts` matches Fig. 1 (for each type, the exact set of bold edges expected by the paper).
+
+2. **DWBC snapshots match the paper (hard checks)**
+
+   * For **N=8**, `generateDWBCHigh(8)` and `generateDWBCLow(8)` must match the exact **type grid slices** implied by the figures (write rows as “a1 a1 … c2” style and assert specific rows/diagonals).
+   * Add visual smoke test: render High/Low (N=24) to an offscreen canvas and count bold segments along the expected diagonals/regions (e.g., High: c₂ on anti-diagonal, vertical-dominant region in upper-left, horizontal-dominant in lower-right; Low: c₂ on main diagonal, a₁ region in upper-right, a₂ in lower-left).
+
+3. **Flip invariants**
+
+   * After any `flipUp/flipDown`, every vertex still satisfies the 2-in/2-out rule (encode rule checks independent of drawing).
+   * Only a 2×2 neighborhood mutates; outside edges unchanged.
+   * Height/volume counters update consistently with `main.c`.
+
+4. **Heat-bath probabilities**
+
+   * For synthetic local neighborhoods where both flips are possible, run many trials with a fixed seed and assert empirical frequencies ≈ normalized local weights.
+
+5. **Tiny-lattice equilibrium sanity**
+
+   * For N=2 or N=3 with simple weights (all ones), sample many steps and assert vertex-type frequencies are close to uniform.
+
+Add a **pre-commit test** script; CI fails on any test error.
+
+### C. Acceptance criteria (what I will check)
+
+* `/dwbc-verify` visuals **match the paper** by eye (High/Low).
+* Toggling to “Paths” mode shows **connected bold segments** only (no arrows).
+* Starting from DWBC High/Low, running with equal weights shows reasonable mixing; stats update live; redraw can be throttled.
+* All tests pass locally with `npm test`.
+
+> If you find discrepancies between my quick verbal rules and the paper/C sources, **defer to the paper and `main.c`** and adjust the implementation and tests accordingly.
+
+---
+
+## Implementation guidance (do this verbatim)
+
+1. **Study sources first**
+
+   * Parse `attached_assets/0502314v1.pdf` to extract:
+
+     * The six vertex drawings (which edges are bold for each type in the paper’s style).
+     * The exact DWBC High/Low layouts shown in Fig. 2 & Fig. 3 (how c₂ sits on the diagonal; which regions are straight segments).
+     * The flip/Monte-Carlo description (heat-bath / detailed balance).
+   * Read `attached_assets/main.c` functions that define:
+
+     * `getisflippable`, `executeflip`, `updatepositions`, weight ratio calculation, success/failure accounting, CDensity output, etc.
+     * Mirror **multi-cell** updates—not single-cell edits.
+
+2. **Lock the drawing truth table**
+
+   * Build `vertexShapes.ts` from Fig. 1 only. Add inline comments citing the figure (page/number).
+   * All rendering consumes this map; tests assert it.
+
+3. **DWBC generators**
+
+   * Implement High/Low by **formula** (not ad-hoc): produce the same type pattern the figures depict. If you use simple index rules (e.g., region above/below a diagonal and a specific diagonal labeled c₂), prove them by tests against N=8 & N=24 snapshots.
+   * Ensure all **boundary arrows point inward** (DWBC) if you store explicit edge directions.
+
+4. **Engine**
+
+   * TS implementation first (clear & debuggable). Expose:
+
+     * `init(params)`; `step()`; `run(steps)`; getters for stats.
+     * Seeded RNG so regressions are reproducible.
+     * Flippable-set maintenance like the C code. Include the “do nothing” probability proportional to non-flippables when sampling.
+   * Render every `stepsPerFrame` via `requestAnimationFrame` (don’t redraw every flip).
+
+5. **UI**
+
+   * React controls as in Deliverables. Persist the last used config in `localStorage`.
+
+6. **Tests**
+
+   * Write the unit/integration tests listed above and make them pass. Keep tests strict on DWBC layouts (they should break if someone “fixes” the wrong thing later).
+
+7. **Docs**
+
+   * `README.md` with: how to run, what “Paths vs Arrows” means, where tests live, and a short note tying DWBC High/Low back to the figures.
+
+8. **Polish**
+
+   * Add a small “Model Tests” page with buttons to run the DWBC visual check and a quick correlation-length smoke test on a tiny lattice (fast).
+
+When done, post:
+
+* A summary of how you derived the `vertexShapes` map from Fig. 1,
+* Screenshots of `/dwbc-verify` (High & Low) next to small copies of Fig. 2 & Fig. 3,
+* Test output from `npm test`.
+
+**Important**: If anything in my prose conflicts with either the PDF or `main.c`, **use the PDF/`main.c` as the source of truth** and update the code *and tests* accordingly.

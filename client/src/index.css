@@ -1,0 +1,14 @@
+/* Import global styles */
+@import './styles/global.css';
+
+/* Base reset - minimal overrides since global.css handles most styling */
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+}
+
+#root {
+  width: 100%;
+  min-height: 100vh;
+}

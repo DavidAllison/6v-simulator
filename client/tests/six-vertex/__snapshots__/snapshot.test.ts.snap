@@ -1,0 +1,25 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`DWBC Pattern Snapshot Tests DWBC High Pattern (Figure 2) should match exact pattern for N=8: DWBC_High_N8 1`] = `
+"Lattice 8x8:
+B B B B B B B c 
+B B B B B B c b 
+B B B B B c b b 
+B B B B c b b b 
+B B B c b b b b 
+B B c b b b b b 
+B c b b b b b b 
+c b b b b b b b "
+`;
+
+exports[`DWBC Pattern Snapshot Tests DWBC Low Pattern (Figure 3) should match exact pattern for N=8: DWBC_Low_N8 1`] = `
+"Lattice 8x8:
+c A A A A A A A 
+a c A A A A A A 
+a a c A A A A A 
+a a a c A A A A 
+a a a a c A A A 
+a a a a a c A A 
+a a a a a a c A 
+a a a a a a a c "
+`;
