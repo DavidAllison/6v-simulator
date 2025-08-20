@@ -67,7 +67,9 @@ export function DWBCDebug() {
       <div className="dwbc-debug__matrix">
         <h3 className="dwbc-debug__matrix-title">
           {title}
-          <span className={`dwbc-debug__status ${matches ? 'dwbc-debug__status--match' : 'dwbc-debug__status--mismatch'}`}>
+          <span
+            className={`dwbc-debug__status ${matches ? 'dwbc-debug__status--match' : 'dwbc-debug__status--mismatch'}`}
+          >
             {matches ? '✓ Matches paper' : '✗ Does not match'}
           </span>
         </h3>
@@ -86,8 +88,10 @@ export function DWBCDebug() {
                     cell === 'a2' && 'dwbc-debug__cell--a2',
                     cell === 'b1' && 'dwbc-debug__cell--b1',
                     cell === 'b2' && 'dwbc-debug__cell--b2',
-                  ].filter(Boolean).join(' ');
-                  
+                  ]
+                    .filter(Boolean)
+                    .join(' ');
+
                   return (
                     <td key={colIdx} className={cellClasses}>
                       {cell}
@@ -150,15 +154,15 @@ export function DWBCDebug() {
             <h4 className="dwbc-debug__expected-title">Expected DWBC Low (Figure 3):</h4>
             <table className="dwbc-debug__expected-table">
               <tbody>
-              {EXPECTED_LOW.map((row, rowIdx) => (
-                <tr key={rowIdx}>
-                  {row.map((cell, colIdx) => (
-                    <td key={colIdx} className="dwbc-debug__expected-cell">
-                      {cell}
-                    </td>
-                  ))}
-                </tr>
-              ))}
+                {EXPECTED_LOW.map((row, rowIdx) => (
+                  <tr key={rowIdx}>
+                    {row.map((cell, colIdx) => (
+                      <td key={colIdx} className="dwbc-debug__expected-cell">
+                        {cell}
+                      </td>
+                    ))}
+                  </tr>
+                ))}
               </tbody>
             </table>
           </div>
@@ -169,23 +173,38 @@ export function DWBCDebug() {
         <h3 className="dwbc-debug__legend-title">Legend:</h3>
         <div className="dwbc-debug__legend-items">
           <div className="dwbc-debug__legend-item">
-            <span className="dwbc-debug__legend-color" style={{ backgroundColor: '#dcfce7' }}></span>
+            <span
+              className="dwbc-debug__legend-color"
+              style={{ backgroundColor: '#dcfce7' }}
+            ></span>
             <span className="dwbc-debug__legend-label">a1: In(left,top) Out(right,bottom)</span>
           </div>
           <div className="dwbc-debug__legend-item">
-            <span className="dwbc-debug__legend-color" style={{ backgroundColor: '#fef3c7' }}></span>
+            <span
+              className="dwbc-debug__legend-color"
+              style={{ backgroundColor: '#fef3c7' }}
+            ></span>
             <span className="dwbc-debug__legend-label">a2: In(right,bottom) Out(left,top)</span>
           </div>
           <div className="dwbc-debug__legend-item">
-            <span className="dwbc-debug__legend-color" style={{ backgroundColor: '#ede9fe' }}></span>
+            <span
+              className="dwbc-debug__legend-color"
+              style={{ backgroundColor: '#ede9fe' }}
+            ></span>
             <span className="dwbc-debug__legend-label">b1: In(left,right) Out(top,bottom)</span>
           </div>
           <div className="dwbc-debug__legend-item">
-            <span className="dwbc-debug__legend-color" style={{ backgroundColor: '#fce7f3' }}></span>
+            <span
+              className="dwbc-debug__legend-color"
+              style={{ backgroundColor: '#fce7f3' }}
+            ></span>
             <span className="dwbc-debug__legend-label">b2: In(top,bottom) Out(left,right)</span>
           </div>
           <div className="dwbc-debug__legend-item">
-            <span className="dwbc-debug__legend-color" style={{ backgroundColor: '#dbeafe', fontWeight: 'bold' }}></span>
+            <span
+              className="dwbc-debug__legend-color"
+              style={{ backgroundColor: '#dbeafe', fontWeight: 'bold' }}
+            ></span>
             <span className="dwbc-debug__legend-label">c2: In(right,top) Out(left,bottom)</span>
           </div>
         </div>

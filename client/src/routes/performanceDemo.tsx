@@ -282,17 +282,14 @@ export function PerformanceDemo() {
               </div>
               <div className="performance-stats__item">
                 <span className="performance-stats__label">Flippable:</span>
-                <span className="performance-stats__value">{simulationStats?.flippableCount || 'N/A'}</span>
+                <span className="performance-stats__value">
+                  {simulationStats?.flippableCount || 'N/A'}
+                </span>
               </div>
             </div>
           </div>
 
-          <canvas
-            ref={canvasRef}
-            width={800}
-            height={800}
-            className="performance-canvas"
-          />
+          <canvas ref={canvasRef} width={800} height={800} className="performance-canvas" />
         </div>
 
         {/* Performance Tests */}
@@ -324,19 +321,25 @@ export function PerformanceDemo() {
             <ul className="performance-info__list">
               <li className="performance-info__item">
                 <span>N=24:</span>
-                <span className={`performance-info__target ${currentFPS >= 60 && selectedSize === 24 ? 'active' : ''}`}>
+                <span
+                  className={`performance-info__target ${currentFPS >= 60 && selectedSize === 24 ? 'active' : ''}`}
+                >
                   60+ FPS (Target)
                 </span>
               </li>
               <li className="performance-info__item">
                 <span>N=50:</span>
-                <span className={`performance-info__target ${currentFPS >= 30 && selectedSize === 50 ? 'active' : ''}`}>
+                <span
+                  className={`performance-info__target ${currentFPS >= 30 && selectedSize === 50 ? 'active' : ''}`}
+                >
                   30+ FPS (Target)
                 </span>
               </li>
               <li className="performance-info__item">
                 <span>N=100:</span>
-                <span className={`performance-info__target ${currentFPS >= 10 && selectedSize === 100 ? 'active' : ''}`}>
+                <span
+                  className={`performance-info__target ${currentFPS >= 10 && selectedSize === 100 ? 'active' : ''}`}
+                >
                   10+ FPS (Target)
                 </span>
               </li>
@@ -346,8 +349,12 @@ export function PerformanceDemo() {
           <div className="performance-optimizations">
             <h3 className="performance-optimizations__title">Optimizations Implemented</h3>
             <ul className="performance-optimizations__list">
-              <li className="performance-optimizations__item">Incremental flippable list management</li>
-              <li className="performance-optimizations__item">Typed arrays for memory efficiency</li>
+              <li className="performance-optimizations__item">
+                Incremental flippable list management
+              </li>
+              <li className="performance-optimizations__item">
+                Typed arrays for memory efficiency
+              </li>
               <li className="performance-optimizations__item">Batch processing (adaptive)</li>
               <li className="performance-optimizations__item">Optimized XorShift RNG</li>
               <li className="performance-optimizations__item">In-place state updates</li>

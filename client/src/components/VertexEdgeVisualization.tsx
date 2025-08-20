@@ -50,20 +50,20 @@ export const VertexEdgeVisualization: React.FC<VertexEdgeVisualizationProps> = (
   // Render arrow marker
   const renderArrow = (x1: number, y1: number, x2: number, y2: number, pointsIn: boolean) => {
     if (!showArrows) return null;
-    
+
     // Calculate arrow position (at midpoint of edge)
     const midX = (x1 + x2) / 2;
     const midY = (y1 + y2) / 2;
-    
+
     // Calculate arrow direction
     const angle = Math.atan2(y2 - y1, x2 - x1);
     const arrowAngle = pointsIn ? angle : angle + Math.PI;
-    
-    const tipX = midX + Math.cos(arrowAngle) * arrowSize / 2;
-    const tipY = midY + Math.sin(arrowAngle) * arrowSize / 2;
+
+    const tipX = midX + (Math.cos(arrowAngle) * arrowSize) / 2;
+    const tipY = midY + (Math.sin(arrowAngle) * arrowSize) / 2;
     const baseAngle1 = arrowAngle + 2.5;
     const baseAngle2 = arrowAngle - 2.5;
-    
+
     return (
       <polygon
         points={`
@@ -180,9 +180,7 @@ export const VertexEdgeVisualization: React.FC<VertexEdgeVisualizationProps> = (
         {renderArrow(center, center, center, size - padding, config.bottom)}
       </svg>
       {showLabel && (
-        <div style={{ textAlign: 'center', fontSize: '12px', marginTop: '2px' }}>
-          {vertexType}
-        </div>
+        <div style={{ textAlign: 'center', fontSize: '12px', marginTop: '2px' }}>{vertexType}</div>
       )}
     </div>
   );
@@ -191,12 +189,12 @@ export const VertexEdgeVisualization: React.FC<VertexEdgeVisualizationProps> = (
 // Edge patterns for each vertex type (which edges have bold segments/paths passing through)
 // Based on paper Figure 1: edges are shaded where paths flow through them
 const edgePatterns = {
-  a1: { left: true, top: true, right: true, bottom: true },  // All edges (2 straight paths)
+  a1: { left: true, top: true, right: true, bottom: true }, // All edges (2 straight paths)
   a2: { left: false, top: false, right: false, bottom: false }, // No edges shaded
-  b1: { left: false, top: true, right: false, bottom: true },  // Vertical path only
-  b2: { left: true, top: false, right: true, bottom: false },  // Horizontal path only
-  c1: { left: true, top: false, right: false, bottom: true },  // L-shaped: left→bottom
-  c2: { left: false, top: true, right: true, bottom: false },  // L-shaped: top→right
+  b1: { left: false, top: true, right: false, bottom: true }, // Vertical path only
+  b2: { left: true, top: false, right: true, bottom: false }, // Horizontal path only
+  c1: { left: true, top: false, right: false, bottom: true }, // L-shaped: left→bottom
+  c2: { left: false, top: true, right: true, bottom: false }, // L-shaped: top→right
 };
 
 /**
@@ -236,7 +234,7 @@ export const PlaquetteVisualization: React.FC<{
 }> = ({ vertices, highlightEdges = false }) => {
   const [bottomLeft, bottomRight, topRight, topLeft] = vertices;
   const cellSize = 60;
-  
+
   return (
     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0' }}>
       <div style={{ gridRow: 1, gridColumn: 1 }}>

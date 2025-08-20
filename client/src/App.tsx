@@ -16,7 +16,9 @@ function ModelTests() {
           <div className="tests-page__header-title">
             <h1>Model Tests</h1>
           </div>
-          <Link to="/" className="tests-page__back-link">← Back to Simulator</Link>
+          <Link to="/" className="tests-page__back-link">
+            ← Back to Simulator
+          </Link>
         </div>
       </header>
       <div className="tests-page__content">
@@ -24,7 +26,7 @@ function ModelTests() {
         <p className="tests-page__description">
           Comprehensive test suite for verifying the physics implementation of the 6-vertex model.
         </p>
-        
+
         <div className="tests-page__grid">
           <div className="test-suite">
             <div className="test-suite__header">

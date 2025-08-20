@@ -77,7 +77,7 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
   onExportImage,
 }) => {
   const [showLegend, setShowLegend] = useState(false);
-  
+
   const vertexColors = {
     a1: '#3B82F6', // blue
     a2: '#60A5FA', // light blue
@@ -325,10 +325,10 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
             </div>
           ))}
         </div>
-        
+
         {/* Vertex Edge Pattern Legend */}
         <div className="control-item">
-          <button 
+          <button
             className="legend-toggle"
             onClick={() => setShowLegend(!showLegend)}
             style={{
@@ -340,7 +340,7 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
               cursor: 'pointer',
               display: 'flex',
               justifyContent: 'space-between',
-              alignItems: 'center'
+              alignItems: 'center',
             }}
           >
             <span>Vertex Edge Patterns</span>
@@ -349,12 +349,14 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
           {showLegend && (
             <div style={{ marginTop: '10px' }}>
               <VertexLegend showArrows={false} />
-              <div style={{ 
-                marginTop: '8px', 
-                fontSize: '0.85rem', 
-                color: '#6b7280',
-                fontStyle: 'italic'
-              }}>
+              <div
+                style={{
+                  marginTop: '8px',
+                  fontSize: '0.85rem',
+                  color: '#6b7280',
+                  fontStyle: 'italic',
+                }}
+              >
                 Bold edges show the connected path segments
               </div>
             </div>

@@ -11,12 +11,17 @@
 
 import { VertexType } from './types';
 import { FlipDirection } from './physicsFlips';
-import { 
-  isFlipValidCStyle as isFlipValid, 
+import {
+  isFlipValidCStyle as isFlipValid,
   executeFlipCStyle as executeValidFlip,
   getWeightRatioCStyle,
   validateIceRule,
-  VERTEX_A1, VERTEX_A2, VERTEX_B1, VERTEX_B2, VERTEX_C1, VERTEX_C2 
+  VERTEX_A1,
+  VERTEX_A2,
+  VERTEX_B1,
+  VERTEX_B2,
+  VERTEX_C1,
+  VERTEX_C2,
 } from './cStyleFlipLogic';
 
 // Vertex type constants are now imported from fixedFlipLogic
@@ -172,15 +177,15 @@ export class OptimizedPhysicsSimulation {
     if (state.length !== this.size * this.size) {
       throw new Error(`Invalid state size: expected ${this.size * this.size}, got ${state.length}`);
     }
-    
+
     // Copy the state
     for (let i = 0; i < state.length; i++) {
       this.vertices[i] = state[i];
     }
-    
+
     // Rebuild the flippable list
     this.buildFlippableList();
-    
+
     // Recalculate height
     this.currentHeight = 0;
     for (let i = 0; i < this.vertices.length; i++) {
@@ -395,20 +400,20 @@ export class OptimizedPhysicsSimulation {
     for (let i = 0; i < this.vertices.length; i++) {
       if (this.vertices[i] === VERTEX_C2) c2CountBefore++;
     }
-    
+
     // Use the corrected flip execution logic
     const success = executeValidFlip(this.vertices, this.size, row, col, direction);
-    
+
     if (success) {
       // Count c2 vertices after flip to update height
       let c2CountAfter = 0;
       for (let i = 0; i < this.vertices.length; i++) {
         if (this.vertices[i] === VERTEX_C2) c2CountAfter++;
       }
-      
+
       // Update height based on c2 count change
-      this.currentHeight += (c2CountAfter - c2CountBefore);
-      
+      this.currentHeight += c2CountAfter - c2CountBefore;
+
       // Validate lattice integrity in debug mode
       if (process.env.NODE_ENV === 'development') {
         const validation = validateIceRule(this.vertices, this.size);
@@ -418,7 +423,7 @@ export class OptimizedPhysicsSimulation {
         }
       }
     }
-    
+
     return success;
   }
 
@@ -443,8 +448,8 @@ export class OptimizedPhysicsSimulation {
    */
   private performStep(): void {
     // Filter out any null/undefined entries
-    const validPositions = this.flippableList.filter(p => p != null);
-    
+    const validPositions = this.flippableList.filter((p) => p != null);
+
     // If no flippable positions, return early
     if (validPositions.length === 0) {
       return;
@@ -452,12 +457,12 @@ export class OptimizedPhysicsSimulation {
 
     // Select a random position from the valid list
     const pos = validPositions[this.rng.nextInt(validPositions.length)];
-    
+
     // Safety check
     if (!pos) {
       return;
     }
-    
+
     // Execute the flip attempt
     this.attemptedFlips++;
     this.executeFlipStep(pos);
@@ -470,52 +475,52 @@ export class OptimizedPhysicsSimulation {
   private executeFlipStep(pos: FlippablePosition): void {
     // Handle different flip scenarios
     if (pos.canFlipUp && !pos.canFlipDown) {
-        // Can only flip up
-        const weightRatio = this.getWeightRatio(pos.row, pos.col, FlipDirection.Up);
-        const acceptanceProbability = Math.min(1.0, this.rho * weightRatio);
+      // Can only flip up
+      const weightRatio = this.getWeightRatio(pos.row, pos.col, FlipDirection.Up);
+      const acceptanceProbability = Math.min(1.0, this.rho * weightRatio);
 
-        if (this.rng.next() < acceptanceProbability) {
-          if (this.executeFlipInPlace(pos.row, pos.col, FlipDirection.Up)) {
-            this.updateFlippableListAfterFlip(pos.row, pos.col, FlipDirection.Up);
-            this.successfulFlips++;
-          }
+      if (this.rng.next() < acceptanceProbability) {
+        if (this.executeFlipInPlace(pos.row, pos.col, FlipDirection.Up)) {
+          this.updateFlippableListAfterFlip(pos.row, pos.col, FlipDirection.Up);
+          this.successfulFlips++;
         }
-      } else if (!pos.canFlipUp && pos.canFlipDown) {
-        // Can only flip down
-        const weightRatio = this.getWeightRatio(pos.row, pos.col, FlipDirection.Down);
-        const acceptanceProbability = Math.min(1.0, this.rho * weightRatio);
-
-        if (this.rng.next() < acceptanceProbability) {
-          if (this.executeFlipInPlace(pos.row, pos.col, FlipDirection.Down)) {
-            this.updateFlippableListAfterFlip(pos.row, pos.col, FlipDirection.Down);
-            this.successfulFlips++;
-          }
-        }
-      } else {
-        // Can flip both ways (biflip) - use heat bath algorithm
-        const upRatio = this.getWeightRatio(pos.row, pos.col, FlipDirection.Up);
-        const downRatio = this.getWeightRatio(pos.row, pos.col, FlipDirection.Down);
-
-        // Heat bath: normalize probabilities
-        const totalWeight = 1.0 + upRatio + downRatio; // 1.0 for no flip
-        const upProbability = upRatio / totalWeight;
-        const downProbability = downRatio / totalWeight;
-
-        const random = this.rng.next();
-
-        if (random < upProbability) {
-          if (this.executeFlipInPlace(pos.row, pos.col, FlipDirection.Up)) {
-            this.updateFlippableListAfterFlip(pos.row, pos.col, FlipDirection.Up);
-            this.successfulFlips++;
-          }
-        } else if (random < upProbability + downProbability) {
-          if (this.executeFlipInPlace(pos.row, pos.col, FlipDirection.Down)) {
-            this.updateFlippableListAfterFlip(pos.row, pos.col, FlipDirection.Down);
-            this.successfulFlips++;
-          }
-        }
-        // else: no flip (with probability 1/totalWeight)
       }
+    } else if (!pos.canFlipUp && pos.canFlipDown) {
+      // Can only flip down
+      const weightRatio = this.getWeightRatio(pos.row, pos.col, FlipDirection.Down);
+      const acceptanceProbability = Math.min(1.0, this.rho * weightRatio);
+
+      if (this.rng.next() < acceptanceProbability) {
+        if (this.executeFlipInPlace(pos.row, pos.col, FlipDirection.Down)) {
+          this.updateFlippableListAfterFlip(pos.row, pos.col, FlipDirection.Down);
+          this.successfulFlips++;
+        }
+      }
+    } else {
+      // Can flip both ways (biflip) - use heat bath algorithm
+      const upRatio = this.getWeightRatio(pos.row, pos.col, FlipDirection.Up);
+      const downRatio = this.getWeightRatio(pos.row, pos.col, FlipDirection.Down);
+
+      // Heat bath: normalize probabilities
+      const totalWeight = 1.0 + upRatio + downRatio; // 1.0 for no flip
+      const upProbability = upRatio / totalWeight;
+      const downProbability = downRatio / totalWeight;
+
+      const random = this.rng.next();
+
+      if (random < upProbability) {
+        if (this.executeFlipInPlace(pos.row, pos.col, FlipDirection.Up)) {
+          this.updateFlippableListAfterFlip(pos.row, pos.col, FlipDirection.Up);
+          this.successfulFlips++;
+        }
+      } else if (random < upProbability + downProbability) {
+        if (this.executeFlipInPlace(pos.row, pos.col, FlipDirection.Down)) {
+          this.updateFlippableListAfterFlip(pos.row, pos.col, FlipDirection.Down);
+          this.successfulFlips++;
+        }
+      }
+      // else: no flip (with probability 1/totalWeight)
+    }
   }
 
   /**
@@ -683,7 +688,7 @@ export const OptimizedSimulation = OptimizedPhysicsSimulation;
 // Export functions to generate DWBC states as Uint8Array for testing
 export function generateDWBCHighOptimized(size: number): Uint8Array {
   const vertices = new Uint8Array(size * size);
-  
+
   // DWBC High: c2 on anti-diagonal, b1 upper-left, b2 lower-right
   for (let row = 0; row < size; row++) {
     for (let col = 0; col < size; col++) {
@@ -700,13 +705,13 @@ export function generateDWBCHighOptimized(size: number): Uint8Array {
       }
     }
   }
-  
+
   return vertices;
 }
 
 export function generateDWBCLowOptimized(size: number): Uint8Array {
   const vertices = new Uint8Array(size * size);
-  
+
   // DWBC Low: c2 on main diagonal, a1 upper-right, a2 lower-left
   for (let row = 0; row < size; row++) {
     for (let col = 0; col < size; col++) {
@@ -723,7 +728,7 @@ export function generateDWBCLowOptimized(size: number): Uint8Array {
       }
     }
   }
-  
+
   return vertices;
 }
 

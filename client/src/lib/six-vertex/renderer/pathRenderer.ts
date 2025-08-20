@@ -385,14 +385,19 @@ export class PathRenderer {
    * Get edge pattern for a vertex type (which edges have paths passing through)
    * Based on paper Figure 1: edges are shaded where paths flow through them
    */
-  private getEdgePattern(vertexType: VertexType): { left: boolean; top: boolean; right: boolean; bottom: boolean } {
+  private getEdgePattern(vertexType: VertexType): {
+    left: boolean;
+    top: boolean;
+    right: boolean;
+    bottom: boolean;
+  } {
     const patterns = {
-      [VertexType.a1]: { left: true, top: true, right: true, bottom: true },  // All edges (2 straight paths)
+      [VertexType.a1]: { left: true, top: true, right: true, bottom: true }, // All edges (2 straight paths)
       [VertexType.a2]: { left: false, top: false, right: false, bottom: false }, // No edges shaded
-      [VertexType.b1]: { left: false, top: true, right: false, bottom: true },  // Vertical path only
-      [VertexType.b2]: { left: true, top: false, right: true, bottom: false },  // Horizontal path only
-      [VertexType.c1]: { left: true, top: false, right: false, bottom: true },  // L-shaped: left→bottom
-      [VertexType.c2]: { left: false, top: true, right: true, bottom: false },  // L-shaped: top→right
+      [VertexType.b1]: { left: false, top: true, right: false, bottom: true }, // Vertical path only
+      [VertexType.b2]: { left: true, top: false, right: true, bottom: false }, // Horizontal path only
+      [VertexType.c1]: { left: true, top: false, right: false, bottom: true }, // L-shaped: left→bottom
+      [VertexType.c2]: { left: false, top: true, right: true, bottom: false }, // L-shaped: top→right
     };
     return patterns[vertexType];
   }
@@ -448,7 +453,7 @@ export class PathRenderer {
 
         // Draw edge shading patterns
         this.ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
-        
+
         if (edges.left) {
           this.ctx.fillRect(cx - halfSize, cy - halfSize, edgeWidth, squareSize);
         }

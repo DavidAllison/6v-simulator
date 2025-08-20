@@ -38,7 +38,9 @@
       "Bash(test-ice-rule.js test-ice-valid.js testFlipFix.ts runBenchmark.js verify-physics.cjs )",
       "Bash(run-all-tests.sh)",
       "Bash(git restore:*)",
-      "Bash(gh pr list:*)"
+      "Bash(gh pr list:*)",
+      "Bash(gh run list:*)",
+      "Bash(gh run view:*)"
     ],
     "deny": [],
     "ask": []
