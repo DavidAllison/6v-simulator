@@ -34,7 +34,12 @@ export class WorkerSimulation {
    */
   async initialize(config: OptimizedSimConfig): Promise<void> {
     // Create worker
-    this.worker = new Worker(new URL('./simulationWorker.ts', import.meta.url), { type: 'module' });
+    try {
+      this.worker = new Worker(new URL('./simulationWorker.ts', import.meta.url), { type: 'module' });
+    } catch (error) {
+      // Worker creation failed (e.g., in Node environment during build)
+      throw new Error(`Failed to create Web Worker: ${error}`);
+    }
 
     // Set up message handler
     this.worker.addEventListener('message', this.handleWorkerMessage.bind(this));
@@ -205,6 +210,12 @@ export async function createWorkerSimulation(
   config: OptimizedSimConfig,
   callbacks?: WorkerSimulationCallbacks,
 ): Promise<WorkerSimulation | null> {
+  // Skip Web Worker in test/build environments
+  if (typeof process !== 'undefined' && process.env?.NODE_ENV === 'test') {
+    console.warn('Web Workers disabled in test environment');
+    return null;
+  }
+
   if (!isWorkerSupported()) {
     console.warn('Web Workers not supported, falling back to main thread');
     return null;
