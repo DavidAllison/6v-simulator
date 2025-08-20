@@ -37,7 +37,8 @@
       "Bash(verify-dwbc-patterns.js test-app.cjs test-dwbc-fix.js test-ice-debug.html )",
       "Bash(test-ice-rule.js test-ice-valid.js testFlipFix.ts runBenchmark.js verify-physics.cjs )",
       "Bash(run-all-tests.sh)",
-      "Bash(git restore:*)"
+      "Bash(git restore:*)",
+      "Bash(gh pr list:*)"
     ],
     "deny": [],
     "ask": []

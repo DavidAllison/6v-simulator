@@ -1,0 +1,76 @@
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        node-version: [18.x, 20.x]
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      
+      - name: Setup Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'npm'
+          cache-dependency-path: client/package-lock.json
+      
+      - name: Install dependencies
+        run: |
+          cd client
+          npm ci
+      
+      - name: Run linting
+        run: |
+          cd client
+          npm run lint
+      
+      - name: TypeScript check
+        run: |
+          cd client
+          npm run typecheck
+      
+      - name: Run tests
+        run: |
+          cd client
+          npm test -- --passWithNoTests
+      
+      - name: Build application
+        run: |
+          cd client
+          npm run build
+      
+      - name: Upload build artifacts
+        if: matrix.node-version == '20.x'
+        uses: actions/upload-artifact@v3
+        with:
+          name: build-output
+          path: client/dist/
+          retention-days: 7
+
+  deploy-preview:
+    needs: test
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    
+    steps:
+      - name: Comment PR
+        uses: actions/github-script@v6
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: '✅ All tests passed! Ready for review.'
+            })
