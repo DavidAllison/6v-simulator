@@ -38,6 +38,3 @@ export { SeededRNG, globalRNG, createRNG, generateSeed } from './rng';
 
 // Path renderer
 export * from './renderer/pathRenderer';
-
-// Test utilities (for development)
-export { runTests, validateDWBCHigh, validateDWBCLow, printLattice } from './test';

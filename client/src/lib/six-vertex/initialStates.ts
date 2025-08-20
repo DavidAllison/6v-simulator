@@ -4,11 +4,6 @@
  * Based on Figures 2 and 3 from Allison & Reshetikhin (2005) paper: arXiv:cond-mat/0502314v1
  */
 
-import { generateDWBCHighFixed, generateDWBCLowFixed } from './initialStatesFix';
-import { generateDWBCHighCorrect, generateDWBCLowCorrect } from './initialStatesCorrect';
-import { generateDWBCHighFinal, generateDWBCLowFinal } from './dwbcFinal';
-import { generateDWBCHighIceValid, generateDWBCLowIceValid } from './dwbcIceValid';
-import { generateDWBCHighProper, generateDWBCLowProper } from './dwbcProper';
 import { generateDWBCHighCorrectIce, generateDWBCLowCorrectIce } from './dwbcCorrectIce';
 import type {
   LatticeState,
@@ -39,6 +34,7 @@ export function generateDWBCHigh(size: number): LatticeState {
   return generateDWBCHighCorrectIce(size);
 }
 
+// Old implementation kept for reference
 function generateDWBCHighOld(size: number): LatticeState {
   const vertices: Vertex[][] = [];
   const horizontalEdges: EdgeState[][] = [];
@@ -144,6 +140,7 @@ export function generateDWBCLow(size: number): LatticeState {
   return generateDWBCLowCorrectIce(size);
 }
 
+// Old implementation kept for reference
 function generateDWBCLowOld(size: number): LatticeState {
   const vertices: Vertex[][] = [];
   const horizontalEdges: EdgeState[][] = [];

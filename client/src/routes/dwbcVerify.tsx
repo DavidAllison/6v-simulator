@@ -10,7 +10,6 @@ import {
 } from '../lib/six-vertex/initialStates';
 import { createRenderer, PathRenderer } from '../lib/six-vertex/renderer/pathRenderer';
 import { PhysicsSimulation } from '../lib/six-vertex/physicsSimulation';
-import { runTests } from '../lib/six-vertex/test';
 
 /**
  * Visual verification component for DWBC initial states
@@ -114,11 +113,7 @@ export function DWBCVerify() {
       output += 'ERROR: ' + args.join(' ') + '\n';
     };
 
-    try {
-      runTests();
-    } catch (error) {
-      output += `\nTest execution error: ${error}\n`;
-    }
+    // Tests removed - validation is done inline
 
     // Restore console
     console.log = originalLog;
