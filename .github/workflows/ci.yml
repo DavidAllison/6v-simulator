@@ -6,6 +6,12 @@ on:
   pull_request:
     branches: [main, develop]
 
+# Permissions for GITHUB_TOKEN
+permissions:
+  contents: read
+  pull-requests: write  # Allow commenting on PRs
+  issues: write        # Allow commenting on issues
+
 env:
   NODE_VERSION: '20.x'  # Primary Node version to avoid crypto.hash issues
 
