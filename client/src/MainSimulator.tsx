@@ -382,7 +382,7 @@ function MainSimulator() {
 
   return (
     <div className="main-content">
-      <CollapsiblePanel title="Controls" side="left" className="control-section">
+      <CollapsiblePanel title="Controls" side="left" className="panel-section">
         <ControlPanel
           isRunning={isRunning}
           latticeSize={latticeSize}
@@ -435,11 +435,9 @@ function MainSimulator() {
         renderConfig={renderConfig}
       />
 
-      <CollapsiblePanel title="Info" side="right" className="right-panels">
-        <div className="right-panels-content">
-          <StatisticsPanel stats={stats} fps={fps} />
-          <SaveLoadPanel getCurrentData={getCurrentSimulationData} onLoadData={loadSimulationData} />
-        </div>
+      <CollapsiblePanel title="Info" side="right" className="panel-section">
+        <StatisticsPanel stats={stats} fps={fps} />
+        <SaveLoadPanel getCurrentData={getCurrentSimulationData} onLoadData={loadSimulationData} />
       </CollapsiblePanel>
     </div>
   );
