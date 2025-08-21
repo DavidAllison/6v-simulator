@@ -14,7 +14,38 @@ This is a 6-vertex model physics simulation project implementing Domain Wall Bou
 
 ## Software Development Lifecycle (SDLC)
 
-### 1. Development Workflow
+### 1. Issue-Driven Development
+
+#### Creating Issues
+Every significant change should start with a GitHub issue:
+```bash
+gh issue create --title "Add feature X" --body "Description of the feature"
+```
+
+Issues should include:
+- Clear description of the problem/feature
+- Acceptance criteria
+- Technical requirements
+- Related documentation/references
+
+#### Issue Templates
+- **Bug Report**: Steps to reproduce, expected vs actual behavior
+- **Feature Request**: User story, acceptance criteria, technical specs
+- **Maintenance**: Dependencies to update, technical debt to address
+
+### 2. Development Workflow
+
+#### Starting New Work
+```bash
+# Create issue first
+gh issue create --title "Implement feature X"
+
+# Create feature branch from issue
+git checkout -b feature/issue-NUMBER-description
+
+# Or for fixes
+git checkout -b fix/issue-NUMBER-description
+```
 
 #### Local Development
 ```bash
@@ -25,11 +56,13 @@ npm run build        # Build for production
 npm run preview      # Preview production build
 ```
 
-#### Code Quality
+#### Code Quality Commands
 ```bash
 npm run lint         # Run ESLint checks
+npm run lint -- --fix # Auto-fix ESLint issues
 npm run typecheck    # Run TypeScript compiler checks
 npm run format       # Format code with Prettier (if configured)
+npm run format:check # Check formatting without fixing
 ```
 
 #### Testing
@@ -37,43 +70,164 @@ npm run format       # Format code with Prettier (if configured)
 npm test             # Run test suite
 npm run test:watch   # Run tests in watch mode
 npm run test:coverage # Generate coverage report
+npm test -- --passWithNoTests # Run tests even if none exist
 ```
 
-### 2. Git Workflow
+### 3. Git Workflow
 
 #### Branch Strategy
-- `main` - Production-ready code
-- `develop` - Integration branch for features
-- `feature/*` - New features
-- `fix/*` - Bug fixes
+- `main` - Production-ready code, protected with CI checks
+- `develop` - Integration branch for features (optional)
+- `feature/*` - New features (link to issue number)
+- `fix/*` - Bug fixes (link to issue number)
 - `refactor/*` - Code refactoring
 - `docs/*` - Documentation updates
+- `chore/*` - Maintenance tasks
 
 #### Commit Messages
-Follow conventional commits format:
+Follow conventional commits format with issue references:
+```bash
+git commit -m "feat: add Arctic region visualization
+
+Implements the Arctic region frozen state visualization
+as specified in the research paper Fig. 3.
+
+Refs #5"
+```
+
+Commit types:
 - `feat:` - New feature
 - `fix:` - Bug fix
 - `refactor:` - Code refactoring
 - `docs:` - Documentation
 - `test:` - Testing
 - `chore:` - Maintenance tasks
-
-Example:
-```bash
-git commit -m "feat: add Arctic region visualization"
-git commit -m "fix: correct b1→c2 flip transformation"
-git commit -m "docs: update DWBC configuration details"
-```
+- `ci:` - CI/CD changes
+- `perf:` - Performance improvements
 
 #### Pull Request Process
-1. Create feature branch from `main`
-2. Make changes following code standards
-3. Run tests and linting
-4. Create PR with descriptive title and body
-5. Address review feedback
-6. Merge after approval
 
-### 3. Code Review Checklist
+1. **Create feature branch from main**
+```bash
+git checkout main
+git pull origin main
+git checkout -b feature/issue-NUMBER-description
+```
+
+2. **Make changes following standards**
+- Write tests for new functionality
+- Ensure all tests pass
+- Fix linting issues
+- Update documentation
+
+3. **Verify changes locally**
+```bash
+npm run lint
+npm run typecheck
+npm test
+npm run build
+```
+
+4. **Create Pull Request**
+```bash
+# Push branch
+git push -u origin feature/issue-NUMBER-description
+
+# Create PR with detailed description
+gh pr create \
+  --title "feat: Brief description (#NUMBER)" \
+  --body "## Summary
+  
+Detailed description of changes
+
+## Related Issues
+Fixes #NUMBER
+
+## Testing
+- [ ] Unit tests pass
+- [ ] Manual testing completed
+- [ ] No regressions identified
+
+## Checklist
+- [ ] Code follows project conventions
+- [ ] Tests added/updated
+- [ ] Documentation updated
+- [ ] CI checks pass"
+```
+
+5. **Monitor CI checks**
+```bash
+gh pr checks --watch
+```
+
+6. **Address review feedback**
+- Respond to all comments
+- Make requested changes
+- Re-request review when ready
+
+7. **Merge after approval**
+```bash
+# CI will verify all checks pass
+gh pr merge --merge
+```
+
+8. **Close related issue**
+```bash
+gh issue close NUMBER --comment "Implemented in PR #PR_NUMBER"
+```
+
+### 4. Issue & PR Best Practices
+
+#### Writing Good Issues
+```markdown
+## Problem Description
+Clear description of what needs to be done and why
+
+## Acceptance Criteria
+- [ ] Specific measurable outcomes
+- [ ] User-facing changes described
+- [ ] Technical requirements listed
+
+## Technical Details
+- Implementation approach
+- Files that need modification
+- Dependencies or blockers
+
+## Testing Plan
+How to verify the implementation works
+```
+
+#### PR Description Template
+```markdown
+## Summary
+Brief description of changes (2-3 sentences)
+
+## Changes
+- Bullet list of specific changes
+- Link to related documentation
+- Screenshots if UI changes
+
+## Testing
+- [ ] Unit tests added/updated
+- [ ] Manual testing completed
+- [ ] No regressions identified
+
+## Related Issues
+Fixes #NUMBER
+
+## Checklist
+- [ ] Code follows project conventions
+- [ ] Tests pass locally
+- [ ] Documentation updated
+- [ ] CI checks pass
+```
+
+#### Review Etiquette
+- **Authors**: Keep PRs focused and small
+- **Reviewers**: Provide constructive feedback
+- **Both**: Communicate clearly and respectfully
+
+### 5. Code Review Checklist
 - [ ] Code follows project conventions
 - [ ] Tests pass (`npm test`)
 - [ ] Linting passes (`npm run lint`)
@@ -82,7 +236,7 @@ git commit -m "docs: update DWBC configuration details"
 - [ ] Performance is acceptable
 - [ ] Documentation is updated
 
-### 4. Release Process
+### 6. Release Process
 
 #### Version Numbering
 Follow semantic versioning (MAJOR.MINOR.PATCH):
@@ -90,17 +244,41 @@ Follow semantic versioning (MAJOR.MINOR.PATCH):
 - MINOR: New features (backward compatible)
 - PATCH: Bug fixes
 
-#### Release Steps
-1. Update version in `package.json`
-2. Update CHANGELOG.md
-3. Run full test suite
-4. Build production bundle
-5. Create git tag: `git tag -a v1.0.0 -m "Release version 1.0.0"`
-6. Push tag: `git push origin v1.0.0`
-7. Create GitHub release with notes
-8. Deploy to production
+#### Release Checklist
+```bash
+# 1. Ensure main branch is clean
+git checkout main
+git pull origin main
+gh pr list  # Should be empty or only approved PRs
 
-### 5. Deployment
+# 2. Verify CI is passing
+gh run list --branch main --limit 1
+gh workflow run ci.yml --ref main  # Trigger if needed
+
+# 3. Update version
+npm version patch  # or minor/major
+# This updates package.json and creates a git tag
+
+# 4. Update CHANGELOG.md
+echo "## [$(node -p "require('./package.json').version")] - $(date +%Y-%m-%d)" >> CHANGELOG.md
+# Add release notes
+
+# 5. Commit and push
+git add CHANGELOG.md
+git commit -m "chore: release v$(node -p "require('./package.json').version")"
+git push origin main --tags
+
+# 6. Create GitHub release
+gh release create v$(node -p "require('./package.json').version") \
+  --title "Release v$(node -p "require('./package.json').version")" \
+  --notes-file CHANGELOG.md \
+  --target main
+
+# 7. Deploy (if automated deployment is set up)
+# CI will automatically deploy tagged releases
+```
+
+### 7. Deployment
 
 #### Build for Production
 ```bash
@@ -115,7 +293,7 @@ npm run build
 - **Netlify**: CI/CD with preview deployments
 - **Custom Server**: Serve dist/ folder with nginx/apache
 
-### 6. Monitoring & Maintenance
+### 8. Monitoring & Maintenance
 
 #### Performance Monitoring
 - Track frame rates during simulation
@@ -184,36 +362,49 @@ All tests must pass before any commit:
 
 ## CI/CD Configuration
 
-### GitHub Actions Workflows
+### GitHub Actions Pipeline
 
-Create `.github/workflows/ci.yml` for continuous integration:
+Our CI/CD pipeline (`.github/workflows/ci.yml`) runs automatically on:
+- Push to main, develop, or feature branches
+- Pull requests to main or develop
+
+#### Pipeline Jobs
+
+1. **Code Quality** - ESLint and TypeScript checks
+2. **Test Suite** - Matrix testing on Node 20.x and 22.x
+3. **Build Application** - Production build verification
+4. **Security Scan** - npm audit for vulnerabilities
+5. **Bundle Analysis** - Size reporting for PRs
+6. **Deploy Preview** - Automated PR comments
+
+#### Key Configuration
+
 ```yaml
-name: CI
+# Use Node 20+ for Vite 7.0.0 compatibility
+env:
+  NODE_VERSION: '20.x'
 
-on:
-  push:
-    branches: [main, develop]
-  pull_request:
-    branches: [main]
-
-jobs:
-  test:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-node@v3
-        with:
-          node-version: '18'
-      - run: cd client && npm ci
-      - run: cd client && npm run lint
-      - run: cd client && npm run typecheck
-      - run: cd client && npm test
-      - run: cd client && npm run build
+# Required permissions for PR operations
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
 ```
 
-### Pre-commit Hooks
+#### Running CI Locally
 
-Use husky for git hooks:
+Simulate CI checks before pushing:
+```bash
+cd client
+npm run lint
+npm run typecheck
+npm test -- --passWithNoTests
+NODE_ENV=production npm run build
+```
+
+### Pre-commit Hooks (Optional)
+
+For automatic local checks, set up husky:
 ```bash
 cd client
 npx husky-init && npm install
@@ -221,10 +412,19 @@ npx husky add .husky/pre-commit "npm run lint && npm run typecheck"
 npx husky add .husky/pre-push "npm test"
 ```
 
+### CI/CD Best Practices
+
+1. **Fix CI failures immediately** - Don't merge with failing checks
+2. **Keep CI fast** - Parallel jobs, dependency caching
+3. **Progressive enhancement** - Non-blocking warnings while fixing
+4. **Monitor trends** - Track test coverage and build times
+5. **Document CI changes** - Update this file when modifying pipeline
+
 ## Troubleshooting Guide
 
 ### Common Issues
 
+#### Physics Simulation Issues
 1. **Ice Rule Violations**
    - Check flip transformations preserve 2-in/2-out
    - Verify boundary conditions are correct
@@ -240,10 +440,80 @@ npx husky add .husky/pre-push "npm test"
    - Verify vertex type mappings
    - Check edge drawing logic
 
-4. **Build Failures**
-   - Clear node_modules and reinstall
-   - Check TypeScript version compatibility
-   - Verify all imports are correct
+#### Build & CI/CD Issues
+1. **Build Failures**
+   - Clear node_modules and reinstall: `rm -rf node_modules && npm install`
+   - Check Node version: `node --version` (should be 20+)
+   - Verify TypeScript version compatibility
+   - Check for import errors in build output
+
+2. **CI Pipeline Failures**
+   - **Vite build errors**: Ensure Node 20+ is used
+   - **Web Worker issues**: Check error handling in workerInterface.ts
+   - **Permission errors**: Verify GitHub token permissions in workflow
+   - **Test failures**: Run locally with `npm test` to debug
+
+3. **GitHub Actions Issues**
+   ```bash
+   # View recent workflow runs
+   gh run list --limit 5
+   
+   # View specific run details
+   gh run view RUN_ID
+   
+   # Download artifacts from failed run
+   gh run download RUN_ID
+   
+   # Re-run failed jobs
+   gh run rerun RUN_ID --failed
+   ```
+
+4. **PR Merge Conflicts**
+   ```bash
+   # Update feature branch with main
+   git checkout main
+   git pull origin main
+   git checkout feature/your-branch
+   git rebase main
+   # Resolve conflicts if any
+   git push --force-with-lease
+   ```
+
+## SDLC Completeness Checklist
+
+For each feature or fix, ensure:
+
+### Planning Phase
+- [ ] GitHub issue created with clear requirements
+- [ ] Acceptance criteria defined
+- [ ] Technical approach documented
+- [ ] Dependencies identified
+
+### Development Phase
+- [ ] Feature branch created from main
+- [ ] Tests written (TDD preferred)
+- [ ] Code implementation complete
+- [ ] Local testing passed
+- [ ] Documentation updated
+
+### Review Phase
+- [ ] PR created with detailed description
+- [ ] CI checks passing
+- [ ] Code review requested
+- [ ] Feedback addressed
+- [ ] Final approval received
+
+### Deployment Phase
+- [ ] PR merged to main
+- [ ] Issue closed with summary
+- [ ] Release notes updated (if applicable)
+- [ ] Stakeholders notified
+
+### Post-Deployment
+- [ ] Monitor for issues
+- [ ] Gather feedback
+- [ ] Document lessons learned
+- [ ] Create follow-up issues if needed
 
 ## Important Notes
 
@@ -252,3 +522,4 @@ npx husky add .husky/pre-push "npm test"
 - **Performance**: Start with main-thread implementation; optimize with Web Workers if needed
 - **Validation**: The `/dwbc-verify` route must visually match paper figures exactly
 - **Code Style**: Follow existing patterns, avoid unnecessary comments, maintain consistency
+- **SDLC Compliance**: Every change should follow the complete software development lifecycle
