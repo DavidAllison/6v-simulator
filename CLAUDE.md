@@ -2,6 +2,16 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## ⚠️ CRITICAL: PR Validation Requirements
+
+**MANDATORY**: Before creating ANY pull request, you MUST:
+1. Run the validation script: `./validate-pr.sh`
+2. Ensure ALL checks pass (zero errors, zero warnings)
+3. Verify PR is under 300 lines
+4. Complete the full checklist in Section 4
+
+**Failure to validate will result in automatic PR rejection.**
+
 ## Project Overview
 
 This is a 6-vertex model physics simulation project implementing Domain Wall Boundary Conditions (DWBC) based on the paper "Numerical study of the 6-vertex model with DWBC" (attached_assets/0502314v1.pdf). The goal is to create a TypeScript + React web application that faithfully reproduces the Monte Carlo dynamics and visualizations from the reference C implementation.
@@ -176,7 +186,296 @@ gh pr merge --merge
 gh issue close NUMBER --comment "Implemented in PR #PR_NUMBER"
 ```
 
-### 4. Issue & PR Best Practices
+### 4. Comprehensive PR Validation Checklist
+
+**CRITICAL**: This checklist MUST be completed IN FULL before creating or updating any pull request. Failure to complete these checks results in wasted review time and rejected PRs.
+
+#### Pre-PR Validation Requirements
+
+##### Phase 1: Code Scope Validation
+```bash
+# STOP if any of these fail - DO NOT proceed to create PR
+
+# 1. Verify PR scope is focused (target: <300 lines changed)
+git diff main --stat | tail -1
+# If > 300 lines, STOP and refactor into smaller PRs
+
+# 2. Check for unintended files
+git status --porcelain
+# Remove any files not directly related to the issue:
+# - No test files unless fixing tests
+# - No generated files
+# - No unrelated config changes
+# - No documentation unless specifically required
+
+# 3. Verify single responsibility
+git log main..HEAD --oneline
+# Each commit should have ONE clear purpose
+# If mixing features/fixes, STOP and split into separate PRs
+```
+
+##### Phase 2: Code Quality Validation
+```bash
+# ALL commands must pass with ZERO errors/warnings
+
+# 1. Clean install dependencies
+cd client
+rm -rf node_modules package-lock.json
+npm install
+
+# 2. Linting - MUST have zero errors
+npm run lint
+# If errors exist, fix them:
+npm run lint -- --fix
+# Then verify again:
+npm run lint
+
+# 3. TypeScript compilation - MUST have zero errors
+npm run typecheck
+
+# 4. Code formatting check
+npm run format:check || npx prettier --check "src/**/*.{ts,tsx,js,jsx}"
+# If formatting issues exist:
+npx prettier --write "src/**/*.{ts,tsx,js,jsx}"
+
+# 5. Import validation
+npx depcheck
+# Remove any unused dependencies
+```
+
+##### Phase 3: Build Validation
+```bash
+# Build MUST succeed with zero warnings
+
+# 1. Development build test
+npm run dev &
+DEV_PID=$!
+sleep 10
+curl -f http://localhost:5173 || (kill $DEV_PID && exit 1)
+kill $DEV_PID
+
+# 2. Production build - MUST succeed
+NODE_ENV=production npm run build
+# Check for build warnings in output
+# If ANY warnings exist, fix them before proceeding
+
+# 3. Bundle size check
+du -sh dist/
+# Verify no unexpected size increase (>10% requires justification)
+
+# 4. Preview production build
+npm run preview &
+PREVIEW_PID=$!
+sleep 5
+curl -f http://localhost:4173 || (kill $PREVIEW_PID && exit 1)
+kill $PREVIEW_PID
+```
+
+##### Phase 4: Testing Validation
+```bash
+# ALL tests must pass
+
+# 1. Run all tests
+npm test
+# If any test fails, fix it
+
+# 2. Run tests in CI mode
+CI=true npm test -- --coverage
+
+# 3. Check test coverage (if applicable)
+# New code should maintain or improve coverage
+
+# 4. Manual testing checklist
+# - [ ] Feature works as described in issue
+# - [ ] No console errors in browser
+# - [ ] No visual regressions
+# - [ ] Performance is acceptable
+# - [ ] Works in Chrome, Firefox, Safari (if applicable)
+```
+
+##### Phase 5: Component Validation (For UI Changes)
+```bash
+# For any component changes:
+
+# 1. Check for DOM structure consistency
+grep -r "className=" src/ | sort | uniq -c | sort -rn | head -20
+# Look for inconsistent patterns
+
+# 2. Verify accessibility
+# - All interactive elements have proper ARIA labels
+# - Color contrast meets WCAG standards
+# - Keyboard navigation works
+
+# 3. Check for prop validation
+# All components should have proper TypeScript types
+
+# 4. Verify no inline styles (use CSS modules/styled components)
+grep -r "style={{" src/ | grep -v "test"
+# Should return minimal or no results
+```
+
+##### Phase 6: Git History Validation
+```bash
+# 1. Squash WIP commits
+git rebase -i main
+# Combine related commits into logical units
+
+# 2. Verify commit messages follow convention
+git log main..HEAD --oneline
+# Each message should start with: feat|fix|refactor|docs|test|chore|ci|perf
+
+# 3. No merge commits from main
+git log main..HEAD --merges
+# Should be empty
+
+# 4. Verify branch is up to date
+git fetch origin main
+git rebase origin/main
+```
+
+##### Phase 7: Documentation Validation
+```bash
+# 1. Update relevant documentation
+# - [ ] Code comments for complex logic
+# - [ ] JSDoc/TSDoc for public APIs
+# - [ ] README updates if adding features
+# - [ ] CHANGELOG entry if user-facing change
+
+# 2. Remove unnecessary comments
+grep -r "TODO\|FIXME\|XXX\|HACK" src/ --exclude-dir=node_modules
+# Address or remove before PR
+
+# 3. Verify examples work (if applicable)
+# Test any code examples in documentation
+```
+
+##### Phase 8: Final Validation Script
+Create and run this validation script before EVERY PR:
+```bash
+#!/bin/bash
+# Save as: validate-pr.sh
+
+set -e  # Exit on any error
+
+echo "🔍 Starting PR Validation..."
+
+# Check PR size
+LINES_CHANGED=$(git diff main --stat | tail -1 | awk '{print $4}')
+if [ "$LINES_CHANGED" -gt 300 ]; then
+    echo "❌ PR too large: $LINES_CHANGED lines (max: 300)"
+    echo "   Split into smaller PRs"
+    exit 1
+fi
+
+# Clean state
+cd client
+rm -rf node_modules package-lock.json dist
+npm install
+
+# Quality checks
+echo "✓ Running linter..."
+npm run lint
+
+echo "✓ Running TypeScript..."
+npm run typecheck
+
+echo "✓ Running tests..."
+npm test
+
+echo "✓ Building application..."
+NODE_ENV=production npm run build
+
+# Check for console statements
+if grep -r "console\." src/ --exclude-dir=node_modules | grep -v "eslint-disable"; then
+    echo "⚠️  Warning: console statements found"
+fi
+
+# Check for build output warnings
+if [ -f dist/index.html ]; then
+    echo "✅ Build successful"
+else
+    echo "❌ Build failed"
+    exit 1
+fi
+
+echo "🎉 All validations passed! Ready for PR."
+```
+
+#### PR Scope Guidelines
+
+##### Acceptable PR Sizes
+- **Small**: < 100 lines - Quick fixes, small features
+- **Medium**: 100-200 lines - Single feature/component
+- **Large**: 200-300 lines - Complex feature (requires justification)
+- **Too Large**: > 300 lines - MUST be split
+
+##### Signs Your PR is Too Large
+1. Changes span multiple unrelated components
+2. Mixing refactoring with new features
+3. Including "while I'm here" fixes
+4. Adding tests for existing code (separate PR)
+5. Updating dependencies (separate PR)
+
+##### How to Split Large PRs
+1. **Feature flags**: Implement behind flags, merge incrementally
+2. **Vertical slicing**: Complete one user path at a time
+3. **Horizontal slicing**: Backend first, then frontend
+4. **Refactor first**: Separate refactoring from features
+5. **Tests separately**: Add missing tests in dedicated PR
+
+#### Common PR Rejection Reasons
+
+##### Immediate Rejections
+- Build failures
+- Linting errors
+- TypeScript errors
+- Failing tests
+- > 300 lines without justification
+- Mixed concerns (multiple issues in one PR)
+- No issue reference
+- Console errors in browser
+
+##### Review Required
+- No tests for new features
+- Decreased test coverage
+- Performance regressions
+- Accessibility issues
+- Security vulnerabilities
+- Breaking changes without documentation
+
+#### AI Agent Specific Guidelines
+
+When creating PRs as an AI agent:
+
+1. **ALWAYS run the full validation script first**
+2. **NEVER include unnecessary files**:
+   - No test files unless specifically fixing tests
+   - No markdown files unless specifically requested
+   - No example/demo files unless part of requirements
+3. **ALWAYS verify the build succeeds locally**
+4. **NEVER create PRs with known issues**
+5. **ALWAYS keep PRs focused on single issue**
+6. **VERIFY all GitHub Actions will pass**:
+   ```bash
+   # Simulate CI environment
+   CI=true NODE_ENV=test npm test
+   CI=true NODE_ENV=production npm run build
+   ```
+
+#### Emergency PR Checklist
+
+If you must create a PR quickly:
+```bash
+# Absolute minimum - NEVER skip these
+cd client
+npm run lint         # MUST pass
+npm run typecheck    # MUST pass
+npm test            # MUST pass
+npm run build       # MUST succeed
+git diff main --stat # MUST be < 300 lines
+```
+
+### 5. Issue & PR Best Practices
 
 #### Writing Good Issues
 ```markdown
@@ -227,16 +526,66 @@ Fixes #NUMBER
 - **Reviewers**: Provide constructive feedback
 - **Both**: Communicate clearly and respectfully
 
-### 5. Code Review Checklist
-- [ ] Code follows project conventions
-- [ ] Tests pass (`npm test`)
-- [ ] Linting passes (`npm run lint`)
-- [ ] TypeScript compiles (`npm run typecheck`)
-- [ ] Ice rule is preserved in all transformations
-- [ ] Performance is acceptable
-- [ ] Documentation is updated
+### 6. Code Review Checklist
 
-### 6. Release Process
+#### Automated Validation (MUST be completed before review)
+**Prerequisites**: The PR author MUST have completed the full "Comprehensive PR Validation Checklist" (Section 4) before requesting review.
+
+```bash
+# Reviewer should verify these pass locally:
+cd client
+npm run lint
+npm run typecheck  
+npm test
+NODE_ENV=production npm run build
+```
+
+#### Manual Review Checklist
+
+##### Code Quality
+- [ ] PR is focused on a single issue/feature (< 300 lines)
+- [ ] No unrelated files included
+- [ ] Code follows project conventions and patterns
+- [ ] No unnecessary complexity added
+- [ ] Error handling is appropriate
+- [ ] No security vulnerabilities introduced
+- [ ] No performance regressions
+
+##### Testing
+- [ ] Tests exist for new functionality
+- [ ] Tests are meaningful (not just for coverage)
+- [ ] Edge cases are tested
+- [ ] Tests follow AAA pattern (Arrange, Act, Assert)
+- [ ] No skipped tests without justification
+
+##### Physics Simulation Specific
+- [ ] Ice rule (2-in/2-out) is preserved in all transformations
+- [ ] Vertex types match research paper specifications
+- [ ] DWBC boundary conditions are maintained
+- [ ] Monte Carlo dynamics follow reference implementation
+- [ ] Rendering accurately represents vertex states
+
+##### Documentation
+- [ ] Complex logic has explanatory comments
+- [ ] Public APIs have JSDoc/TSDoc
+- [ ] Changes are reflected in relevant documentation
+- [ ] No TODO/FIXME comments without issue references
+
+##### UI/UX (if applicable)
+- [ ] UI changes match design specifications
+- [ ] Accessibility requirements met (ARIA, keyboard nav)
+- [ ] Responsive design maintained
+- [ ] No visual regressions
+- [ ] Consistent styling patterns
+
+##### Final Checks
+- [ ] CI/CD pipeline passes all checks
+- [ ] No console.log statements (unless intentional)
+- [ ] Bundle size impact is acceptable
+- [ ] Breaking changes are documented
+- [ ] Issue will be fully resolved by this PR
+
+### 7. Release Process
 
 #### Version Numbering
 Follow semantic versioning (MAJOR.MINOR.PATCH):
@@ -278,7 +627,7 @@ gh release create v$(node -p "require('./package.json').version") \
 # CI will automatically deploy tagged releases
 ```
 
-### 7. Deployment
+### 8. Deployment
 
 #### Build for Production
 ```bash
@@ -293,7 +642,7 @@ npm run build
 - **Netlify**: CI/CD with preview deployments
 - **Custom Server**: Serve dist/ folder with nginx/apache
 
-### 8. Monitoring & Maintenance
+### 9. Monitoring & Maintenance
 
 #### Performance Monitoring
 - Track frame rates during simulation
