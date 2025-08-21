@@ -1,4 +1,5 @@
-import { useState, ReactNode, useEffect } from 'react';
+import { useState, useEffect } from 'react';
+import type { ReactNode } from 'react';
 import './CollapsiblePanel.css';
 
 interface CollapsiblePanelProps {
