@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Collapsible Panel Button Alignment Test</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            background: #f3f4f6;
+            padding: 20px;
+        }
+
+        .test-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        h1 {
+            margin-bottom: 20px;
+            color: #1f2937;
+        }
+
+        .test-info {
+            background: #e5f3ff;
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            border-left: 4px solid #3b82f6;
+        }
+
+        .test-info h2 {
+            color: #1e40af;
+            margin-bottom: 10px;
+            font-size: 18px;
+        }
+
+        .test-info ul {
+            margin-left: 20px;
+            color: #374151;
+        }
+
+        /* Main layout using CSS Grid (mimics App.css) */
+        .main-content {
+            display: grid;
+            grid-template-columns: auto 1fr auto;
+            grid-template-rows: 1fr;
+            align-items: stretch;
+            height: 500px;
+            gap: 1rem;
+            border: 2px dashed #9ca3af;
+            padding: 10px;
+            position: relative;
+            background: #fafafa;
+        }
+
+        /* Collapsible panels */
+        .collapsible-panel {
+            position: relative;
+            display: flex;
+            transition: all 0.25s ease-out;
+            height: 100%;
+            background: white;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+        }
+
+        .collapsible-panel.left {
+            width: 250px;
+            min-width: 250px;
+        }
+
+        .collapsible-panel.left.collapsed {
+            width: 8px;
+            min-width: 8px;
+        }
+
+        .collapsible-panel.right {
+            width: 250px;
+            min-width: 250px;
+        }
+
+        .collapsible-panel.right.collapsed {
+            width: 8px;
+            min-width: 8px;
+        }
+
+        /* Collapse toggle buttons */
+        .collapse-toggle {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 16px;
+            height: 48px;
+            padding: 0;
+            border: 2px solid #ef4444;
+            background: #fee2e2;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 4px;
+            z-index: 10;
+            font-weight: bold;
+            color: #ef4444;
+        }
+
+        .collapsible-panel.left .collapse-toggle {
+            right: 0;
+        }
+
+        .collapsible-panel.right .collapse-toggle {
+            left: 0;
+        }
+
+        .collapse-toggle:hover {
+            background: #fecaca;
+            border-color: #dc2626;
+        }
+
+        /* Panel content */
+        .panel-content {
+            flex: 1;
+            padding: 20px;
+            overflow: hidden;
+            transition: opacity 0.2s;
+        }
+
+        .collapsed .panel-content {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        /* Visualization area */
+        .visualization-container {
+            background: white;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #6b7280;
+            font-size: 14px;
+            position: relative;
+        }
+
+        /* Alignment guide */
+        .alignment-guide {
+            position: absolute;
+            top: 50%;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: #10b981;
+            z-index: 5;
+            pointer-events: none;
+        }
+
+        .alignment-guide::before {
+            content: '50% height alignment line';
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%) translateY(-20px);
+            background: #10b981;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            white-space: nowrap;
+        }
+
+        /* Test controls */
+        .test-controls {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f9fafb;
+            border-radius: 6px;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .test-controls button {
+            padding: 8px 16px;
+            background: #3b82f6;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: background 0.2s;
+        }
+
+        .test-controls button:hover {
+            background: #2563eb;
+        }
+
+        .test-controls label {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            color: #374151;
+            font-size: 14px;
+        }
+
+        /* Results display */
+        .test-results {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f0fdf4;
+            border: 1px solid #86efac;
+            border-radius: 6px;
+        }
+
+        .test-results h3 {
+            color: #166534;
+            margin-bottom: 10px;
+            font-size: 16px;
+        }
+
+        .test-results .result-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 5px 0;
+            border-bottom: 1px solid #dcfce7;
+        }
+
+        .test-results .result-value {
+            font-family: monospace;
+            color: #15803d;
+            font-weight: 500;
+        }
+
+        .alignment-status {
+            margin-top: 10px;
+            padding: 10px;
+            border-radius: 6px;
+            font-weight: 500;
+            text-align: center;
+        }
+
+        .alignment-status.aligned {
+            background: #dcfce7;
+            color: #166534;
+            border: 1px solid #86efac;
+        }
+
+        .alignment-status.misaligned {
+            background: #fee2e2;
+            color: #991b1b;
+            border: 1px solid #fca5a5;
+        }
+
+        /* Height indicators */
+        .height-indicator {
+            position: absolute;
+            right: -30px;
+            top: 0;
+            bottom: 0;
+            width: 20px;
+            background: linear-gradient(to bottom, #fbbf24 0%, #f59e0b 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            writing-mode: vertical-rl;
+            text-orientation: mixed;
+            font-size: 12px;
+            color: white;
+            font-weight: 500;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>🔬 Collapsible Panel Button Alignment Test</h1>
+        
+        <div class="test-info">
+            <h2>Test Objective</h2>
+            <ul>
+                <li>Verify collapse buttons are aligned at the same vertical position</li>
+                <li>Test CSS Grid layout maintains equal column heights</li>
+                <li>Ensure buttons stay centered at 50% of container height</li>
+                <li>Check alignment in all collapsed/expanded states</li>
+            </ul>
+        </div>
+
+        <div class="main-content" id="mainContent">
+            <div class="alignment-guide"></div>
+            
+            <div class="collapsible-panel left" id="leftPanel">
+                <button class="collapse-toggle" id="leftButton" onclick="togglePanel('left')">‹</button>
+                <div class="panel-content">
+                    <h3>Left Panel</h3>
+                    <p>Control Panel Content</p>
+                    <ul>
+                        <li>Setting 1</li>
+                        <li>Setting 2</li>
+                        <li>Setting 3</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="visualization-container">
+                <div>Visualization Area (Canvas)</div>
+            </div>
+
+            <div class="collapsible-panel right" id="rightPanel">
+                <button class="collapse-toggle" id="rightButton" onclick="togglePanel('right')">›</button>
+                <div class="panel-content">
+                    <h3>Right Panel</h3>
+                    <p>Statistics Panel Content</p>
+                    <ul>
+                        <li>Stat 1</li>
+                        <li>Stat 2</li>
+                        <li>Stat 3</li>
+                    </ul>
+                </div>
+                <div class="height-indicator" id="heightIndicator">Height</div>
+            </div>
+        </div>
+
+        <div class="test-controls">
+            <button onclick="togglePanel('left')">Toggle Left Panel</button>
+            <button onclick="togglePanel('right')">Toggle Right Panel</button>
+            <button onclick="toggleBoth()">Toggle Both Panels</button>
+            <button onclick="resetPanels()">Reset All</button>
+            <label>
+                <input type="checkbox" id="showGuide" checked onchange="toggleGuide()">
+                Show Alignment Guide
+            </label>
+            <button onclick="measureAlignment()">Measure Alignment</button>
+        </div>
+
+        <div class="test-results" id="testResults">
+            <h3>📊 Measurement Results</h3>
+            <div id="measurements">
+                <p style="color: #6b7280; font-style: italic;">Click "Measure Alignment" to see results</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function togglePanel(side) {
+            const panel = document.getElementById(side === 'left' ? 'leftPanel' : 'rightPanel');
+            const button = document.getElementById(side === 'left' ? 'leftButton' : 'rightButton');
+            
+            panel.classList.toggle('collapsed');
+            button.textContent = panel.classList.contains('collapsed') 
+                ? (side === 'left' ? '›' : '‹') 
+                : (side === 'left' ? '‹' : '›');
+            
+            // Auto-measure after toggle
+            setTimeout(measureAlignment, 300);
+        }
+
+        function toggleBoth() {
+            togglePanel('left');
+            togglePanel('right');
+        }
+
+        function resetPanels() {
+            const leftPanel = document.getElementById('leftPanel');
+            const rightPanel = document.getElementById('rightPanel');
+            const leftButton = document.getElementById('leftButton');
+            const rightButton = document.getElementById('rightButton');
+            
+            leftPanel.classList.remove('collapsed');
+            rightPanel.classList.remove('collapsed');
+            leftButton.textContent = '‹';
+            rightButton.textContent = '›';
+            
+            setTimeout(measureAlignment, 300);
+        }
+
+        function toggleGuide() {
+            const guide = document.querySelector('.alignment-guide');
+            const checkbox = document.getElementById('showGuide');
+            guide.style.display = checkbox.checked ? 'block' : 'none';
+        }
+
+        function measureAlignment() {
+            const leftButton = document.getElementById('leftButton');
+            const rightButton = document.getElementById('rightButton');
+            const leftPanel = document.getElementById('leftPanel');
+            const rightPanel = document.getElementById('rightPanel');
+            const mainContent = document.getElementById('mainContent');
+            
+            const leftRect = leftButton.getBoundingClientRect();
+            const rightRect = rightButton.getBoundingClientRect();
+            const leftPanelRect = leftPanel.getBoundingClientRect();
+            const rightPanelRect = rightPanel.getBoundingClientRect();
+            const mainRect = mainContent.getBoundingClientRect();
+            
+            // Calculate button centers
+            const leftCenterY = leftRect.top + (leftRect.height / 2);
+            const rightCenterY = rightRect.top + (rightRect.height / 2);
+            const containerCenterY = mainRect.top + (mainRect.height / 2);
+            
+            // Calculate alignment difference
+            const alignmentDiff = Math.abs(leftCenterY - rightCenterY);
+            const leftOffset = Math.abs(leftCenterY - containerCenterY);
+            const rightOffset = Math.abs(rightCenterY - containerCenterY);
+            
+            // Check if panels have equal height
+            const heightDiff = Math.abs(leftPanelRect.height - rightPanelRect.height);
+            
+            // Display results
+            const results = document.getElementById('measurements');
+            results.innerHTML = `
+                <div class="result-item">
+                    <span>Left Button Y Position:</span>
+                    <span class="result-value">${leftRect.top.toFixed(2)}px</span>
+                </div>
+                <div class="result-item">
+                    <span>Right Button Y Position:</span>
+                    <span class="result-value">${rightRect.top.toFixed(2)}px</span>
+                </div>
+                <div class="result-item">
+                    <span>Vertical Alignment Difference:</span>
+                    <span class="result-value">${alignmentDiff.toFixed(2)}px</span>
+                </div>
+                <div class="result-item">
+                    <span>Left Button Center Y:</span>
+                    <span class="result-value">${leftCenterY.toFixed(2)}px</span>
+                </div>
+                <div class="result-item">
+                    <span>Right Button Center Y:</span>
+                    <span class="result-value">${rightCenterY.toFixed(2)}px</span>
+                </div>
+                <div class="result-item">
+                    <span>Container Center Y:</span>
+                    <span class="result-value">${containerCenterY.toFixed(2)}px</span>
+                </div>
+                <div class="result-item">
+                    <span>Left Offset from Center:</span>
+                    <span class="result-value">${leftOffset.toFixed(2)}px</span>
+                </div>
+                <div class="result-item">
+                    <span>Right Offset from Center:</span>
+                    <span class="result-value">${rightOffset.toFixed(2)}px</span>
+                </div>
+                <div class="result-item">
+                    <span>Left Panel Height:</span>
+                    <span class="result-value">${leftPanelRect.height.toFixed(2)}px</span>
+                </div>
+                <div class="result-item">
+                    <span>Right Panel Height:</span>
+                    <span class="result-value">${rightPanelRect.height.toFixed(2)}px</span>
+                </div>
+                <div class="result-item">
+                    <span>Panel Height Difference:</span>
+                    <span class="result-value">${heightDiff.toFixed(2)}px</span>
+                </div>
+                <div class="alignment-status ${alignmentDiff <= 2 ? 'aligned' : 'misaligned'}">
+                    ${alignmentDiff <= 2 
+                        ? '✅ BUTTONS ARE PERFECTLY ALIGNED (within 2px tolerance)' 
+                        : `⚠️ BUTTONS ARE MISALIGNED BY ${alignmentDiff.toFixed(2)}px`}
+                </div>
+                <div class="alignment-status ${heightDiff <= 2 ? 'aligned' : 'misaligned'}">
+                    ${heightDiff <= 2 
+                        ? '✅ PANELS HAVE EQUAL HEIGHT (CSS Grid working correctly)' 
+                        : `⚠️ PANELS HAVE UNEQUAL HEIGHT (${heightDiff.toFixed(2)}px difference)`}
+                </div>
+            `;
+            
+            // Update height indicator
+            const indicator = document.getElementById('heightIndicator');
+            if (indicator) {
+                indicator.textContent = `${rightPanelRect.height.toFixed(0)}px`;
+            }
+        }
+
+        // Initial measurement
+        window.addEventListener('load', () => {
+            setTimeout(measureAlignment, 100);
+        });
+
+        // Re-measure on window resize
+        window.addEventListener('resize', () => {
+            setTimeout(measureAlignment, 100);
+        });
+    </script>
+</body>
+</html>

@@ -3,6 +3,7 @@
   display: flex;
   transition: all 0.25s ease-out;
   height: 100%;
+  align-self: stretch; /* Ensure panel stretches to full grid cell height */
 }
 
 /* Left side panel */
