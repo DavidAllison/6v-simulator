@@ -56,7 +56,8 @@
       "Bash(gh pr view:*)",
       "Bash(gh api:*)",
       "Bash(npx husky init:*)",
-      "Bash(npx prettier:*)"
+      "Bash(npx prettier:*)",
+      "Bash(/Users/dja/Desktop/6v/validate-pr.sh:*)"
     ],
     "deny": [],
     "ask": []

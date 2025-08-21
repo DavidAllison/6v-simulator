@@ -9,8 +9,8 @@
  * - Object pooling to reduce GC pressure
  */
 
-import { VertexType } from './types';
-import type { SimulationStats } from './types';
+import { VertexType, EdgeState } from './types';
+import type { SimulationStats, LatticeState, Vertex } from './types';
 import { FlipDirection } from './physicsFlips';
 import {
   isFlipValidCStyle as isFlipValid,
@@ -632,49 +632,12 @@ export class OptimizedPhysicsSimulation {
   /**
    * Get current state as a standard LatticeState (for rendering)
    */
-  public getState(): {
-    width: number;
-    height: number;
-    vertices: Array<
-      Array<{
-        position: { row: number; col: number };
-        type: VertexType;
-        configuration: {
-          left: string;
-          right: string;
-          top: string;
-          bottom: string;
-        };
-      }>
-    >;
-    horizontalEdges: never[];
-    verticalEdges: never[];
-  } {
+  public getState(): LatticeState {
     // Convert back to standard format for compatibility
-    const vertices: Array<
-      Array<{
-        position: { row: number; col: number };
-        type: VertexType;
-        configuration: {
-          left: string;
-          right: string;
-          top: string;
-          bottom: string;
-        };
-      }>
-    > = [];
+    const vertices: Vertex[][] = [];
 
     for (let row = 0; row < this.size; row++) {
-      const rowVertices: Array<{
-        position: { row: number; col: number };
-        type: VertexType;
-        configuration: {
-          left: string;
-          right: string;
-          top: string;
-          bottom: string;
-        };
-      }> = [];
+      const rowVertices: Vertex[] = [];
       for (let col = 0; col < this.size; col++) {
         const idx = row * this.size + col;
         const type = NUM_TO_VERTEX_TYPE[this.vertices[idx]];
@@ -700,27 +663,57 @@ export class OptimizedPhysicsSimulation {
    * Get vertex configuration from type
    */
   private getVertexConfiguration(type: VertexType): {
-    left: string;
-    right: string;
-    top: string;
-    bottom: string;
+    left: EdgeState;
+    right: EdgeState;
+    top: EdgeState;
+    bottom: EdgeState;
   } {
     // Simplified configuration for compatibility
     const configs: Record<
       VertexType,
       {
-        left: string;
-        right: string;
-        top: string;
-        bottom: string;
+        left: EdgeState;
+        right: EdgeState;
+        top: EdgeState;
+        bottom: EdgeState;
       }
     > = {
-      [VertexType.a1]: { left: 'in', right: 'out', top: 'in', bottom: 'out' },
-      [VertexType.a2]: { left: 'out', right: 'in', top: 'out', bottom: 'in' },
-      [VertexType.b1]: { left: 'in', right: 'in', top: 'out', bottom: 'out' },
-      [VertexType.b2]: { left: 'out', right: 'out', top: 'in', bottom: 'in' },
-      [VertexType.c1]: { left: 'in', right: 'out', top: 'out', bottom: 'in' },
-      [VertexType.c2]: { left: 'out', right: 'in', top: 'in', bottom: 'out' },
+      [VertexType.a1]: {
+        left: EdgeState.In,
+        right: EdgeState.Out,
+        top: EdgeState.In,
+        bottom: EdgeState.Out,
+      },
+      [VertexType.a2]: {
+        left: EdgeState.Out,
+        right: EdgeState.In,
+        top: EdgeState.Out,
+        bottom: EdgeState.In,
+      },
+      [VertexType.b1]: {
+        left: EdgeState.In,
+        right: EdgeState.In,
+        top: EdgeState.Out,
+        bottom: EdgeState.Out,
+      },
+      [VertexType.b2]: {
+        left: EdgeState.Out,
+        right: EdgeState.Out,
+        top: EdgeState.In,
+        bottom: EdgeState.In,
+      },
+      [VertexType.c1]: {
+        left: EdgeState.In,
+        right: EdgeState.Out,
+        top: EdgeState.Out,
+        bottom: EdgeState.In,
+      },
+      [VertexType.c2]: {
+        left: EdgeState.Out,
+        right: EdgeState.In,
+        top: EdgeState.In,
+        bottom: EdgeState.Out,
+      },
     };
     return configs[type];
   }
