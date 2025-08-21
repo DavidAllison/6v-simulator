@@ -55,7 +55,8 @@
       "Bash(git commit:*)",
       "Bash(gh pr view:*)",
       "Bash(gh api:*)",
-      "Bash(npx husky init:*)"
+      "Bash(npx husky init:*)",
+      "Bash(npx prettier:*)"
     ],
     "deny": [],
     "ask": []

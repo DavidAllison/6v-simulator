@@ -9,7 +9,8 @@
  * - Object pooling to reduce GC pressure
  */
 
-import { VertexType, SimulationStats } from './types';
+import { VertexType } from './types';
+import type { SimulationStats } from './types';
 import { FlipDirection } from './physicsFlips';
 import {
   isFlipValidCStyle as isFlipValid,
@@ -27,14 +28,14 @@ import {
 // Vertex type constants are now imported from fixedFlipLogic
 
 // Map between enum and numeric values
-const VERTEX_TYPE_TO_NUM: Record<VertexType, number> = {
-  [VertexType.a1]: VERTEX_A1,
-  [VertexType.a2]: VERTEX_A2,
-  [VertexType.b1]: VERTEX_B1,
-  [VertexType.b2]: VERTEX_B2,
-  [VertexType.c1]: VERTEX_C1,
-  [VertexType.c2]: VERTEX_C2,
-};
+// const VERTEX_TYPE_TO_NUM: Record<VertexType, number> = {
+//   [VertexType.a1]: VERTEX_A1,
+//   [VertexType.a2]: VERTEX_A2,
+//   [VertexType.b1]: VERTEX_B1,
+//   [VertexType.b2]: VERTEX_B2,
+//   [VertexType.c1]: VERTEX_C1,
+//   [VertexType.c2]: VERTEX_C2,
+// };
 
 const NUM_TO_VERTEX_TYPE = [
   VertexType.a1,
@@ -134,6 +135,7 @@ export class OptimizedPhysicsSimulation {
   private attemptedFlips: number = 0;
   private currentHeight: number = 0;
   private rho: number;
+  private beta: number;
 
   // Performance options
   private batchSize: number;
@@ -144,6 +146,7 @@ export class OptimizedPhysicsSimulation {
     this.batchSize = config.batchSize || 100;
     this.useCachedWeights = config.useCachedWeights !== false;
     this.rng = new FastRNG(config.seed);
+    this.beta = config.beta || 1.0;
 
     // Initialize typed arrays
     this.vertices = new Int8Array(this.size * this.size);
@@ -283,13 +286,11 @@ export class OptimizedPhysicsSimulation {
     this.flippableUpList = [];
     this.flippableDownList = [];
 
-    let flippableCount = 0;
     for (let row = 0; row < this.size; row++) {
       for (let col = 0; col < this.size; col++) {
         const capability = this.checkFlippable(row, col);
 
         if (capability.canFlipUp || capability.canFlipDown) {
-          flippableCount++;
           const pos: FlippablePosition = {
             row,
             col,
@@ -334,7 +335,11 @@ export class OptimizedPhysicsSimulation {
    * For simplicity and correctness, we just rebuild the entire list
    * This ensures we don't miss any new flippable positions
    */
-  private updateFlippableListAfterFlip(row: number, col: number, direction: FlipDirection): void {
+  private updateFlippableListAfterFlip(
+    _row: number,
+    _col: number,
+    _direction: FlipDirection,
+  ): void {
     // Simply rebuild the entire list to ensure correctness
     // This is more robust than trying to do incremental updates
     this.buildFlippableList();
@@ -612,8 +617,8 @@ export class OptimizedPhysicsSimulation {
       acceptanceRate,
       flipAttempts: this.attemptedFlips,
       successfulFlips: this.successfulFlips,
+      beta: this.beta,
       height: this.currentHeight,
-      flippableCount: this.flippableList.filter((p) => p !== null).length,
     };
   }
 
@@ -627,12 +632,49 @@ export class OptimizedPhysicsSimulation {
   /**
    * Get current state as a standard LatticeState (for rendering)
    */
-  public getState(): any {
+  public getState(): {
+    width: number;
+    height: number;
+    vertices: Array<
+      Array<{
+        position: { row: number; col: number };
+        type: VertexType;
+        configuration: {
+          left: string;
+          right: string;
+          top: string;
+          bottom: string;
+        };
+      }>
+    >;
+    horizontalEdges: never[];
+    verticalEdges: never[];
+  } {
     // Convert back to standard format for compatibility
-    const vertices: any[][] = [];
+    const vertices: Array<
+      Array<{
+        position: { row: number; col: number };
+        type: VertexType;
+        configuration: {
+          left: string;
+          right: string;
+          top: string;
+          bottom: string;
+        };
+      }>
+    > = [];
 
     for (let row = 0; row < this.size; row++) {
-      const rowVertices: any[] = [];
+      const rowVertices: Array<{
+        position: { row: number; col: number };
+        type: VertexType;
+        configuration: {
+          left: string;
+          right: string;
+          top: string;
+          bottom: string;
+        };
+      }> = [];
       for (let col = 0; col < this.size; col++) {
         const idx = row * this.size + col;
         const type = NUM_TO_VERTEX_TYPE[this.vertices[idx]];
@@ -657,9 +699,22 @@ export class OptimizedPhysicsSimulation {
   /**
    * Get vertex configuration from type
    */
-  private getVertexConfiguration(type: VertexType): any {
+  private getVertexConfiguration(type: VertexType): {
+    left: string;
+    right: string;
+    top: string;
+    bottom: string;
+  } {
     // Simplified configuration for compatibility
-    const configs: Record<VertexType, any> = {
+    const configs: Record<
+      VertexType,
+      {
+        left: string;
+        right: string;
+        top: string;
+        bottom: string;
+      }
+    > = {
       [VertexType.a1]: { left: 'in', right: 'out', top: 'in', bottom: 'out' },
       [VertexType.a2]: { left: 'out', right: 'in', top: 'out', bottom: 'in' },
       [VertexType.b1]: { left: 'in', right: 'in', top: 'out', bottom: 'out' },
@@ -741,7 +796,7 @@ export function benchmarkSimulation(
 ): {
   timeMs: number;
   stepsPerSecond: number;
-  stats: any;
+  stats: SimulationStats;
 } {
   const startTime = performance.now();
 
