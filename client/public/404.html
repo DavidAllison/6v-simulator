@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>6-Vertex Model Simulator</title>
+    <script type="text/javascript">
+      // Single Page App support for GitHub Pages
+      // When GitHub Pages returns 404, it will load this page
+      // This script redirects to the main index.html with the path as a query parameter
+      var pathSegmentsToKeep = 1; // for /6v-simulator/
+
+      var l = window.location;
+      l.replace(
+        l.protocol + '//' + l.hostname + (l.port ? ':' + l.port : '') +
+        l.pathname.split('/').slice(0, 1 + pathSegmentsToKeep).join('/') + '/?/' +
+        l.pathname.slice(1).split('/').slice(pathSegmentsToKeep).join('/').replace(/&/g, '~and~') +
+        (l.search ? '&' + l.search.slice(1).replace(/&/g, '~and~') : '') +
+        l.hash
+      );
+    </script>
+  </head>
+  <body>
+    <noscript>Please enable JavaScript to view this application.</noscript>
+  </body>
+</html>
