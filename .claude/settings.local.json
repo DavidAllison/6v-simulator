@@ -40,7 +40,11 @@
       "Bash(git restore:*)",
       "Bash(gh pr list:*)",
       "Bash(gh run list:*)",
-      "Bash(gh run view:*)"
+      "Bash(gh run view:*)",
+      "Bash(gh issue create:*)",
+      "Bash(git checkout:*)",
+      "WebSearch",
+      "Bash(NODE_ENV=production npm run build)"
     ],
     "deny": [],
     "ask": []
