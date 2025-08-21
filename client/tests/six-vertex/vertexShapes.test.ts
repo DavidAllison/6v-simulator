@@ -1,6 +1,6 @@
 /**
  * Test suite for vertex shapes and path configurations
- * Verifies correctness against Figure 1 from Allison & Reshetikhin (2005) paper
+ * Verifies correctness against Figure 1 from David Allison & Reshetikhin (2005) paper
  */
 
 import {

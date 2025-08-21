@@ -122,7 +122,7 @@ npm run format     # Code formatting
 
 ## 🔗 References
 
-- Paper: Allison & Reshetikhin (2005), arXiv:cond-mat/0502314
+- Paper: David Allison & Reshetikhin (2005), arXiv:cond-mat/0502314
 - C Reference: `/Users/dja/Desktop/6v/attached_assets/main.c`
 - Specification: `/Users/dja/Desktop/6v/6v-prompt.txt`
 

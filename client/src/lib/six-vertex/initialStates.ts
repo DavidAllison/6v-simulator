@@ -1,7 +1,7 @@
 /**
  * Generators for initial lattice states
  * Focuses on Domain Wall Boundary Conditions (DWBC)
- * Based on Figures 2 and 3 from Allison & Reshetikhin (2005) paper: arXiv:cond-mat/0502314v1
+ * Based on Figures 2 and 3 from David Allison & Reshetikhin (2005) paper: arXiv:cond-mat/0502314v1
  */
 
 import { generateDWBCHighCorrectIce, generateDWBCLowCorrectIce } from './dwbcCorrectIce';

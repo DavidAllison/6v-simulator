@@ -1,6 +1,6 @@
 /**
  * Maps vertex types to their bold edge patterns for path rendering
- * Based on Figure 1 from Allison & Reshetikhin (2005) paper: arXiv:cond-mat/0502314v1
+ * Based on Figure 1 from David Allison & Reshetikhin (2005) paper: arXiv:cond-mat/0502314v1
  *
  * In the paper's representation:
  * - Bold edges (thick lines) represent paths where arrows point in opposite directions

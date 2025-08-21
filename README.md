@@ -3,7 +3,7 @@
 [![CI](https://github.com/DavidAllison/6v-simulator/actions/workflows/ci.yml/badge.svg)](https://github.com/DavidAllison/6v-simulator/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-A TypeScript/React implementation of the 6-vertex model with Domain Wall Boundary Conditions (DWBC), based on the paper "Numerical study of the 6-vertex model with DWBC" by Allison & Reshetikhin (2005).
+A TypeScript/React implementation of the 6-vertex model with Domain Wall Boundary Conditions (DWBC), based on the paper "Numerical study of the 6-vertex model with DWBC" by David Allison & Reshetikhin (2005).
 
 ![6-Vertex Model Simulation](docs/images/simulation-preview.png)
 
@@ -139,7 +139,7 @@ The simulator is optimized for:
 
 ## Research References
 
-- Allison, L. & Reshetikhin, N. (2005). "Numerical study of the 6-vertex model with DWBC". [arXiv:cond-mat/0502314v1](https://arxiv.org/abs/cond-mat/0502314)
+- Allison, David & Reshetikhin, N. (2005). "Numerical study of the 6-vertex model with DWBC". [arXiv:cond-mat/0502314v1](https://arxiv.org/abs/cond-mat/0502314)
 - Original C implementation available in `docs/reference/attached_assets/main.c`
 
 ## License
@@ -148,7 +148,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## Acknowledgments
 
-- Original research by L. Allison and N. Reshetikhin
+- Original research by David Allison and N. Reshetikhin
 - Physics consultation and validation from the statistical mechanics community
 - Built with React, TypeScript, and Vite
 

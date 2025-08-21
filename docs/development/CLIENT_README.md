@@ -1,6 +1,6 @@
 # 6-Vertex Model Simulator
 
-A browser-based interactive simulator for the 6-vertex model with Domain Wall Boundary Conditions (DWBC), implementing the physics from Allison & Reshetikhin's paper "Numerical study of the 6-vertex model with DWBC" (arXiv:cond-mat/0502314).
+A browser-based interactive simulator for the 6-vertex model with Domain Wall Boundary Conditions (DWBC), implementing the physics from David Allison & Reshetikhin's paper "Numerical study of the 6-vertex model with DWBC" (arXiv:cond-mat/0502314).
 
 ## Features
 
@@ -153,7 +153,7 @@ npm run preview
 
 ## References
 
-- Allison, L. and Reshetikhin, N. (2005). "Numerical study of the 6-vertex model with domain wall boundary conditions." arXiv:cond-mat/0502314.
+- Allison, David and Reshetikhin, N. (2005). "Numerical study of the 6-vertex model with domain wall boundary conditions." arXiv:cond-mat/0502314.
 - Original implementation: `attached_assets/main.c`
 
 ## License
