@@ -44,7 +44,9 @@
       "Bash(gh issue create:*)",
       "Bash(git checkout:*)",
       "WebSearch",
-      "Bash(NODE_ENV=production npm run build)"
+      "Bash(NODE_ENV=production npm run build)",
+      "Bash(gh issue list:*)",
+      "Bash(GITHUB_ACTIONS=true npm run build)"
     ],
     "deny": [],
     "ask": []
