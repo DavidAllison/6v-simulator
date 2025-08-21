@@ -22,3 +22,20 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Test artifacts and reports
+tests/**/TEST_*.md
+tests/**/*.test.md
+tests/**/*-manual-test.html
+tests/**/*-test.html
+tests/verify-*.js
+
+# Manual testing files  
+*.manual-test.*
+*-manual-test.*
+manual-tests/
+
+# Test execution reports
+TEST_EXECUTION_*.md
+test-reports/
+coverage/
