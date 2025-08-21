@@ -46,7 +46,8 @@
       "WebSearch",
       "Bash(NODE_ENV=production npm run build)",
       "Bash(gh issue list:*)",
-      "Bash(GITHUB_ACTIONS=true npm run build)"
+      "Bash(GITHUB_ACTIONS=true npm run build)",
+      "Bash(gh run watch:*)"
     ],
     "deny": [],
     "ask": []
