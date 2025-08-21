@@ -13,6 +13,9 @@ import { PathRenderer } from './lib/six-vertex/renderer/pathRenderer';
 import ControlPanel from './components/ControlPanel';
 import StatisticsPanel from './components/StatisticsPanel';
 import VisualizationCanvas from './components/VisualizationCanvas';
+import { SaveLoadPanel } from './components/SaveLoadPanel';
+import { CollapsiblePanel } from './components/CollapsiblePanel';
+import type { SimulationData } from './lib/storage';
 
 function MainSimulator() {
   // Refs
@@ -238,6 +241,115 @@ function MainSimulator() {
     }
   }, []);
 
+  // Methods for save/load functionality
+  const getCurrentSimulationData = useCallback((): SimulationData | null => {
+    if (!simulationRef.current) {
+      console.error('No simulation to save');
+      return null;
+    }
+
+    try {
+      const data = (simulationRef.current as any).exportData();
+      return {
+        latticeState: data.state,
+        params: data.params,
+        stats: data.stats,
+      };
+    } catch (error) {
+      console.error('Failed to export simulation data:', error);
+      return null;
+    }
+  }, []);
+
+  const loadSimulationData = useCallback(
+    (data: SimulationData) => {
+      try {
+        // Pause if running
+        if (isRunning) {
+          handlePause();
+        }
+
+        // Import the data into the simulation
+        if (simulationRef.current) {
+          (simulationRef.current as any).importData({
+            state: data.latticeState,
+            params: data.params,
+            stats: data.stats,
+          });
+
+          // Update local state to match loaded data
+          setLatticeState(data.latticeState);
+          setStats(data.stats);
+          setLatticeSize(data.latticeState.width);
+          setTemperature(data.params.temperature);
+          setWeights(data.params.weights);
+          setBoundaryCondition(data.params.boundaryCondition);
+          if (data.params.dwbcConfig) {
+            setDwbcType(data.params.dwbcConfig.type);
+          }
+          if (data.params.seed !== undefined) {
+            setSeed(data.params.seed);
+          }
+
+          // Re-render the loaded state
+          if (rendererRef.current && data.latticeState) {
+            rendererRef.current.render(data.latticeState);
+          }
+        } else {
+          // If no simulation exists, create one with the loaded params
+          const params: SimulationParams = data.params;
+          const simConfig: SimulationConfig = {
+            useOptimized: true,
+            useWorker: false,
+            workerThreshold: 50,
+          };
+
+          const simulation = createSimulation(params, simConfig);
+          simulationRef.current = simulation;
+
+          // Import the data
+          (simulation as any).importData({
+            state: data.latticeState,
+            params: data.params,
+            stats: data.stats,
+          });
+
+          // Update local state
+          setLatticeState(data.latticeState);
+          setStats(data.stats);
+          setLatticeSize(data.latticeState.width);
+          setTemperature(data.params.temperature);
+          setWeights(data.params.weights);
+          setBoundaryCondition(data.params.boundaryCondition);
+          if (data.params.dwbcConfig) {
+            setDwbcType(data.params.dwbcConfig.type);
+          }
+          if (data.params.seed !== undefined) {
+            setSeed(data.params.seed);
+          }
+
+          // Set up event handlers
+          simulation.on('onStep', (newStats) => {
+            setStats(newStats);
+          });
+
+          simulation.on('onStateChange', (newState) => {
+            setLatticeState(newState);
+            if (rendererRef.current) {
+              rendererRef.current.render(newState);
+            }
+          });
+        }
+
+        console.log('Simulation loaded successfully');
+      } catch (error) {
+        console.error('Failed to load simulation data:', error);
+        alert('Failed to load simulation. Please check the console for details.');
+      }
+    },
+    [isRunning, handlePause],
+  );
+
   // Effect to handle run state
   useEffect(() => {
     if (isRunning) {
@@ -270,49 +382,51 @@ function MainSimulator() {
 
   return (
     <div className="main-content">
-      <ControlPanel
-        isRunning={isRunning}
-        latticeSize={latticeSize}
-        temperature={temperature}
-        seed={seed}
-        boundaryCondition={boundaryCondition}
-        dwbcType={dwbcType}
-        weights={weights}
-        renderMode={renderMode}
-        showGrid={showGrid}
-        animateFlips={animateFlips}
-        stepsPerFrame={stepsPerFrame}
-        onLatticeSizeChange={setLatticeSize}
-        onTemperatureChange={setTemperature}
-        onSeedChange={setSeed}
-        onBoundaryConditionChange={setBoundaryCondition}
-        onDwbcTypeChange={setDwbcType}
-        onWeightChange={handleWeightChange}
-        onRenderModeChange={setRenderMode}
-        onShowGridChange={setShowGrid}
-        onAnimateFlipsChange={setAnimateFlips}
-        onStepsPerFrameChange={setStepsPerFrame}
-        onStep={handleStep}
-        onRun={() => {
-          if (!simulationRef.current) {
-            console.error('Simulation not initialized');
-            initializeSimulation();
-            // Wait a bit for initialization then try to run
-            setTimeout(() => {
-              if (simulationRef.current) {
-                setIsRunning(true);
-              } else {
-                alert('Failed to initialize simulation. Please try resetting.');
-              }
-            }, 100);
-          } else {
-            setIsRunning(true);
-          }
-        }}
-        onPause={handlePause}
-        onReset={handleReset}
-        onExportImage={handleExportImage}
-      />
+      <CollapsiblePanel title="Controls" side="left" className="control-section">
+        <ControlPanel
+          isRunning={isRunning}
+          latticeSize={latticeSize}
+          temperature={temperature}
+          seed={seed}
+          boundaryCondition={boundaryCondition}
+          dwbcType={dwbcType}
+          weights={weights}
+          renderMode={renderMode}
+          showGrid={showGrid}
+          animateFlips={animateFlips}
+          stepsPerFrame={stepsPerFrame}
+          onLatticeSizeChange={setLatticeSize}
+          onTemperatureChange={setTemperature}
+          onSeedChange={setSeed}
+          onBoundaryConditionChange={setBoundaryCondition}
+          onDwbcTypeChange={setDwbcType}
+          onWeightChange={handleWeightChange}
+          onRenderModeChange={setRenderMode}
+          onShowGridChange={setShowGrid}
+          onAnimateFlipsChange={setAnimateFlips}
+          onStepsPerFrameChange={setStepsPerFrame}
+          onStep={handleStep}
+          onRun={() => {
+            if (!simulationRef.current) {
+              console.error('Simulation not initialized');
+              initializeSimulation();
+              // Wait a bit for initialization then try to run
+              setTimeout(() => {
+                if (simulationRef.current) {
+                  setIsRunning(true);
+                } else {
+                  alert('Failed to initialize simulation. Please try resetting.');
+                }
+              }, 100);
+            } else {
+              setIsRunning(true);
+            }
+          }}
+          onPause={handlePause}
+          onReset={handleReset}
+          onExportImage={handleExportImage}
+        />
+      </CollapsiblePanel>
 
       <VisualizationCanvas
         renderer={rendererRef.current}
@@ -321,7 +435,12 @@ function MainSimulator() {
         renderConfig={renderConfig}
       />
 
-      <StatisticsPanel stats={stats} fps={fps} />
+      <CollapsiblePanel title="Info" side="right" className="right-panels">
+        <div className="right-panels-content">
+          <StatisticsPanel stats={stats} fps={fps} />
+          <SaveLoadPanel getCurrentData={getCurrentSimulationData} onLoadData={loadSimulationData} />
+        </div>
+      </CollapsiblePanel>
     </div>
   );
 }

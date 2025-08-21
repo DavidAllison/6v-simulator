@@ -35,7 +35,9 @@ export class WorkerSimulation {
   async initialize(config: OptimizedSimConfig): Promise<void> {
     // Create worker
     try {
-      this.worker = new Worker(new URL('./simulationWorker.ts', import.meta.url), { type: 'module' });
+      this.worker = new Worker(new URL('./simulationWorker.ts', import.meta.url), {
+        type: 'module',
+      });
     } catch (error) {
       // Worker creation failed (e.g., in Node environment during build)
       throw new Error(`Failed to create Web Worker: ${error}`);
