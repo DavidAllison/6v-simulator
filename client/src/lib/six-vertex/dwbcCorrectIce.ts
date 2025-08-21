@@ -12,63 +12,63 @@ import { VertexType, EdgeState } from './types';
  * Helper to get the correct vertex configuration for each type
  * These are based on Figure 1 from the paper
  */
-function getCorrectConfiguration(type: VertexType): VertexConfiguration {
-  switch (type) {
-    case VertexType.a1:
-      // Left & top in, right & bottom out
-      return {
-        left: EdgeState.In,
-        top: EdgeState.In,
-        right: EdgeState.Out,
-        bottom: EdgeState.Out,
-      };
+// function getCorrectConfiguration(type: VertexType): VertexConfiguration {
+//   switch (type) {
+//     case VertexType.a1:
+//       // Left & top in, right & bottom out
+//       return {
+//         left: EdgeState.In,
+//         top: EdgeState.In,
+//         right: EdgeState.Out,
+//         bottom: EdgeState.Out,
+//       };
 
-    case VertexType.a2:
-      // Right & bottom in, left & top out
-      return {
-        right: EdgeState.In,
-        bottom: EdgeState.In,
-        left: EdgeState.Out,
-        top: EdgeState.Out,
-      };
+//     case VertexType.a2:
+//       // Right & bottom in, left & top out
+//       return {
+//         right: EdgeState.In,
+//         bottom: EdgeState.In,
+//         left: EdgeState.Out,
+//         top: EdgeState.Out,
+//       };
 
-    case VertexType.b1:
-      // Left & right in, top & bottom out
-      return {
-        left: EdgeState.In,
-        right: EdgeState.In,
-        top: EdgeState.Out,
-        bottom: EdgeState.Out,
-      };
+//     case VertexType.b1:
+//       // Left & right in, top & bottom out
+//       return {
+//         left: EdgeState.In,
+//         right: EdgeState.In,
+//         top: EdgeState.Out,
+//         bottom: EdgeState.Out,
+//       };
 
-    case VertexType.b2:
-      // Top & bottom in, left & right out
-      return {
-        top: EdgeState.In,
-        bottom: EdgeState.In,
-        left: EdgeState.Out,
-        right: EdgeState.Out,
-      };
+//     case VertexType.b2:
+//       // Top & bottom in, left & right out
+//       return {
+//         top: EdgeState.In,
+//         bottom: EdgeState.In,
+//         left: EdgeState.Out,
+//         right: EdgeState.Out,
+//       };
 
-    case VertexType.c1:
-      // Left & bottom in, right & top out
-      return {
-        left: EdgeState.In,
-        bottom: EdgeState.In,
-        right: EdgeState.Out,
-        top: EdgeState.Out,
-      };
+//     case VertexType.c1:
+//       // Left & bottom in, right & top out
+//       return {
+//         left: EdgeState.In,
+//         bottom: EdgeState.In,
+//         right: EdgeState.Out,
+//         top: EdgeState.Out,
+//       };
 
-    case VertexType.c2:
-      // Right & top in, left & bottom out
-      return {
-        right: EdgeState.In,
-        top: EdgeState.In,
-        left: EdgeState.Out,
-        bottom: EdgeState.Out,
-      };
-  }
-}
+//     case VertexType.c2:
+//       // Right & top in, left & bottom out
+//       return {
+//         right: EdgeState.In,
+//         top: EdgeState.In,
+//         left: EdgeState.Out,
+//         bottom: EdgeState.Out,
+//       };
+//   }
+// }
 
 /**
  * Generate DWBC High with correct ice rule
@@ -132,7 +132,6 @@ export function generateDWBCHighCorrectIce(size: number): LatticeState {
     vertices[row] = [];
     for (let col = 0; col < size; col++) {
       const type = vertexTypes[row][col];
-      const idealConfig = getCorrectConfiguration(type);
 
       // Get the actual edges around this vertex
       const leftEdge = horizontalEdges[row][col];

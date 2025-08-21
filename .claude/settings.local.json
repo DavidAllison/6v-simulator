@@ -52,7 +52,10 @@
       "WebFetch(domain:davidallison.github.io)",
       "Bash(gh pr create:*)",
       "Bash(gh pr checks:*)",
-      "Bash(git commit:*)"
+      "Bash(git commit:*)",
+      "Bash(gh pr view:*)",
+      "Bash(gh api:*)",
+      "Bash(npx husky init:*)"
     ],
     "deny": [],
     "ask": []

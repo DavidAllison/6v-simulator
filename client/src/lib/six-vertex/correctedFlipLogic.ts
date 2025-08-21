@@ -4,7 +4,6 @@
  * Based on the reference C implementation
  */
 
-import { VertexType } from './types';
 import { FlipDirection } from './physicsFlips';
 
 // Numeric constants for performance

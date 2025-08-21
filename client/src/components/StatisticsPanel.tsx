@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useMemo } from 'react';
 import type { SimulationStats } from '../lib/six-vertex/types';
 import { VertexType } from '../lib/six-vertex/types';
 import './StatisticsPanel.css';
@@ -11,14 +11,17 @@ interface StatisticsPanelProps {
 const StatisticsPanel: React.FC<StatisticsPanelProps> = ({ stats, fps }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
-  const vertexColors = {
-    [VertexType.a1]: '#3B82F6',
-    [VertexType.a2]: '#60A5FA',
-    [VertexType.b1]: '#10B981',
-    [VertexType.b2]: '#34D399',
-    [VertexType.c1]: '#F59E0B',
-    [VertexType.c2]: '#FCD34D',
-  };
+  const vertexColors = useMemo(
+    () => ({
+      [VertexType.a1]: '#3B82F6',
+      [VertexType.a2]: '#60A5FA',
+      [VertexType.b1]: '#10B981',
+      [VertexType.b2]: '#34D399',
+      [VertexType.c1]: '#F59E0B',
+      [VertexType.c2]: '#FCD34D',
+    }),
+    [],
+  );
 
   // Draw vertex distribution chart
   useEffect(() => {
@@ -95,7 +98,7 @@ const StatisticsPanel: React.FC<StatisticsPanelProps> = ({ stats, fps }) => {
     } catch (error) {
       console.error('Error drawing vertex distribution chart:', error);
     }
-  }, [stats]);
+  }, [stats, vertexColors]);
 
   if (!stats) {
     return (

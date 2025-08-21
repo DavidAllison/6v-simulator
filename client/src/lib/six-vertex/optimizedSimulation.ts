@@ -9,7 +9,7 @@
  * - Object pooling to reduce GC pressure
  */
 
-import { VertexType } from './types';
+import { VertexType, SimulationStats } from './types';
 import { FlipDirection } from './physicsFlips';
 import {
   isFlipValidCStyle as isFlipValid,
@@ -198,7 +198,7 @@ export class OptimizedPhysicsSimulation {
   /**
    * Perform a single Monte Carlo step
    */
-  public step(): any {
+  public step(): SimulationStats {
     this.performStep();
     return this.getStats();
   }
@@ -348,7 +348,7 @@ export class OptimizedPhysicsSimulation {
     this.flippableMap.delete(key);
 
     // Mark as removed (we'll clean up periodically to avoid array shifting)
-    this.flippableList[pos.listIndex] = null as any;
+    this.flippableList[pos.listIndex] = null!;
   }
 
   /**
@@ -542,7 +542,7 @@ export class OptimizedPhysicsSimulation {
    * Run simulation continuously with callback
    */
   public runContinuous(
-    onBatch: (stats: any) => void,
+    onBatch: (stats: SimulationStats) => void,
     targetFPS: number = 60,
   ): { stop: () => void } {
     let running = true;
@@ -583,7 +583,7 @@ export class OptimizedPhysicsSimulation {
   /**
    * Get current statistics
    */
-  public getStats(): any {
+  public getStats(): SimulationStats {
     // Count vertex types
     const vertexCounts = new Array(6).fill(0);
     for (let i = 0; i < this.vertices.length; i++) {
