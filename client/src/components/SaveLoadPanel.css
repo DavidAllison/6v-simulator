@@ -104,7 +104,7 @@
   gap: 8px;
 }
 
-.save-load-panel__form input[type="text"],
+.save-load-panel__form input[type='text'],
 .save-load-panel__form textarea {
   padding: 8px;
   border: 1px solid #ddd;
@@ -114,10 +114,10 @@
   transition: border-color 0.2s;
 }
 
-.save-load-panel__form input[type="text"]:focus,
+.save-load-panel__form input[type='text']:focus,
 .save-load-panel__form textarea:focus {
   outline: none;
-  border-color: #4CAF50;
+  border-color: #4caf50;
 }
 
 .save-load-panel__form textarea {
@@ -140,7 +140,7 @@
   cursor: pointer;
 }
 
-.save-load-panel__checkbox input[type="checkbox"] {
+.save-load-panel__checkbox input[type='checkbox'] {
   cursor: pointer;
 }
 
@@ -168,9 +168,9 @@
 }
 
 .save-load-panel__button--primary {
-  background: #4CAF50;
+  background: #4caf50;
   color: white;
-  border-color: #4CAF50;
+  border-color: #4caf50;
 }
 
 .save-load-panel__button--primary:hover:not(:disabled) {
@@ -220,7 +220,7 @@
 }
 
 .save-load-panel__save-item--selected {
-  border-color: #4CAF50;
+  border-color: #4caf50;
   background: #f8fff8;
 }
 
@@ -299,11 +299,11 @@
   .save-load-panel {
     padding: 12px;
   }
-  
+
   .save-load-panel__saves {
     max-height: 300px;
   }
-  
+
   .save-load-panel__save-actions {
     flex-wrap: wrap;
   }

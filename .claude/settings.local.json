@@ -53,10 +53,16 @@
       "Bash(gh pr create:*)",
       "Bash(gh pr checks:*)",
       "Bash(git commit:*)",
+      "Bash(npm run prepare:*)",
+      "Bash(npx:*)",
       "Bash(gh issue view:*)",
-      "Bash(git push:*)"
+      "Bash(git push:*)",
+      "Bash(gh pr:*)"
     ],
     "deny": [],
-    "ask": []
+    "ask": [],
+    "additionalDirectories": [
+      "/Users/dja/Desktop/.husky"
+    ]
   }
 }

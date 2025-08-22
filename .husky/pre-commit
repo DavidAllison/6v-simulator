@@ -1,0 +1,6 @@
+#!/bin/sh
+
+echo "🔍 Running pre-commit checks..."
+cd client || { echo "❌ Failed to change to client directory"; exit 1; }
+npx lint-staged || { echo "❌ Pre-commit checks failed. Use --no-verify to bypass."; exit 1; }
+echo "✅ Pre-commit checks passed!"

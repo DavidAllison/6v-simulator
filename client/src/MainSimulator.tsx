@@ -437,10 +437,7 @@ function MainSimulator() {
 
       <CollapsiblePanel title="Info" side="right" className="panel-section">
         <StatisticsPanel stats={stats} fps={fps} />
-        <SaveLoadPanel
-          getCurrentData={getCurrentSimulationData}
-          onLoadData={loadSimulationData}
-        />
+        <SaveLoadPanel getCurrentData={getCurrentSimulationData} onLoadData={loadSimulationData} />
       </CollapsiblePanel>
     </div>
   );
