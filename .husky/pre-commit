@@ -1,0 +1,4 @@
+#!/bin/sh
+
+# Change to client directory and run lint-staged
+cd client && npx lint-staged
