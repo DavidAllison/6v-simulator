@@ -52,9 +52,14 @@
       "WebFetch(domain:davidallison.github.io)",
       "Bash(gh pr create:*)",
       "Bash(gh pr checks:*)",
-      "Bash(git commit:*)"
+      "Bash(git commit:*)",
+      "Bash(npm run prepare:*)",
+      "Bash(npx:*)"
     ],
     "deny": [],
-    "ask": []
+    "ask": [],
+    "additionalDirectories": [
+      "/Users/dja/Desktop/.husky"
+    ]
   }
 }
