@@ -57,7 +57,8 @@
       "Bash(npx:*)",
       "Bash(gh issue view:*)",
       "Bash(git push:*)",
-      "Bash(gh pr:*)"
+      "Bash(gh pr:*)",
+      "Bash(./scripts/validate-pr.sh:*)"
     ],
     "deny": [],
     "ask": [],

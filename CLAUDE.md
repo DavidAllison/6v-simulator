@@ -244,6 +244,84 @@ When a PR grows too large:
 3. Cherry-pick relevant changes to new branches
 4. Close the bloated PR with explanation
 
+### 4. PR Validation System
+
+#### Automated Validation Script
+Run the validation script before creating any PR:
+```bash
+# Standard validation (300 line limit)
+./scripts/validate-pr.sh
+
+# Extended validation (500 line limit)  
+./scripts/validate-pr.sh --extended
+
+# Show help
+./scripts/validate-pr.sh --help
+```
+
+The script checks:
+- PR size (configurable limits)
+- Console.log statements
+- TODO/FIXME comments
+- Large commented code blocks
+- Linting and TypeScript errors
+- Test coverage
+- Branch naming conventions
+
+#### Good vs Bad PR Examples
+
+**✅ Good PR Example:**
+```
+Branch: feat/issue-42-user-authentication
+Files changed: 6
+Lines changed: 247
+Changes:
+- Single focus: adds JWT authentication
+- Includes tests: auth.test.ts updated
+- No console.logs or debug code
+- Follows naming conventions
+- Clear commit messages
+```
+
+**❌ Bad PR Example:**
+```
+Branch: fix-everything
+Files changed: 32
+Lines changed: 1,847
+Problems:
+- Mixed concerns: auth + UI + database changes
+- No tests added
+- Contains console.log statements
+- Has 47 TODO comments
+- Commented out code blocks
+- Generic branch name
+```
+
+#### Emergency Fix Checklist
+For critical production issues requiring immediate fixes:
+
+**Quick Validation (< 5 minutes):**
+- [ ] CI/CD passes (`npm test`, `npm run lint`, `npm run typecheck`)
+- [ ] No console.log/debug statements
+- [ ] Change is minimal and focused
+- [ ] Tests updated or justification provided
+- [ ] Follows branch naming: `fix/issue-XXX-description`
+
+**Override Large PR Limit:**
+```bash
+# For legitimate large changes (rare)
+./scripts/validate-pr.sh --extended
+# Document justification in PR description
+```
+
+**Emergency Merge Process:**
+1. Create fix branch from main
+2. Make minimal necessary changes
+3. Run quick validation checklist
+4. Create PR with `[EMERGENCY]` prefix
+5. Request expedited review
+6. Merge after one approval
+
 ### 5. Code Review Checklist
 - [ ] Code follows project conventions
 - [ ] Tests pass (`npm test`)
