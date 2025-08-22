@@ -34,7 +34,7 @@ const VisualizationCanvas: React.FC<VisualizationCanvasProps> = ({
     return () => {
       // Cleanup if needed
     };
-  }, [renderConfig.cellSize]); // Re-create renderer when cell size changes
+  }, [renderConfig.cellSize, onRendererReady]); // Re-create renderer when cell size changes
 
   // Update renderer config
   useEffect(() => {

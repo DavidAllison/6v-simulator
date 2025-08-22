@@ -188,14 +188,14 @@ export const VertexEdgeVisualization: React.FC<VertexEdgeVisualizationProps> = (
 
 // Edge patterns for each vertex type (which edges have bold segments/paths passing through)
 // Based on paper Figure 1: edges are shaded where paths flow through them
-const edgePatterns = {
-  a1: { left: true, top: true, right: true, bottom: true }, // All edges (2 straight paths)
-  a2: { left: false, top: false, right: false, bottom: false }, // No edges shaded
-  b1: { left: false, top: true, right: false, bottom: true }, // Vertical path only
-  b2: { left: true, top: false, right: true, bottom: false }, // Horizontal path only
-  c1: { left: true, top: false, right: false, bottom: true }, // L-shaped: left→bottom
-  c2: { left: false, top: true, right: true, bottom: false }, // L-shaped: top→right
-};
+// const edgePatterns = {
+//   a1: { left: true, top: true, right: true, bottom: true }, // All edges (2 straight paths)
+//   a2: { left: false, top: false, right: false, bottom: false }, // No edges shaded
+//   b1: { left: false, top: true, right: false, bottom: true }, // Vertical path only
+//   b2: { left: true, top: false, right: true, bottom: false }, // Horizontal path only
+//   c1: { left: true, top: false, right: false, bottom: true }, // L-shaped: left→bottom
+//   c2: { left: false, top: true, right: true, bottom: false }, // L-shaped: top→right
+// };
 
 /**
  * Legend showing all vertex types with their edge patterns
@@ -231,7 +231,7 @@ export const VertexLegend: React.FC<{ showArrows?: boolean }> = ({ showArrows = 
 export const PlaquetteVisualization: React.FC<{
   vertices: [VertexType, VertexType, VertexType, VertexType];
   highlightEdges?: boolean;
-}> = ({ vertices, highlightEdges = false }) => {
+}> = ({ vertices }) => {
   const [bottomLeft, bottomRight, topRight, topLeft] = vertices;
   const cellSize = 60;
 
