@@ -227,6 +227,23 @@ Fixes #NUMBER
 - **Reviewers**: Provide constructive feedback
 - **Both**: Communicate clearly and respectfully
 
+#### PR Scope Guidelines
+1. **Single Responsibility**: Each PR should address ONE concern
+2. **Line Count**: Aim for <500 lines changed per PR
+3. **File Count**: Prefer <10 files changed per PR
+4. **No Mixed Concerns**: Never mix:
+   - Bug fixes with features
+   - Refactoring with new functionality
+   - Infrastructure with application code
+   - Formatting with logic changes
+
+#### Splitting Large PRs
+When a PR grows too large:
+1. Use `pr-scope-reviewer` agent to analyze
+2. Create separate issues for each concern
+3. Cherry-pick relevant changes to new branches
+4. Close the bloated PR with explanation
+
 ### 5. Code Review Checklist
 - [ ] Code follows project conventions
 - [ ] Tests pass (`npm test`)
@@ -235,8 +252,90 @@ Fixes #NUMBER
 - [ ] Ice rule is preserved in all transformations
 - [ ] Performance is acceptable
 - [ ] Documentation is updated
+- [ ] Single responsibility principle maintained (one concern per PR)
+- [ ] No unrelated changes mixed in
 
-### 6. Release Process
+### 6. Automated PR Review Process
+
+#### Using Specialized Agents for Reviews
+When reviewing PRs, use specialized Claude Code agents for comprehensive analysis:
+
+1. **Code Architecture Review** (`code-review-architect`)
+   - Validates single responsibility principle
+   - Checks architectural compliance
+   - Identifies security concerns
+   - Ensures test coverage
+
+2. **DevOps Review** (`devops-engineer`)
+   - Reviews CI/CD changes
+   - Validates hook configurations
+   - Checks deployment impacts
+   - Assesses security implications
+
+3. **Performance Review** (`site-reliability-engineer`)
+   - Analyzes performance impacts
+   - Reviews monitoring changes
+   - Checks for potential bottlenecks
+
+#### PR Merge Order Strategy
+When managing multiple related PRs:
+
+1. **Determine Dependencies**
+   - Core bug fixes merge first
+   - Code improvements merge second
+   - Infrastructure changes merge last
+
+2. **Handle Merge Conflicts**
+   ```bash
+   # Checkout PR branch
+   gh pr checkout PR_NUMBER
+   
+   # Fetch and merge latest main
+   git fetch origin main
+   git merge origin/main
+   
+   # Resolve conflicts
+   # Edit conflicted files
+   git add -A
+   git commit -m "Merge branch 'main' into branch-name"
+   git push
+   ```
+
+3. **Verify CI Status**
+   ```bash
+   # Check PR status
+   gh pr checks PR_NUMBER
+   
+   # Watch until complete
+   gh pr checks PR_NUMBER --watch
+   ```
+
+### 7. Issue Closure Documentation
+
+When closing issues after PR merge:
+
+1. **Include in closure comment:**
+   - Summary of changes made
+   - PR reference link
+   - Key improvements/fixes
+   - Any remaining work identified
+
+2. **Example closure:**
+   ```markdown
+   ## ✅ Issue Resolved
+   
+   This issue has been resolved in PR #NUMBER
+   
+   ### Summary of Changes:
+   - [List key changes]
+   
+   ### Key Improvements:
+   - [List improvements]
+   
+   Merged in: [PR link]
+   ```
+
+### 8. Release Process
 
 #### Version Numbering
 Follow semantic versioning (MAJOR.MINOR.PATCH):
@@ -402,15 +501,31 @@ npm test -- --passWithNoTests
 NODE_ENV=production npm run build
 ```
 
-### Pre-commit Hooks (Optional)
+### Pre-commit Hooks (Active)
 
-For automatic local checks, set up husky:
+Pre-commit hooks are now configured and active using husky and lint-staged:
+
+#### Current Configuration
+- **Husky**: Git hooks management (v9.1.7)
+- **Lint-staged**: Runs linters on staged files only (v16.1.5)
+- **Location**: `.husky/pre-commit`
+
+#### What Happens on Commit
+1. ESLint runs with auto-fix on TypeScript/TSX files
+2. Prettier formats all supported files
+3. Only staged files are checked (performance optimization)
+4. Clear success/failure messages displayed
+
+#### Bypass When Needed
 ```bash
-cd client
-npx husky-init && npm install
-npx husky add .husky/pre-commit "npm run lint && npm run typecheck"
-npx husky add .husky/pre-push "npm test"
+# Skip hooks for emergency fixes
+git commit --no-verify -m "Emergency fix"
 ```
+
+#### Troubleshooting
+- If hooks don't run: `git config core.hooksPath .husky`
+- To reinstall: `cd client && npm install`
+- Check hook permissions: `ls -la .husky/pre-commit` (should be executable)
 
 ### CI/CD Best Practices
 
