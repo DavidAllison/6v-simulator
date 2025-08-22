@@ -226,6 +226,14 @@ export interface SimulationController {
   // Event handling
   on<K extends keyof SimulationEvents>(event: K, handler: SimulationEvents[K]): void;
   off<K extends keyof SimulationEvents>(event: K, handler: SimulationEvents[K]): void;
+
+  // Data export/import
+  exportData(): {
+    params: SimulationParams;
+    stats: SimulationStats;
+    state: LatticeState;
+  };
+  importData(data: { params: SimulationParams; stats: SimulationStats; state: LatticeState }): void;
 }
 
 /**

@@ -142,7 +142,7 @@ function MainSimulator() {
         cancelAnimationFrame(animationFrameRef.current);
       }
     };
-  }, [latticeSize, boundaryCondition, dwbcType, seed]); // Re-initialize on these changes - removed initializeSimulation to avoid circular dep
+  }, [latticeSize, boundaryCondition, dwbcType, seed, initializeSimulation]); // Re-initialize on these changes
 
   // Handle renderer ready
   const handleRendererReady = useCallback(
@@ -249,7 +249,7 @@ function MainSimulator() {
     }
 
     try {
-      const data = (simulationRef.current as any).exportData();
+      const data = simulationRef.current.exportData();
       return {
         latticeState: data.state,
         params: data.params,
@@ -271,7 +271,7 @@ function MainSimulator() {
 
         // Import the data into the simulation
         if (simulationRef.current) {
-          (simulationRef.current as any).importData({
+          simulationRef.current.importData({
             state: data.latticeState,
             params: data.params,
             stats: data.stats,
@@ -308,7 +308,7 @@ function MainSimulator() {
           simulationRef.current = simulation;
 
           // Import the data
-          (simulation as any).importData({
+          simulation.importData({
             state: data.latticeState,
             params: data.params,
             stats: data.stats,
@@ -382,7 +382,7 @@ function MainSimulator() {
 
   return (
     <div className="main-content">
-      <CollapsiblePanel title="Controls" side="left" className="control-section">
+      <CollapsiblePanel title="Controls" side="left" className="panel-section">
         <ControlPanel
           isRunning={isRunning}
           latticeSize={latticeSize}
@@ -435,14 +435,12 @@ function MainSimulator() {
         renderConfig={renderConfig}
       />
 
-      <CollapsiblePanel title="Info" side="right" className="right-panels">
-        <div className="right-panels-content">
-          <StatisticsPanel stats={stats} fps={fps} />
-          <SaveLoadPanel
-            getCurrentData={getCurrentSimulationData}
-            onLoadData={loadSimulationData}
-          />
-        </div>
+      <CollapsiblePanel title="Info" side="right" className="panel-section">
+        <StatisticsPanel stats={stats} fps={fps} />
+        <SaveLoadPanel
+          getCurrentData={getCurrentSimulationData}
+          onLoadData={loadSimulationData}
+        />
       </CollapsiblePanel>
     </div>
   );
