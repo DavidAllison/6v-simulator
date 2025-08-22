@@ -19,7 +19,7 @@ export function CollapsiblePanel({
 }: CollapsiblePanelProps) {
   // Create a unique key for this panel's state in localStorage
   const storageKey = `panel-collapsed-${title.toLowerCase().replace(/[^a-z0-9]/g, '-')}`;
-  
+
   // Initialize state from localStorage if available, otherwise use defaultCollapsed
   const [isCollapsed, setIsCollapsed] = useState(() => {
     const stored = localStorage.getItem(storageKey);
@@ -36,9 +36,7 @@ export function CollapsiblePanel({
   };
 
   return (
-    <div
-      className={`collapsible-panel ${side} ${isCollapsed ? 'collapsed' : ''} ${className}`}
-    >
+    <div className={`collapsible-panel ${side} ${isCollapsed ? 'collapsed' : ''} ${className}`}>
       <button
         className="collapse-toggle"
         onClick={toggleCollapse}
@@ -46,19 +44,11 @@ export function CollapsiblePanel({
         title={isCollapsed ? `Expand ${title}` : `Collapse ${title}`}
       >
         <span className="toggle-icon">
-          {side === 'left' ? (
-            isCollapsed ? '▶' : '◀'
-          ) : (
-            isCollapsed ? '◀' : '▶'
-          )}
+          {side === 'left' ? (isCollapsed ? '▶' : '◀') : isCollapsed ? '◀' : '▶'}
         </span>
-        {isCollapsed && (
-          <span className="collapsed-title">{title}</span>
-        )}
+        {isCollapsed && <span className="collapsed-title">{title}</span>}
       </button>
-      <div className="panel-content">
-        {children}
-      </div>
+      <div className="panel-content">{children}</div>
     </div>
   );
 }
