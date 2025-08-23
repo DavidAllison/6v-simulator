@@ -69,7 +69,9 @@
       "Bash(aws s3 sync:*)",
       "Bash(git reset:*)",
       "Bash(./scripts/check-for-secrets.sh:*)",
-      "Bash(git rm:*)"
+      "Bash(git rm:*)",
+      "Bash(source:*)",
+      "Bash(cp:*)"
     ],
     "deny": [],
     "ask": [],
