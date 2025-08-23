@@ -1,28 +1,29 @@
 .collapsible-panel {
   position: relative;
   display: flex;
-  align-items: center;
-  justify-content: center;
+  align-items: stretch;
   transition: all 0.25s ease-out;
   height: 100%;
   align-self: stretch; /* Ensure panel stretches to full grid cell height */
 }
 
-/* When expanded, show the content panel */
-.collapsible-panel:not(.collapsed) {
-  align-items: stretch;
-  justify-content: stretch;
+/* When collapsed, center the toggle button */
+.collapsible-panel.collapsed {
+  align-items: center;
+  justify-content: center;
 }
 
-/* Left side panel */
-.collapsible-panel.left {
+/* Left side panel - expanded state */
+.collapsible-panel.left:not(.collapsed) {
   width: 320px;
   min-width: 320px;
+  max-width: 320px;
 }
 
 .collapsible-panel.left.collapsed {
-  width: 24px; /* Just enough for button with some padding */
-  min-width: 24px;
+  width: 24px !important; /* Just enough for button with some padding */
+  min-width: 24px !important;
+  max-width: 24px !important;
   background: transparent; /* Remove any background when collapsed */
   padding: 0;
   border: none;
@@ -41,15 +42,17 @@
   right: 4px;
 }
 
-/* Right side panel */
-.collapsible-panel.right {
+/* Right side panel - expanded state */
+.collapsible-panel.right:not(.collapsed) {
   width: 320px;
   min-width: 320px;
+  max-width: 320px;
 }
 
 .collapsible-panel.right.collapsed {
-  width: 24px; /* Just enough for button with some padding */
-  min-width: 24px;
+  width: 24px !important; /* Just enough for button with some padding */
+  min-width: 24px !important;
+  max-width: 24px !important;
   background: transparent; /* Remove any background when collapsed */
   padding: 0;
   border: none;
@@ -111,7 +114,8 @@
 .panel-content {
   flex: 1;
   width: 100%;
-  overflow: hidden;
+  overflow-y: auto;
+  overflow-x: hidden;
   background: white;
   border-radius: 8px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
