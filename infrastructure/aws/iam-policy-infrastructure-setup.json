@@ -1,0 +1,184 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "S3BucketCreationAndConfiguration",
+      "Effect": "Allow",
+      "Action": [
+        "s3:CreateBucket",
+        "s3:DeleteBucket",
+        "s3:PutBucketWebsite",
+        "s3:DeleteBucketWebsite",
+        "s3:PutBucketVersioning",
+        "s3:PutBucketAcl",
+        "s3:PutBucketPolicy",
+        "s3:DeleteBucketPolicy",
+        "s3:PutBucketPublicAccessBlock",
+        "s3:PutBucketOwnershipControls",
+        "s3:PutBucketCORS",
+        "s3:PutBucketTagging",
+        "s3:PutBucketEncryption",
+        "s3:PutBucketLifecycleConfiguration"
+      ],
+      "Resource": [
+        "arn:aws:s3:::6v-allison-la-production",
+        "arn:aws:s3:::6v-allison-la-pr-previews"
+      ]
+    },
+    {
+      "Sid": "CloudFrontDistributionSetup",
+      "Effect": "Allow",
+      "Action": [
+        "cloudfront:CreateDistribution",
+        "cloudfront:CreateDistributionWithTags",
+        "cloudfront:UpdateDistribution",
+        "cloudfront:DeleteDistribution",
+        "cloudfront:TagResource",
+        "cloudfront:UntagResource"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "CloudFrontFunctionSetup",
+      "Effect": "Allow",
+      "Action": [
+        "cloudfront:CreateFunction",
+        "cloudfront:UpdateFunction",
+        "cloudfront:PublishFunction",
+        "cloudfront:DeleteFunction"
+      ],
+      "Resource": [
+        "arn:aws:cloudfront::517311508324:function/6v-index-rewrite",
+        "arn:aws:cloudfront::517311508324:function/6v-pr-preview-router"
+      ]
+    },
+    {
+      "Sid": "CloudFrontOriginAccessControlSetup",
+      "Effect": "Allow",
+      "Action": [
+        "cloudfront:CreateOriginAccessControl",
+        "cloudfront:UpdateOriginAccessControl",
+        "cloudfront:DeleteOriginAccessControl"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "Route53DomainSetup",
+      "Effect": "Allow",
+      "Action": [
+        "route53:CreateHostedZone",
+        "route53:DeleteHostedZone",
+        "route53:UpdateHostedZoneComment",
+        "route53:ChangeResourceRecordSets",
+        "route53:GetChange"
+      ],
+      "Resource": [
+        "arn:aws:route53:::hostedzone/Z0358877108B22OGXZBUD",
+        "arn:aws:route53:::change/*"
+      ]
+    },
+    {
+      "Sid": "Route53HealthCheckSetup",
+      "Effect": "Allow",
+      "Action": [
+        "route53:CreateHealthCheck",
+        "route53:UpdateHealthCheck",
+        "route53:DeleteHealthCheck"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "ACMCertificateSetup",
+      "Effect": "Allow",
+      "Action": [
+        "acm:RequestCertificate",
+        "acm:DeleteCertificate",
+        "acm:AddTagsToCertificate",
+        "acm:ImportCertificate",
+        "acm:RenewCertificate"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "ACMCertificateValidation",
+      "Effect": "Allow",
+      "Action": [
+        "acm:DescribeCertificate",
+        "acm:GetCertificate",
+        "acm:ListCertificates"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "IAMServiceLinkedRoleCreation",
+      "Effect": "Allow",
+      "Action": [
+        "iam:CreateServiceLinkedRole",
+        "iam:DeleteServiceLinkedRole"
+      ],
+      "Resource": "arn:aws:iam::*:role/aws-service-role/*.amazonaws.com/*",
+      "Condition": {
+        "StringLike": {
+          "iam:AWSServiceName": [
+            "cloudfront.amazonaws.com",
+            "logger.cloudfront.amazonaws.com",
+            "s3.amazonaws.com"
+          ]
+        }
+      }
+    },
+    {
+      "Sid": "CloudWatchLogGroupSetup",
+      "Effect": "Allow",
+      "Action": [
+        "logs:CreateLogGroup",
+        "logs:DeleteLogGroup",
+        "logs:PutRetentionPolicy"
+      ],
+      "Resource": [
+        "arn:aws:logs:*:517311508324:log-group:/aws/cloudfront/*",
+        "arn:aws:logs:*:517311508324:log-group:/aws/lambda/*"
+      ]
+    },
+    {
+      "Sid": "WAFv2Setup",
+      "Effect": "Allow",
+      "Action": [
+        "wafv2:CreateWebACL",
+        "wafv2:DeleteWebACL",
+        "wafv2:UpdateWebACL",
+        "wafv2:AssociateWebACL",
+        "wafv2:DisassociateWebACL"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "LambdaEdgeSetup",
+      "Effect": "Allow",
+      "Action": [
+        "lambda:CreateFunction",
+        "lambda:DeleteFunction",
+        "lambda:UpdateFunctionCode",
+        "lambda:UpdateFunctionConfiguration",
+        "lambda:PublishVersion",
+        "lambda:EnableReplication"
+      ],
+      "Resource": "arn:aws:lambda:us-east-1:517311508324:function:6v-*"
+    },
+    {
+      "Sid": "GeneralReadAccess",
+      "Effect": "Allow",
+      "Action": [
+        "s3:ListAllMyBuckets",
+        "cloudfront:ListDistributions",
+        "cloudfront:ListFunctions",
+        "cloudfront:ListOriginAccessControls",
+        "route53:ListHostedZones",
+        "route53:ListResourceRecordSets",
+        "acm:ListCertificates",
+        "sts:GetCallerIdentity"
+      ],
+      "Resource": "*"
+    }
+  ]
+}
