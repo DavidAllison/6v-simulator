@@ -22,7 +22,7 @@ jobs:
           
           # Create or update the function
           FUNCTION_NAME="6v-simulator-index-rewrite"
-          FUNCTION_CODE='function handler(event) {
+          FUNCTION_CODE=$(echo 'function handler(event) {
               var request = event.request;
               var uri = request.uri;
               
@@ -33,7 +33,7 @@ jobs:
               }
               
               return request;
-          }'
+          }' | base64)
           
           # Check if function exists
           if aws cloudfront describe-function --name "$FUNCTION_NAME" 2>/dev/null; then
