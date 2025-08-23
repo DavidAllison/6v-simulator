@@ -36,7 +36,7 @@ jobs:
           AWS_REGION: us-east-1
         run: |
           aws sts get-caller-identity
-          aws s3 ls s3://6v-allison-la-production --region us-east-1 | head -5
+          aws s3 ls s3://6v-simulator-production --region us-east-1 | head -5
       
       - name: Deploy to S3
         env:
@@ -45,7 +45,7 @@ jobs:
           AWS_REGION: us-east-1
           AWS_DEFAULT_REGION: us-east-1
         run: |
-          aws s3 sync client/dist s3://6v-allison-la-production --delete --region us-east-1
+          aws s3 sync client/dist s3://6v-simulator-production --delete --region us-east-1
       
       - name: Invalidate CloudFront
         env:
