@@ -46,7 +46,7 @@ export function getThemeColors(isDark: boolean) {
 export function getThemeColorsFromCSS() {
   // Detect if dark theme is active
   const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-  
+
   // Use predefined colors for consistency with the canvas
   return getThemeColors(isDark);
 }

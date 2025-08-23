@@ -35,7 +35,7 @@ describe('ThemeToggle', () => {
     render(
       <ThemeProvider>
         <ThemeToggle />
-      </ThemeProvider>
+      </ThemeProvider>,
     );
 
     const button = screen.getByRole('button');
@@ -48,12 +48,12 @@ describe('ThemeToggle', () => {
     render(
       <ThemeProvider>
         <ThemeToggle />
-      </ThemeProvider>
+      </ThemeProvider>,
     );
 
     const button = screen.getByRole('button');
     expect(button).toHaveAttribute('aria-label', 'Switch to dark mode');
-    
+
     // Check for moon icon path (simplified check)
     const svg = button.querySelector('svg');
     expect(svg).toBeInTheDocument();
@@ -67,12 +67,12 @@ describe('ThemeToggle', () => {
     render(
       <ThemeProvider>
         <ThemeToggle />
-      </ThemeProvider>
+      </ThemeProvider>,
     );
 
     const button = screen.getByRole('button');
     expect(button).toHaveAttribute('aria-label', 'Switch to light mode');
-    
+
     // Check for sun icon (has circle element)
     const svg = button.querySelector('svg');
     expect(svg).toBeInTheDocument();
@@ -88,18 +88,18 @@ describe('ThemeToggle', () => {
     render(
       <ThemeProvider>
         <ThemeToggle />
-      </ThemeProvider>
+      </ThemeProvider>,
     );
 
     const button = screen.getByRole('button');
-    
+
     // Initially in light mode
     expect(button).toHaveAttribute('aria-label', 'Switch to dark mode');
-    
+
     // Click to switch to dark mode
     fireEvent.click(button);
     expect(button).toHaveAttribute('aria-label', 'Switch to light mode');
-    
+
     // Click to switch back to light mode
     fireEvent.click(button);
     expect(button).toHaveAttribute('aria-label', 'Switch to dark mode');
@@ -109,7 +109,7 @@ describe('ThemeToggle', () => {
     render(
       <ThemeProvider>
         <ThemeToggle />
-      </ThemeProvider>
+      </ThemeProvider>,
     );
 
     const button = screen.getByRole('button');
@@ -121,7 +121,7 @@ describe('ThemeToggle', () => {
     render(
       <ThemeProvider>
         <ThemeToggle />
-      </ThemeProvider>
+      </ThemeProvider>,
     );
 
     const button = screen.getByRole('button');

@@ -19,7 +19,7 @@
 }
 
 /* Dark mode specific header styling */
-[data-theme="dark"] .app-header {
+[data-theme='dark'] .app-header {
   background: linear-gradient(135deg, #1f2937 0%, #374151 100%);
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
@@ -57,7 +57,7 @@
   color: var(--color-text-primary);
 }
 
-[data-theme="dark"] .app-header h1 {
+[data-theme='dark'] .app-header h1 {
   color: white;
 }
 
@@ -88,11 +88,11 @@
   text-decoration: none;
 }
 
-[data-theme="dark"] .header-nav a {
+[data-theme='dark'] .header-nav a {
   color: rgba(255, 255, 255, 0.9);
 }
 
-[data-theme="dark"] .header-nav a:hover {
+[data-theme='dark'] .header-nav a:hover {
   background-color: rgba(255, 255, 255, 0.1);
   color: white;
 }

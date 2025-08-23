@@ -279,7 +279,7 @@
 }
 
 .performance-optimizations__item::before {
-  content: "✓ ";
+  content: '✓ ';
   color: var(--color-success);
   font-weight: var(--font-weight-bold);
   margin-right: var(--spacing-xs);

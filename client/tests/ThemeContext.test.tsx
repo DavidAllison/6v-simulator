@@ -51,7 +51,7 @@ describe('ThemeContext', () => {
     render(
       <ThemeProvider>
         <TestComponent />
-      </ThemeProvider>
+      </ThemeProvider>,
     );
 
     expect(screen.getByTestId('theme-value')).toHaveTextContent('light');
@@ -63,7 +63,7 @@ describe('ThemeContext', () => {
     render(
       <ThemeProvider>
         <TestComponent />
-      </ThemeProvider>
+      </ThemeProvider>,
     );
 
     expect(screen.getByTestId('theme-value')).toHaveTextContent('dark');
@@ -76,7 +76,7 @@ describe('ThemeContext', () => {
     render(
       <ThemeProvider>
         <TestComponent />
-      </ThemeProvider>
+      </ThemeProvider>,
     );
 
     expect(screen.getByTestId('theme-value')).toHaveTextContent('light');
@@ -92,7 +92,7 @@ describe('ThemeContext', () => {
     render(
       <ThemeProvider>
         <TestComponent />
-      </ThemeProvider>
+      </ThemeProvider>,
     );
 
     fireEvent.click(screen.getByText('Set Dark'));
@@ -106,7 +106,7 @@ describe('ThemeContext', () => {
     render(
       <ThemeProvider>
         <TestComponent />
-      </ThemeProvider>
+      </ThemeProvider>,
     );
 
     fireEvent.click(screen.getByText('Toggle Theme'));
@@ -120,7 +120,7 @@ describe('ThemeContext', () => {
     render(
       <ThemeProvider>
         <TestComponent />
-      </ThemeProvider>
+      </ThemeProvider>,
     );
 
     fireEvent.click(screen.getByText('Set Dark'));
@@ -138,7 +138,7 @@ describe('ThemeContext', () => {
 
   it('should throw error when useTheme is used outside ThemeProvider', () => {
     const spy = jest.spyOn(console, 'error').mockImplementation(() => {});
-    
+
     expect(() => {
       render(<TestComponent />);
     }).toThrow('useTheme must be used within a ThemeProvider');
@@ -148,7 +148,7 @@ describe('ThemeContext', () => {
 
   it('should respect system preference when no saved preference exists', () => {
     localStorageMock.getItem.mockReturnValue(null);
-    
+
     // Mock dark mode system preference
     window.matchMedia = jest.fn().mockImplementation((query) => ({
       matches: query === '(prefers-color-scheme: dark)',
@@ -161,7 +161,7 @@ describe('ThemeContext', () => {
     render(
       <ThemeProvider>
         <TestComponent />
-      </ThemeProvider>
+      </ThemeProvider>,
     );
 
     expect(screen.getByTestId('theme-value')).toHaveTextContent('dark');
