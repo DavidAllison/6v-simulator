@@ -161,3 +161,4 @@ For issues, questions, or suggestions:
 - Review the [development documentation](docs/development/)# Test deployment Fri Aug 22 22:07:09 PDT 2025
 # Deployment test Fri Aug 22 22:19:10 PDT 2025
 Triggering deployment to update S3 content
+# Site is now deployed with fixed CloudFront function
