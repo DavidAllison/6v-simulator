@@ -14,6 +14,7 @@ coverage/
 
 # AWS credentials - NEVER commit these!
 .aws/
+.aws-credentials
 aws-credentials.json
 *-credentials.json
 
