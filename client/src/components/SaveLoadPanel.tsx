@@ -202,7 +202,17 @@ export const SaveLoadPanel: React.FC<SaveLoadPanelProps> = ({
     <div className="save-load-section">
       <div className="save-load-panel">
         <div className="save-load-panel__header">
-          <h3>Save & Load</h3>
+          <h3>
+            <svg className="section-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V2"
+              />
+            </svg>
+            Save & Load
+          </h3>
           {storageStats && (
             <div className="save-load-panel__stats">
               <span>{storageStats.totalSaves} saves</span>
