@@ -58,12 +58,19 @@
       "Bash(gh issue view:*)",
       "Bash(git push:*)",
       "Bash(gh pr:*)",
-      "Bash(./scripts/validate-pr.sh:*)"
+      "Bash(./scripts/validate-pr.sh:*)",
+      "Bash(aws acm request-certificate:*)",
+      "Bash(aws route53 list-hosted-zones:*)",
+      "Bash(aws route53 change-resource-record-sets:*)",
+      "Bash(aws cloudfront publish-function:*)",
+      "Bash(aws:*)",
+      "Bash(sed:*)"
     ],
     "deny": [],
     "ask": [],
     "additionalDirectories": [
-      "/Users/dja/Desktop/.husky"
+      "/Users/dja/Desktop/.husky",
+      "/Users/dja/Documents/GitHub/mcs/marketing-site"
     ]
   }
 }

@@ -1,0 +1,111 @@
+name: Deploy to Production
+
+on:
+  push:
+    branches:
+      - main
+      - production
+
+env:
+  NODE_VERSION: '20.x'
+  AWS_REGION: us-east-1
+
+jobs:
+  deploy:
+    name: Build and Deploy to Production
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Install dependencies
+        working-directory: ./client
+        run: npm ci
+
+      - name: Run tests
+        working-directory: ./client
+        run: npm test -- --passWithNoTests
+
+      - name: Build production site
+        working-directory: ./client
+        run: npm run build
+        env:
+          NODE_ENV: production
+          VITE_BUILD_MODE: production
+          VITE_BASE_URL: https://6v.allison.la
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Deploy to S3
+        working-directory: ./client
+        run: |
+          # Deploy static assets with long cache
+          aws s3 sync ./dist s3://${{ secrets.AWS_S3_BUCKET_PRODUCTION }} \
+            --delete \
+            --cache-control "public, max-age=31536000, immutable" \
+            --exclude "*.html" \
+            --exclude "*.xml" \
+            --exclude "*.json" \
+            --exclude "robots.txt"
+          
+          # Deploy HTML and config files with shorter cache
+          aws s3 sync ./dist s3://${{ secrets.AWS_S3_BUCKET_PRODUCTION }} \
+            --delete \
+            --cache-control "public, max-age=3600, must-revalidate" \
+            --exclude "*" \
+            --include "*.html" \
+            --include "*.xml" \
+            --include "*.json" \
+            --include "robots.txt"
+
+      - name: Invalidate CloudFront cache
+        run: |
+          INVALIDATION_ID=$(aws cloudfront create-invalidation \
+            --distribution-id ${{ secrets.AWS_CLOUDFRONT_DISTRIBUTION_ID }} \
+            --paths "/*" \
+            --query 'Invalidation.Id' \
+            --output text)
+          
+          echo "Created invalidation: $INVALIDATION_ID"
+
+      - name: Wait for invalidation
+        run: |
+          aws cloudfront wait invalidation-completed \
+            --distribution-id ${{ secrets.AWS_CLOUDFRONT_DISTRIBUTION_ID }} \
+            --id $(aws cloudfront list-invalidations \
+              --distribution-id ${{ secrets.AWS_CLOUDFRONT_DISTRIBUTION_ID }} \
+              --query "InvalidationList.Items[0].Id" \
+              --output text)
+
+      - name: Verify deployment
+        run: |
+          echo "Deployment completed successfully!"
+          echo "Production URL: https://6v.allison.la"
+          echo "CloudFront Distribution: ${{ secrets.AWS_CLOUDFRONT_DISTRIBUTION_ID }}"
+          echo "S3 Bucket: ${{ secrets.AWS_S3_BUCKET_PRODUCTION }}"
+
+      - name: Post deployment notification
+        if: always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const status = '${{ job.status }}' === 'success' ? '✅' : '❌';
+            const message = `Production deployment: ${status}`;
+            
+            // Log deployment status
+            console.log(message);
+            
+            // Could add Slack/Discord notifications here if needed
