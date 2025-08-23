@@ -64,7 +64,8 @@ jobs:
           AWS_REGION: us-east-1
         run: |
           echo "Listing S3 buckets..."
-          aws s3api list-buckets
+          aws s3api list-buckets --query 'Buckets[*].Name' --output text
           
-          echo "Listing CloudFront distributions..."
-          aws cloudfront list-distributions --query 'DistributionList.Items[*].[Id,DomainName,Aliases.Items[0]]' --output table || echo "No distributions found"
+          echo ""
+          echo "Listing CloudFront distributions with details..."
+          aws cloudfront list-distributions --query 'DistributionList.Items[*].[Id,DomainName,Aliases.Items[0],Origins.Items[0].DomainName]' --output table || echo "No distributions found"
