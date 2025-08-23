@@ -59,7 +59,9 @@
       "Bash(git push:*)",
       "Bash(gh pr:*)",
       "Bash(gh run rerun:*)",
-      "Bash(git branch:*)"
+      "Bash(git branch:*)",
+      "WebFetch(domain:6v.allison.la)",
+      "WebFetch(domain:pr-29.dev.6v.allison.la)"
     ],
     "deny": [],
     "ask": [],

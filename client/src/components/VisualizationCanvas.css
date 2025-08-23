@@ -1,33 +1,33 @@
 .visualization-container {
   flex: 1;
-  background: white;
+  background: var(--color-bg-primary);
   border-radius: 12px;
-  box-shadow:
-    0 1px 3px rgba(0, 0, 0, 0.08),
-    0 1px 2px rgba(0, 0, 0, 0.04);
-  border: 1px solid #e5e7eb;
+  box-shadow: var(--shadow-md);
+  border: 1px solid var(--color-border);
   position: relative;
   overflow: hidden;
   display: flex;
   flex-direction: column;
+  transition: all var(--transition-base);
 }
 
 .canvas-wrapper {
   flex: 1;
   position: relative;
   overflow: hidden;
-  background-color: #fafafa;
+  background-color: var(--color-bg-secondary);
   background-image:
-    linear-gradient(45deg, #f3f4f6 25%, transparent 25%),
-    linear-gradient(-45deg, #f3f4f6 25%, transparent 25%),
-    linear-gradient(45deg, transparent 75%, #f3f4f6 75%),
-    linear-gradient(-45deg, transparent 75%, #f3f4f6 75%);
+    linear-gradient(45deg, var(--color-bg-tertiary) 25%, transparent 25%),
+    linear-gradient(-45deg, var(--color-bg-tertiary) 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, var(--color-bg-tertiary) 75%),
+    linear-gradient(-45deg, transparent 75%, var(--color-bg-tertiary) 75%);
   background-size: 20px 20px;
   background-position:
     0 0,
     0 10px,
     10px -10px,
     -10px 0px;
+  transition: background var(--transition-base);
 }
 
 .canvas-transform {
@@ -40,9 +40,9 @@
 
 .simulation-canvas {
   display: block;
-  background: white;
+  background: transparent;
   border-radius: 4px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 8px var(--color-shadow);
   transform: translate(-50%, -50%);
 }
 
@@ -53,38 +53,39 @@
   display: flex;
   gap: 0.5rem;
   align-items: center;
-  background: white;
+  background: var(--color-bg-primary);
   padding: 0.5rem;
   border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  border: 1px solid #e5e7eb;
+  box-shadow: 0 2px 8px var(--color-shadow);
+  border: 1px solid var(--color-border);
+  transition: all var(--transition-base);
 }
 
 .zoom-button {
   width: 32px;
   height: 32px;
   padding: 0;
-  background: white;
-  border: 1px solid #d1d5db;
+  background: var(--color-bg-primary);
+  border: 1px solid var(--color-border);
   border-radius: 6px;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.15s ease;
+  transition: all var(--transition-fast);
 }
 
 .zoom-button svg {
   width: 18px;
   height: 18px;
-  color: #6b7280;
+  color: var(--color-text-secondary);
 }
 
 .zoom-button:hover {
-  background: #f3f4f6;
-  border-color: #9ca3af;
+  background: var(--color-bg-secondary);
+  border-color: var(--color-text-muted);
   transform: translateY(-1px);
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 2px 4px var(--color-shadow-light);
 }
 
 .zoom-button:active {
@@ -93,33 +94,35 @@
 
 .zoom-indicator {
   padding: 0.25rem 0.75rem;
-  background: #f3f4f6;
+  background: var(--color-bg-secondary);
   border-radius: 6px;
   font-size: 0.8125rem;
   font-weight: 600;
-  color: #4b5563;
+  color: var(--color-text-primary);
   min-width: 3.5rem;
   text-align: center;
-  border: 1px solid #e5e7eb;
+  border: 1px solid var(--color-border);
+  transition: all var(--transition-base);
 }
 
 .vertex-tooltip {
   position: absolute;
   top: 1rem;
   left: 1rem;
-  background: white;
+  background: var(--color-bg-primary);
   padding: 0.75rem;
   border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  border: 1px solid #e5e7eb;
+  box-shadow: 0 4px 12px var(--color-shadow);
+  border: 1px solid var(--color-border);
   pointer-events: none;
   z-index: 10;
+  transition: all var(--transition-base);
 }
 
 .tooltip-header {
   font-size: 0.75rem;
   font-weight: 600;
-  color: #6b7280;
+  color: var(--color-text-secondary);
   margin-bottom: 0.25rem;
   text-transform: uppercase;
   letter-spacing: 0.025em;
@@ -127,10 +130,10 @@
 
 .tooltip-content {
   font-size: 0.875rem;
-  color: #374151;
+  color: var(--color-text-primary);
 }
 
 .tooltip-content strong {
-  color: #1f2937;
+  color: var(--color-text-primary);
   font-weight: 600;
 }

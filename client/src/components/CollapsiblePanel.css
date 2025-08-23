@@ -75,8 +75,8 @@
   width: 16px;
   height: 48px;
   padding: 0;
-  border: 1px solid #d1d5db;
-  background: white;
+  border: 1px solid var(--color-border, #d1d5db);
+  background: var(--color-bg-secondary, white);
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -84,23 +84,23 @@
   border-radius: 4px;
   transition: all 0.15s;
   z-index: 10;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 1px 3px var(--color-shadow, rgba(0, 0, 0, 0.1));
 }
 
 .collapse-toggle:hover {
-  background: #f3f4f6;
-  border-color: #9ca3af;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+  background: var(--color-bg-hover, #f3f4f6);
+  border-color: var(--color-border-hover, #9ca3af);
+  box-shadow: 0 2px 4px var(--color-shadow-hover, rgba(0, 0, 0, 0.15));
 }
 
 .collapse-toggle:active {
-  background: #e5e7eb;
+  background: var(--color-bg-active, #e5e7eb);
 }
 
 /* Toggle icon */
 .toggle-icon {
   font-size: 10px;
-  color: #6b7280;
+  color: var(--color-text-secondary, #6b7280);
   line-height: 1;
 }
 
@@ -201,6 +201,6 @@
     margin-left: 8px;
     font-size: 12px;
     font-weight: 500;
-    color: #6b7280;
+    color: var(--color-text-secondary, #6b7280);
   }
 }

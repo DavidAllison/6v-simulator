@@ -134,9 +134,14 @@ npm run build
 git push -u origin feature/issue-NUMBER-description
 
 # Create PR with detailed description
+# Note: After creation, update the PR description to include the preview URL
 gh pr create \
   --title "feat: Brief description (#NUMBER)" \
-  --body "## Summary
+  --body "## 🚀 Preview Deployment
+**Preview URL:** https://pr-NUMBER.dev.6v.allison.la
+> Will update with actual PR number after creation
+
+## Summary
   
 Detailed description of changes
 
@@ -147,12 +152,14 @@ Fixes #NUMBER
 - [ ] Unit tests pass
 - [ ] Manual testing completed
 - [ ] No regressions identified
+- [ ] Preview deployment tested
 
 ## Checklist
 - [ ] Code follows project conventions
 - [ ] Tests added/updated
 - [ ] Documentation updated
-- [ ] CI checks pass"
+- [ ] CI checks pass
+- [ ] Preview link included"
 ```
 
 5. **Monitor CI checks**
@@ -199,6 +206,10 @@ How to verify the implementation works
 
 #### PR Description Template
 ```markdown
+## 🚀 Preview Deployment
+**Preview URL:** https://pr-NUMBER.dev.6v.allison.la
+> Replace NUMBER with the actual PR number after creation
+
 ## Summary
 Brief description of changes (2-3 sentences)
 
@@ -211,6 +222,7 @@ Brief description of changes (2-3 sentences)
 - [ ] Unit tests added/updated
 - [ ] Manual testing completed
 - [ ] No regressions identified
+- [ ] Preview deployment tested
 
 ## Related Issues
 Fixes #NUMBER
@@ -220,6 +232,7 @@ Fixes #NUMBER
 - [ ] Tests pass locally
 - [ ] Documentation updated
 - [ ] CI checks pass
+- [ ] Preview link included and tested
 ```
 
 #### Review Etiquette
@@ -379,6 +392,42 @@ gh release create v$(node -p "require('./package.json').version") \
 
 ### 7. Deployment
 
+#### PR Preview Deployments
+
+Every pull request automatically receives a preview deployment:
+
+1. **Automatic Deployment**
+   - Triggered on PR open, sync, or reopen
+   - Deploys to `https://pr-{NUMBER}.dev.6v.allison.la`
+   - Updates automatically with new commits
+   - Cleaned up when PR is closed
+
+2. **Preview URL Format**
+   ```
+   https://pr-{PR_NUMBER}.dev.6v.allison.la
+   ```
+   Example: PR #29 deploys to https://pr-29.dev.6v.allison.la
+
+3. **Including Preview Links in PRs**
+   - Use the PR template in `.github/pull_request_template.md`
+   - Update the preview URL after PR creation with actual number
+   - Use helper script: `./scripts/update-pr-preview-url.sh [PR_NUMBER]`
+   - Test the preview deployment before requesting review
+
+4. **Preview Deployment Status**
+   ```bash
+   # Check deployment status
+   gh pr checks PR_NUMBER
+   
+   # View deployment logs
+   gh run list --workflow="pr-preview.yml" --limit=5
+   ```
+
+5. **Troubleshooting Preview Deployments**
+   - Ensure build passes locally: `npm run build`
+   - Check TypeScript errors: `npm run typecheck`
+   - View workflow logs: `gh run view RUN_ID --log`
+
 #### Build for Production
 ```bash
 cd client
@@ -391,6 +440,7 @@ npm run build
 - **Vercel**: Automatic deployments from GitHub
 - **Netlify**: CI/CD with preview deployments
 - **Custom Server**: Serve dist/ folder with nginx/apache
+- **PR Previews**: Automatic S3/CloudFront deployments for all PRs
 
 ### 8. Monitoring & Maintenance
 

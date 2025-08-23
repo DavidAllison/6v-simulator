@@ -3,11 +3,11 @@
  */
 
 .save-load-section {
-  background: white;
+  background: var(--color-bg-secondary, white);
   border-radius: 6px;
   padding: 0.625rem;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
-  border: 1px solid #e5e7eb;
+  box-shadow: 0 1px 2px var(--color-shadow-light, rgba(0, 0, 0, 0.04));
+  border: 1px solid var(--color-border, #e5e7eb);
   width: 100%;
   height: fit-content;
   display: flex;
@@ -34,7 +34,7 @@
   margin: 0;
   font-size: 0.9rem;
   font-weight: 600;
-  color: #111827;
+  color: var(--color-text-primary, #111827);
   display: flex;
   align-items: center;
   gap: 0.375rem;
@@ -43,19 +43,19 @@
 .section-icon {
   width: 18px;
   height: 18px;
-  color: #4b5563;
+  color: var(--color-text-secondary, #4b5563);
 }
 
 .save-load-panel__stats {
   display: flex;
   gap: 0.5rem;
   font-size: 0.75rem;
-  color: #6b7280;
+  color: var(--color-text-secondary, #6b7280);
 }
 
 .save-load-panel__stats span {
   padding: 0.125rem 0.375rem;
-  background: #f9fafb;
+  background: var(--color-bg-tertiary, #f9fafb);
   border-radius: 4px;
 }
 
@@ -101,7 +101,7 @@
   margin: 0;
   font-size: 14px;
   font-weight: 600;
-  color: #555;
+  color: var(--color-text-secondary, #555);
 }
 
 /* Save Form */
@@ -114,11 +114,13 @@
 .save-load-panel__form input[type='text'],
 .save-load-panel__form textarea {
   padding: 0.375rem 0.5rem;
-  border: 1px solid #d1d5db;
+  border: 1px solid var(--color-border, #d1d5db);
   border-radius: 4px;
   font-size: 0.8125rem;
   font-family: inherit;
   transition: border-color 0.2s;
+  background: var(--color-bg-primary, white);
+  color: var(--color-text-primary, #111827);
 }
 
 .save-load-panel__form input[type='text']:focus,
@@ -143,7 +145,7 @@
   align-items: center;
   gap: 0.375rem;
   font-size: 0.8125rem;
-  color: #6b7280;
+  color: var(--color-text-secondary, #6b7280);
   cursor: pointer;
 }
 
@@ -154,19 +156,19 @@
 /* Buttons */
 .save-load-panel__button {
   padding: 0.5rem 0.75rem;
-  border: 1px solid #ddd;
+  border: 1px solid var(--color-border, #ddd);
   border-radius: 4px;
   font-size: 14px;
   font-weight: 500;
-  background: white;
-  color: #333;
+  background: var(--color-bg-secondary, white);
+  color: var(--color-text-primary, #333);
   cursor: pointer;
   transition: all 0.2s;
 }
 
 .save-load-panel__button:hover:not(:disabled) {
-  background: #f5f5f5;
-  border-color: #bbb;
+  background: var(--color-bg-hover, #f5f5f5);
+  border-color: var(--color-border-hover, #bbb);
 }
 
 .save-load-panel__button:disabled {
@@ -199,9 +201,9 @@
 .save-load-panel__empty {
   padding: 1.5rem;
   text-align: center;
-  color: #9ca3af;
+  color: var(--color-text-secondary, #9ca3af);
   font-size: 0.8125rem;
-  background: #f9f9f9;
+  background: var(--color-bg-tertiary, #f9f9f9);
   border-radius: 4px;
 }
 
@@ -215,15 +217,15 @@
 
 .save-load-panel__save-item {
   padding: 0.625rem;
-  border: 1px solid #e5e7eb;
+  border: 1px solid var(--color-border, #e5e7eb);
   border-radius: 4px;
-  background: white;
+  background: var(--color-bg-secondary, white);
   transition: all 0.2s;
 }
 
 .save-load-panel__save-item:hover {
-  border-color: #bbb;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  border-color: var(--color-border-hover, #bbb);
+  box-shadow: 0 2px 4px var(--color-shadow-light, rgba(0, 0, 0, 0.05));
 }
 
 .save-load-panel__save-item--selected {
@@ -242,18 +244,18 @@
   margin: 0;
   font-size: 0.8125rem;
   font-weight: 600;
-  color: #111827;
+  color: var(--color-text-primary, #111827);
 }
 
 .save-load-panel__save-date {
   font-size: 11px;
-  color: #999;
+  color: var(--color-text-secondary, #999);
 }
 
 .save-load-panel__save-description {
   margin: 4px 0;
   font-size: 13px;
-  color: #666;
+  color: var(--color-text-secondary, #666);
   line-height: 1.4;
 }
 
@@ -262,12 +264,12 @@
   gap: 8px;
   margin: 8px 0;
   font-size: 12px;
-  color: #888;
+  color: var(--color-text-secondary, #888);
 }
 
 .save-load-panel__save-metadata span {
   padding: 2px 6px;
-  background: #f5f5f5;
+  background: var(--color-bg-tertiary, #f5f5f5);
   border-radius: 3px;
 }
 
@@ -288,17 +290,17 @@
 }
 
 .save-load-panel__saves::-webkit-scrollbar-track {
-  background: #f1f1f1;
+  background: var(--color-bg-tertiary, #f1f1f1);
   border-radius: 3px;
 }
 
 .save-load-panel__saves::-webkit-scrollbar-thumb {
-  background: #888;
+  background: var(--color-scrollbar-thumb, #888);
   border-radius: 3px;
 }
 
 .save-load-panel__saves::-webkit-scrollbar-thumb:hover {
-  background: #555;
+  background: var(--color-scrollbar-thumb-hover, #555);
 }
 
 /* Responsive adjustments */

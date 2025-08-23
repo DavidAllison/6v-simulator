@@ -7,6 +7,7 @@ import { PerformanceDemo } from './routes/performanceDemo';
 import { DWBCDebug } from './routes/dwbcDebug';
 import { FlipDebug } from './routes/flipDebug';
 import ErrorBoundary from './components/ErrorBoundary';
+import { ThemeToggle } from './components/ThemeToggle';
 
 function ModelTests() {
   return (
@@ -146,6 +147,7 @@ function App() {
             <Link to="/flip-debug">Flip Debug</Link>
             <Link to="/performance">Performance</Link>
             <Link to="/model-tests">Tests</Link>
+            <ThemeToggle />
           </nav>
         </div>
       </header>

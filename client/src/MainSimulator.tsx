@@ -6,7 +6,7 @@ import type {
   SimulationStats,
   RenderConfig,
 } from './lib/six-vertex/types';
-import { RenderMode, VertexType, BoundaryCondition } from './lib/six-vertex/types';
+import { RenderMode, BoundaryCondition } from './lib/six-vertex/types';
 import { createSimulation } from './lib/six-vertex/simulation';
 import type { SimulationConfig } from './lib/six-vertex/simulation';
 import { PathRenderer } from './lib/six-vertex/renderer/pathRenderer';
@@ -16,8 +16,14 @@ import VisualizationCanvas from './components/VisualizationCanvas';
 import { SaveLoadPanel } from './components/SaveLoadPanel';
 import { CollapsiblePanel } from './components/CollapsiblePanel';
 import type { SimulationData } from './lib/storage';
+import { useTheme } from './hooks/useTheme';
+import { getThemeColors } from './lib/six-vertex/themeColors';
 
 function MainSimulator() {
+  // Get theme context
+  const { theme } = useTheme();
+  const isDarkMode = theme === 'dark';
+
   // Refs
   const rendererRef = useRef<PathRenderer | null>(null);
   const simulationRef = useRef<SimulationController | null>(null);
@@ -357,27 +363,14 @@ function MainSimulator() {
     }
   }, [isRunning, runSimulation]);
 
-  // Render config
+  // Render config with theme-aware colors
   const renderConfig: Partial<RenderConfig> = {
     mode: renderMode,
     showGrid,
     animateFlips,
     cellSize: 30,
     lineWidth: 2,
-    colors: {
-      background: '#ffffff',
-      grid: '#e5e7eb',
-      pathSegment: '#1f2937',
-      arrow: '#3b82f6',
-      vertexTypes: {
-        [VertexType.a1]: '#3B82F6',
-        [VertexType.a2]: '#60A5FA',
-        [VertexType.b1]: '#10B981',
-        [VertexType.b2]: '#34D399',
-        [VertexType.c1]: '#F59E0B',
-        [VertexType.c2]: '#FCD34D',
-      },
-    },
+    colors: getThemeColors(isDarkMode),
   };
 
   return (
