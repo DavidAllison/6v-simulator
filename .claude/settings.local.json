@@ -57,7 +57,9 @@
       "Bash(npx:*)",
       "Bash(gh issue view:*)",
       "Bash(git push:*)",
-      "Bash(gh pr:*)"
+      "Bash(gh pr:*)",
+      "Bash(gh run rerun:*)",
+      "Bash(git branch:*)"
     ],
     "deny": [],
     "ask": [],
