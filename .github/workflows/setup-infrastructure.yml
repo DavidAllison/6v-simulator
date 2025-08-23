@@ -28,21 +28,31 @@ jobs:
           echo "Creating production bucket..."
           aws s3api create-bucket \
             --bucket 6v-allison-la-production \
-            --region us-east-1 || echo "Bucket may already exist"
+            --region us-east-1 2>/dev/null || echo "Bucket creation failed or already exists"
+          
+          echo "Waiting for bucket to be available..."
+          sleep 5
           
           echo "Creating PR preview bucket..."
           aws s3api create-bucket \
             --bucket 6v-allison-la-pr-previews \
-            --region us-east-1 || echo "Bucket may already exist"
+            --region us-east-1 2>/dev/null || echo "Bucket creation failed or already exists"
+          
+          echo "Waiting for buckets to be available..."
+          sleep 5
+          
+          echo "Checking if buckets exist..."
+          aws s3api head-bucket --bucket 6v-allison-la-production 2>/dev/null && echo "Production bucket exists" || echo "Production bucket does not exist"
+          aws s3api head-bucket --bucket 6v-allison-la-pr-previews 2>/dev/null && echo "PR preview bucket exists" || echo "PR preview bucket does not exist"
           
           echo "Configuring buckets for static website hosting..."
           aws s3api put-bucket-website \
             --bucket 6v-allison-la-production \
-            --website-configuration '{"IndexDocument":{"Suffix":"index.html"},"ErrorDocument":{"Key":"404.html"}}'
+            --website-configuration '{"IndexDocument":{"Suffix":"index.html"},"ErrorDocument":{"Key":"404.html"}}' 2>/dev/null || echo "Could not configure production bucket website"
           
           aws s3api put-bucket-website \
             --bucket 6v-allison-la-pr-previews \
-            --website-configuration '{"IndexDocument":{"Suffix":"index.html"},"ErrorDocument":{"Key":"404.html"}}'
+            --website-configuration '{"IndexDocument":{"Suffix":"index.html"},"ErrorDocument":{"Key":"404.html"}}' 2>/dev/null || echo "Could not configure PR preview bucket website"
           
           echo "Setting bucket policies for CloudFront access..."
           # We'll add policies after creating CloudFront OAC
