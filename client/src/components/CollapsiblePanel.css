@@ -31,7 +31,7 @@
 
 .collapsible-panel.left .collapse-toggle {
   position: absolute;
-  right: 0;
+  right: -8px; /* Position outside the panel content area */
   top: 50%;
   transform: translateY(-50%);
   z-index: 100; /* Ensure button stays on top */
@@ -39,7 +39,7 @@
 
 /* When collapsed, button stays absolutely positioned and centered */
 .collapsible-panel.left.collapsed .collapse-toggle {
-  right: 4px;
+  right: 4px; /* Center button when panel is collapsed */
 }
 
 /* Right side panel */
@@ -59,7 +59,7 @@
 
 .collapsible-panel.right .collapse-toggle {
   position: absolute;
-  left: 0;
+  left: -8px; /* Position outside the panel content area */
   top: 50%;
   transform: translateY(-50%);
   z-index: 100; /* Ensure button stays on top */
@@ -67,7 +67,7 @@
 
 /* When collapsed, button stays absolutely positioned and centered */
 .collapsible-panel.right.collapsed .collapse-toggle {
-  left: 4px;
+  left: 4px; /* Center button when panel is collapsed */
 }
 
 /* Minimal collapse toggle button */
@@ -125,6 +125,15 @@
   transition:
     opacity 0.2s ease-out,
     transform 0.2s ease-out;
+}
+
+/* Add padding to prevent content from going under buttons */
+.collapsible-panel.left .panel-content {
+  padding-right: 12px;
+}
+
+.collapsible-panel.right .panel-content {
+  padding-left: 12px;
 }
 
 /* When collapsed, completely hide the content */
