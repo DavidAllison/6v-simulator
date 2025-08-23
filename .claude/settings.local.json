@@ -65,13 +65,16 @@
       "Bash(aws cloudfront publish-function:*)",
       "Bash(aws:*)",
       "Bash(sed:*)",
-      "Bash(gh secret:*)"
+      "Bash(gh secret:*)",
+      "Bash(aws s3 sync:*)",
+      "Bash(git reset:*)"
     ],
     "deny": [],
     "ask": [],
     "additionalDirectories": [
       "/Users/dja/Desktop/.husky",
-      "/Users/dja/Documents/GitHub/mcs/marketing-site"
+      "/Users/dja/Documents/GitHub/mcs/marketing-site",
+      "/Users/dja/.aws"
     ]
   }
 }
