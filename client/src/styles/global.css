@@ -2,7 +2,7 @@
    Global Design System
    =========================== */
 
-/* Color Palette */
+/* Color Palette - Light Theme (Default) */
 :root {
   /* Primary Colors */
   --color-primary: #0066cc;
@@ -21,6 +21,10 @@
   
   --color-border: #dee2e6;
   --color-border-light: #e9ecef;
+  
+  /* Shadows */
+  --color-shadow: rgba(0, 0, 0, 0.1);
+  --color-shadow-light: rgba(0, 0, 0, 0.05);
   
   /* Status Colors */
   --color-success: #28a745;
@@ -72,6 +76,41 @@
   --transition-fast: 150ms ease-in-out;
   --transition-base: 250ms ease-in-out;
   --transition-slow: 350ms ease-in-out;
+}
+
+/* Dark Theme */
+[data-theme="dark"] {
+  /* Primary Colors */
+  --color-primary: #4da3ff;
+  --color-primary-hover: #6bb1ff;
+  --color-primary-light: #1a3a52;
+  
+  /* Neutral Colors */
+  --color-bg-primary: #1a1a1a;
+  --color-bg-secondary: #2d2d2d;
+  --color-bg-tertiary: #404040;
+  
+  --color-text-primary: #e0e0e0;
+  --color-text-secondary: #a0a0a0;
+  --color-text-muted: #707070;
+  --color-text-inverse: #1a1a1a;
+  
+  --color-border: #404040;
+  --color-border-light: #333333;
+  
+  /* Shadows */
+  --color-shadow: rgba(0, 0, 0, 0.3);
+  --color-shadow-light: rgba(0, 0, 0, 0.2);
+  
+  /* Status Colors (adjusted for dark mode) */
+  --color-success: #5cb85c;
+  --color-success-light: #2d4a2d;
+  --color-warning: #f0ad4e;
+  --color-warning-light: #4a3a1f;
+  --color-danger: #d9534f;
+  --color-danger-light: #4a2a2a;
+  --color-info: #5bc0de;
+  --color-info-light: #2d3e4a;
 }
 
 /* ===========================
