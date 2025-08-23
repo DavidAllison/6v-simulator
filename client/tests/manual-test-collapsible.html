@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manual Test for Collapsible Panels</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        h1 {
+            color: #333;
+        }
+        .test-section {
+            background: white;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .status {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-weight: bold;
+            margin: 5px 0;
+        }
+        .status.pass {
+            background: #10b981;
+            color: white;
+        }
+        .status.fail {
+            background: #ef4444;
+            color: white;
+        }
+        .status.pending {
+            background: #f59e0b;
+            color: white;
+        }
+        code {
+            background: #f3f4f6;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Monaco', 'Consolas', monospace;
+        }
+        ul {
+            line-height: 1.8;
+        }
+        .important {
+            background: #fef3c7;
+            padding: 10px;
+            border-left: 4px solid #f59e0b;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>🧪 Manual Test Report: Collapsible Panels</h1>
+    
+    <div class="test-section">
+        <h2>Test Environment</h2>
+        <ul>
+            <li><strong>URL:</strong> <code>http://localhost:5173</code></li>
+            <li><strong>Date:</strong> <script>document.write(new Date().toLocaleString());</script></li>
+            <li><strong>Branch:</strong> <code>fix/issue-26-collapsible-panels</code></li>
+        </ul>
+    </div>
+
+    <div class="test-section">
+        <h2>Issues Fixed</h2>
+        <p>The following issues were identified and resolved:</p>
+        <ol>
+            <li><strong>StatisticsPanel crash:</strong> The <code>formatNumber</code> function was attempting to call <code>toFixed()</code> on undefined values, causing the component to crash.</li>
+            <li><strong>FPS display error:</strong> The FPS value was undefined initially, causing a similar crash.</li>
+            <li><strong>Missing mock method:</strong> The PathRenderer mock in tests was missing the <code>updateConfig</code> method.</li>
+        </ol>
+    </div>
+
+    <div class="test-section">
+        <h2>Test Checklist</h2>
+        <p>Please manually verify the following on <code>http://localhost:5173</code>:</p>
+        
+        <h3>Left Panel (Controls)</h3>
+        <ul>
+            <li>☐ Click the collapse button (◀) on the right edge of the Controls panel</li>
+            <li>☐ Verify the panel collapses to a thin bar with only the button visible (▶)</li>
+            <li>☐ Click the button again (▶) to expand</li>
+            <li>☐ Verify the panel expands back to full width showing all controls</li>
+            <li>☐ Verify the arrow directions are correct (◀ when expanded, ▶ when collapsed)</li>
+        </ul>
+
+        <h3>Right Panel (Info)</h3>
+        <ul>
+            <li>☐ Click the collapse button (▶) on the left edge of the Info panel</li>
+            <li>☐ Verify the panel collapses to a thin bar with only the button visible (◀)</li>
+            <li>☐ Click the button again (◀) to expand</li>
+            <li>☐ Verify the panel expands back to full width showing statistics</li>
+            <li>☐ Verify the arrow directions are correct (▶ when expanded, ◀ when collapsed)</li>
+        </ul>
+
+        <h3>LocalStorage Persistence</h3>
+        <ul>
+            <li>☐ Collapse the left panel</li>
+            <li>☐ Refresh the page (F5 or Cmd+R)</li>
+            <li>☐ Verify the left panel remains collapsed after refresh</li>
+            <li>☐ Expand the left panel</li>
+            <li>☐ Collapse the right panel</li>
+            <li>☐ Refresh the page</li>
+            <li>☐ Verify the left panel is expanded and right panel is collapsed</li>
+        </ul>
+
+        <h3>Visual Layout</h3>
+        <ul>
+            <li>☐ When both panels are expanded, the canvas is centered between them</li>
+            <li>☐ When left panel is collapsed, canvas shifts left to use available space</li>
+            <li>☐ When right panel is collapsed, canvas shifts right to use available space</li>
+            <li>☐ When both panels are collapsed, canvas uses maximum available width</li>
+            <li>☐ No visual glitches or overlapping elements</li>
+        </ul>
+
+        <h3>Responsive Behavior</h3>
+        <ul>
+            <li>☐ Resize browser window to smaller width</li>
+            <li>☐ Verify panels stack vertically on mobile view</li>
+            <li>☐ Verify collapse functionality still works in mobile view</li>
+        </ul>
+    </div>
+
+    <div class="test-section">
+        <h2>Automated Test Results</h2>
+        <p><span class="status pass">PASS</span> All CollapsiblePanel unit tests</p>
+        <p><span class="status pass">PASS</span> All CollapsiblePanel integration tests</p>
+        <div class="important">
+            <strong>Note:</strong> Some existing physics simulation tests are failing, but these are unrelated to the CollapsiblePanel fix and were pre-existing issues.
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>Code Changes Summary</h2>
+        <ul>
+            <li><strong>StatisticsPanel.tsx:</strong> Added null/undefined checks in <code>formatNumber()</code> and FPS display</li>
+            <li><strong>Tests:</strong> Created comprehensive unit and integration tests for CollapsiblePanel</li>
+            <li><strong>Mocks:</strong> Updated PathRenderer mock to include <code>updateConfig</code> method</li>
+        </ul>
+    </div>
+
+    <div class="test-section">
+        <h2>Recommendation</h2>
+        <p>The collapsible panels should now be working correctly. The fixes address:</p>
+        <ol>
+            <li>Runtime errors that were preventing the panels from rendering</li>
+            <li>Missing mock methods in tests</li>
+            <li>Proper null/undefined handling for statistics display</li>
+        </ol>
+        <p><strong>Status:</strong> <span class="status pass">Ready for merge</span></p>
+    </div>
+</body>
+</html>

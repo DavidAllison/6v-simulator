@@ -123,7 +123,8 @@ const StatisticsPanel: React.FC<StatisticsPanelProps> = ({ stats, fps }) => {
     );
   }
 
-  const formatNumber = (num: number) => {
+  const formatNumber = (num: number | undefined) => {
+    if (num === undefined || num === null) return '0';
     if (num >= 1e9) return `${(num / 1e9).toFixed(2)}B`;
     if (num >= 1e6) return `${(num / 1e6).toFixed(2)}M`;
     if (num >= 1e3) return `${(num / 1e3).toFixed(2)}K`;
@@ -148,7 +149,7 @@ const StatisticsPanel: React.FC<StatisticsPanelProps> = ({ stats, fps }) => {
         <div className="stats-grid">
           <div className="stat-item">
             <span className="stat-label">FPS</span>
-            <span className="stat-value">{fps.toFixed(0)}</span>
+            <span className="stat-value">{fps ? fps.toFixed(0) : '0'}</span>
           </div>
           <div className="stat-item">
             <span className="stat-label">Steps</span>
