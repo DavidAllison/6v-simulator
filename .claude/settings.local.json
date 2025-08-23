@@ -64,7 +64,8 @@
       "Bash(aws route53 change-resource-record-sets:*)",
       "Bash(aws cloudfront publish-function:*)",
       "Bash(aws:*)",
-      "Bash(sed:*)"
+      "Bash(sed:*)",
+      "Bash(gh secret:*)"
     ],
     "deny": [],
     "ask": [],
