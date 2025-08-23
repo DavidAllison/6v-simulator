@@ -77,6 +77,16 @@
   --transition-fast: 150ms ease-in-out;
   --transition-base: 250ms ease-in-out;
   --transition-slow: 350ms ease-in-out;
+
+  /* Hover states */
+  --color-bg-hover: #f5f5f5;
+  --color-border-hover: #bbb;
+  --color-bg-active: #e5e7eb;
+  --color-shadow-hover: rgba(0, 0, 0, 0.15);
+
+  /* Scrollbar */
+  --color-scrollbar-thumb: #888;
+  --color-scrollbar-thumb-hover: #555;
 }
 
 /* Dark Theme */
@@ -112,6 +122,16 @@
   --color-danger-light: #4a2a2a;
   --color-info: #5bc0de;
   --color-info-light: #2d3e4a;
+
+  /* Hover states */
+  --color-bg-hover: #3a3a3a;
+  --color-border-hover: #606060;
+  --color-bg-active: #454545;
+  --color-shadow-hover: rgba(0, 0, 0, 0.4);
+
+  /* Scrollbar */
+  --color-scrollbar-thumb: #606060;
+  --color-scrollbar-thumb-hover: #808080;
 }
 
 /* ===========================

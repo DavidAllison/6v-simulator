@@ -13,32 +13,32 @@
 }
 
 .statistics-panel::-webkit-scrollbar-track {
-  background: #f1f1f1;
+  background: var(--color-bg-tertiary, #f1f1f1);
   border-radius: 3px;
 }
 
 .statistics-panel::-webkit-scrollbar-thumb {
-  background: #c1c1c1;
+  background: var(--color-scrollbar-thumb, #c1c1c1);
   border-radius: 3px;
 }
 
 .statistics-panel::-webkit-scrollbar-thumb:hover {
-  background: #a1a1a1;
+  background: var(--color-scrollbar-thumb-hover, #a1a1a1);
 }
 
 .stats-section {
-  background: white;
+  background: var(--color-bg-secondary, white);
   border-radius: 6px;
   padding: 0.625rem;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
-  border: 1px solid #e5e7eb;
+  box-shadow: 0 1px 2px var(--color-shadow-light, rgba(0, 0, 0, 0.04));
+  border: 1px solid var(--color-border, #e5e7eb);
 }
 
 .stats-section h3 {
   margin: 0 0 0.625rem 0;
   font-size: 0.9rem;
   font-weight: 600;
-  color: #111827;
+  color: var(--color-text-primary, #111827);
   display: flex;
   align-items: center;
   gap: 0.375rem;
@@ -47,13 +47,13 @@
 .section-icon {
   width: 18px;
   height: 18px;
-  color: #4b5563;
+  color: var(--color-text-secondary, #4b5563);
 }
 
 .stats-placeholder {
   padding: 2rem 1rem;
   text-align: center;
-  color: #6b7280;
+  color: var(--color-text-secondary, #6b7280);
   font-size: 0.875rem;
 }
 
@@ -72,7 +72,7 @@
 .stat-label {
   font-size: 0.75rem;
   font-weight: 500;
-  color: #374151;
+  color: var(--color-text-secondary, #374151);
   text-transform: uppercase;
   letter-spacing: 0.025em;
 }
@@ -80,7 +80,7 @@
 .stat-value {
   font-size: 1.25rem;
   font-weight: 700;
-  color: #111827;
+  color: var(--color-text-primary, #111827);
 }
 
 .distribution-chart {
@@ -88,7 +88,7 @@
   height: 120px;
   margin-bottom: 0.625rem;
   border-radius: 6px;
-  background: #fafafa;
+  background: var(--color-bg-tertiary, #fafafa);
 }
 
 .vertex-legend {
@@ -112,15 +112,15 @@
 
 .legend-label {
   font-weight: 600;
-  color: #374151;
+  color: var(--color-text-secondary, #374151);
   text-transform: uppercase;
 }
 
 .legend-value {
   margin-left: auto;
   font-weight: 500;
-  color: #6b7280;
-  background: #f9fafb;
+  color: var(--color-text-secondary, #6b7280);
+  background: var(--color-bg-tertiary, #f9fafb);
   padding: 0.125rem 0.375rem;
   border-radius: 4px;
   font-size: 0.75rem;
@@ -137,7 +137,7 @@
   justify-content: space-between;
   align-items: center;
   padding: 0.375rem 0;
-  border-bottom: 1px solid #f3f4f6;
+  border-bottom: 1px solid var(--color-border-light, #f3f4f6);
 }
 
 .info-item:last-child {
@@ -146,13 +146,13 @@
 
 .info-label {
   font-size: 0.8125rem;
-  color: #6b7280;
+  color: var(--color-text-secondary, #6b7280);
 }
 
 .info-value {
   font-size: 0.875rem;
   font-weight: 600;
-  color: #1f2937;
+  color: var(--color-text-primary, #1f2937);
 }
 
 /* Responsive adjustments */
