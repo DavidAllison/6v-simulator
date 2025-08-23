@@ -7,6 +7,11 @@ on:
       - 'client/**'
       - '.github/workflows/pr-preview.yml'
 
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
+
 jobs:
   deploy-preview:
     runs-on: ubuntu-latest
