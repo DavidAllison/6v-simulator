@@ -21,7 +21,7 @@ jobs:
           aws cloudfront list-functions --query 'FunctionList.Items[*].[Name,FunctionMetadata.Stage]' --output table
           
           # Create or update the function
-          FUNCTION_NAME="6v-index-rewrite"
+          FUNCTION_NAME="6v-simulator-index-rewrite"
           FUNCTION_CODE='function handler(event) {
               var request = event.request;
               var uri = request.uri;
