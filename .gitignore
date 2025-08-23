@@ -5,10 +5,19 @@ build/
 .DS_Store
 .env
 .env.local
+.env.*.local
 .vscode/
 *.swp
 *.swo
 coverage/
 .idea/
+
+# AWS credentials - NEVER commit these!
+.aws/
+aws-credentials.json
+*-credentials.json
+
+# Keep example files
+!.env.local.example
 
 .DS_Store

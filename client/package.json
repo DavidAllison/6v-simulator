@@ -19,7 +19,9 @@
     "typecheck": "tsc --noEmit",
     "format": "prettier --write 'src/**/*.{ts,tsx,js,jsx,json,css}'",
     "format:check": "prettier --check 'src/**/*.{ts,tsx,js,jsx,json,css}'",
-    "prepare": "husky"
+    "prepare": "husky",
+    "deploy": "npm run build && ../scripts/deploy-to-s3.sh",
+    "deploy:dry": "npm run build && AWS_DRY_RUN=true ../scripts/deploy-to-s3.sh"
   },
   "dependencies": {
     "react": "^19.1.1",
