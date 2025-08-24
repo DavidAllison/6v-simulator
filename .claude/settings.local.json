@@ -61,7 +61,8 @@
       "Bash(gh run rerun:*)",
       "Bash(git branch:*)",
       "WebFetch(domain:6v.allison.la)",
-      "WebFetch(domain:pr-29.dev.6v.allison.la)"
+      "WebFetch(domain:pr-29.dev.6v.allison.la)",
+      "Bash(./scripts/update-pr-preview-url.sh:*)"
     ],
     "deny": [],
     "ask": [],
