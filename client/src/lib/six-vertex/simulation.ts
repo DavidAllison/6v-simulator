@@ -454,6 +454,11 @@ export class MonteCarloSimulation implements SimulationController {
     if (params.temperature !== undefined) {
       this.params.beta = 1.0 / params.temperature;
     }
+
+    // Update weights in optimized simulation without resetting
+    if (params.weights && this.optimizedSim) {
+      this.optimizedSim.updateWeights(params.weights);
+    }
   }
 
   /**

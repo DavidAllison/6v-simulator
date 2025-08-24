@@ -134,7 +134,8 @@ function MainSimulator() {
       // Show error in UI instead of crashing
       alert(`Failed to initialize simulation: ${error}`);
     }
-  }, [latticeSize, temperature, weights, boundaryCondition, dwbcType, seed]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [latticeSize, temperature, boundaryCondition, dwbcType, seed]);
 
   // Re-initialize when key parameters change
   useEffect(() => {

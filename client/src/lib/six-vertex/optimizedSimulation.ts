@@ -671,6 +671,29 @@ export class OptimizedPhysicsSimulation {
   }
 
   /**
+   * Update weights without resetting the lattice state
+   */
+  public updateWeights(newWeights: {
+    a1: number;
+    a2: number;
+    b1: number;
+    b2: number;
+    c1: number;
+    c2: number;
+  }): void {
+    // Update internal weights array
+    this.weights[VERTEX_A1] = newWeights.a1;
+    this.weights[VERTEX_A2] = newWeights.a2;
+    this.weights[VERTEX_B1] = newWeights.b1;
+    this.weights[VERTEX_B2] = newWeights.b2;
+    this.weights[VERTEX_C1] = newWeights.c1;
+    this.weights[VERTEX_C2] = newWeights.c2;
+
+    // No need to rebuild flippable list - lattice topology unchanged
+    // The weight changes will be automatically used in the next flip attempts
+  }
+
+  /**
    * Reset simulation
    */
   public reset(): void {
