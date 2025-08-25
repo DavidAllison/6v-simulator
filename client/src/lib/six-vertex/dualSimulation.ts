@@ -3,8 +3,7 @@
  * with convergence tracking based on height function similarity
  */
 
-import { OptimizedLatticeSimulation } from './optimizedSimulation';
-import { generateDWBCState } from './initialStates';
+import { OptimizedSimulation } from './optimizedSimulation';
 import { calculateHeightFunction } from './heightFunction';
 import type { LatticeState, DWBCConfig } from './types';
 import type { HeightData } from './heightFunction';
@@ -45,8 +44,10 @@ export interface ConvergenceMetrics {
 }
 
 export class DualSimulationManager {
-  private simulationA: OptimizedLatticeSimulation;
-  private simulationB: OptimizedLatticeSimulation;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  private simulationA: any; // OptimizedSimulation instance
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  private simulationB: any; // OptimizedSimulation instance
   private config: DualSimulationConfig;
   private convergenceHistory: number[] = [];
   private readonly HISTORY_SIZE = 100;
@@ -56,44 +57,44 @@ export class DualSimulationManager {
     this.config = config;
 
     // Initialize simulation A
-    const latticeA = generateDWBCState(config.size, config.size, config.configA);
-    this.simulationA = new OptimizedLatticeSimulation(
-      latticeA,
-      config.temperature,
-      config.weights,
-      config.seedA,
-    );
+    this.simulationA = new OptimizedSimulation({
+      size: config.size,
+      weights: config.weights,
+      beta: 1 / config.temperature,
+      seed: config.seedA,
+      initialState: config.configA.type === 'high' ? 'dwbc-high' : 'dwbc-low',
+    });
 
     // Initialize simulation B
-    const latticeB = generateDWBCState(config.size, config.size, config.configB);
-    this.simulationB = new OptimizedLatticeSimulation(
-      latticeB,
-      config.temperature,
-      config.weights,
-      config.seedB,
-    );
+    this.simulationB = new OptimizedSimulation({
+      size: config.size,
+      weights: config.weights,
+      beta: 1 / config.temperature,
+      seed: config.seedB,
+      initialState: config.configB.type === 'high' ? 'dwbc-high' : 'dwbc-low',
+    });
   }
 
   /**
    * Step both simulations forward
    */
   public step(stepsPerFrame: number = 100): void {
-    this.simulationA.step(stepsPerFrame);
-    this.simulationB.step(stepsPerFrame);
+    this.simulationA.run(stepsPerFrame);
+    this.simulationB.run(stepsPerFrame);
   }
 
   /**
    * Get the current state of simulation A
    */
   public getLatticeA(): LatticeState {
-    return this.simulationA.getCurrentState();
+    return this.simulationA.getState();
   }
 
   /**
    * Get the current state of simulation B
    */
   public getLatticeB(): LatticeState {
-    return this.simulationB.getCurrentState();
+    return this.simulationB.getState();
   }
 
   /**
@@ -102,12 +103,13 @@ export class DualSimulationManager {
   public getStatsA(): SimulationStats {
     const lattice = this.getLatticeA();
     const heightData = calculateHeightFunction(lattice);
+    const stats = this.simulationA.getStats();
 
     return {
-      flipAttempts: this.simulationA.getFlipAttempts(),
-      flipSuccesses: this.simulationA.getFlipSuccesses(),
-      flipFailures: this.simulationA.getFlipFailures(),
-      totalSteps: this.simulationA.getStepCount(),
+      flipAttempts: stats.flipAttempts,
+      flipSuccesses: stats.successfulFlips,
+      flipFailures: stats.flipAttempts - stats.successfulFlips,
+      totalSteps: stats.step,
       heightData,
     };
   }
@@ -118,12 +120,13 @@ export class DualSimulationManager {
   public getStatsB(): SimulationStats {
     const lattice = this.getLatticeB();
     const heightData = calculateHeightFunction(lattice);
+    const stats = this.simulationB.getStats();
 
     return {
-      flipAttempts: this.simulationB.getFlipAttempts(),
-      flipSuccesses: this.simulationB.getFlipSuccesses(),
-      flipFailures: this.simulationB.getFlipFailures(),
-      totalSteps: this.simulationB.getStepCount(),
+      flipAttempts: stats.flipAttempts,
+      flipSuccesses: stats.successfulFlips,
+      flipFailures: stats.flipAttempts - stats.successfulFlips,
+      totalSteps: stats.step,
       heightData,
     };
   }
@@ -207,11 +210,13 @@ export class DualSimulationManager {
 
   /**
    * Update temperature for both simulations
+   * Note: OptimizedSimulation doesn't support temperature updates,
+   * so we need to recreate the simulations
    */
   public updateTemperature(temperature: number): void {
-    this.simulationA.updateTemperature(temperature);
-    this.simulationB.updateTemperature(temperature);
     this.config.temperature = temperature;
+    // Recreate simulations with new temperature
+    this.reset();
   }
 
   /**
@@ -226,22 +231,22 @@ export class DualSimulationManager {
     }
 
     // Reset simulation A
-    const latticeA = generateDWBCState(this.config.size, this.config.size, this.config.configA);
-    this.simulationA = new OptimizedLatticeSimulation(
-      latticeA,
-      this.config.temperature,
-      this.config.weights,
-      this.config.seedA,
-    );
+    this.simulationA = new OptimizedSimulation({
+      size: this.config.size,
+      weights: this.config.weights,
+      beta: 1 / this.config.temperature,
+      seed: this.config.seedA,
+      initialState: this.config.configA.type === 'high' ? 'dwbc-high' : 'dwbc-low',
+    });
 
     // Reset simulation B
-    const latticeB = generateDWBCState(this.config.size, this.config.size, this.config.configB);
-    this.simulationB = new OptimizedLatticeSimulation(
-      latticeB,
-      this.config.temperature,
-      this.config.weights,
-      this.config.seedB,
-    );
+    this.simulationB = new OptimizedSimulation({
+      size: this.config.size,
+      weights: this.config.weights,
+      beta: 1 / this.config.temperature,
+      seed: this.config.seedB,
+      initialState: this.config.configB.type === 'high' ? 'dwbc-high' : 'dwbc-low',
+    });
 
     // Clear convergence history
     this.convergenceHistory = [];
@@ -260,10 +265,11 @@ export class DualSimulationManager {
    */
   public isEquilibrated(): boolean {
     // Simple check: both simulations have reasonable flip success rates
-    const successRateA =
-      this.simulationA.getFlipSuccesses() / Math.max(1, this.simulationA.getFlipAttempts());
-    const successRateB =
-      this.simulationB.getFlipSuccesses() / Math.max(1, this.simulationB.getFlipAttempts());
+    const statsA = this.simulationA.getStats();
+    const statsB = this.simulationB.getStats();
+
+    const successRateA = statsA.acceptanceRate;
+    const successRateB = statsB.acceptanceRate;
 
     // Typical equilibrium success rates are between 0.3 and 0.7
     return (
@@ -271,8 +277,8 @@ export class DualSimulationManager {
       successRateA < 0.8 &&
       successRateB > 0.2 &&
       successRateB < 0.8 &&
-      this.simulationA.getStepCount() > 1000 &&
-      this.simulationB.getStepCount() > 1000
+      statsA.step > 1000 &&
+      statsB.step > 1000
     );
   }
 }

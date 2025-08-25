@@ -2,6 +2,7 @@ import React, { useRef, useEffect, useState } from 'react';
 import type { LatticeState } from '../lib/six-vertex/types';
 import type { SimulationStats, ConvergenceMetrics } from '../lib/six-vertex/dualSimulation';
 import { PathRenderer } from '../lib/six-vertex/renderer/pathRenderer';
+import { RenderMode } from '../lib/six-vertex/types';
 import './DualSimulationDisplay.css';
 
 interface DualSimulationDisplayProps {
@@ -32,22 +33,22 @@ export function DualSimulationDisplay({
   useEffect(() => {
     if (!latticeA || !canvasARef.current) return;
 
-    const ctx = canvasARef.current.getContext('2d');
-    if (!ctx) return;
-
-    const renderer = new PathRenderer(ctx, cellSize);
-    renderer.render(latticeA, showArrows);
+    const renderer = new PathRenderer(canvasARef.current, {
+      cellSize,
+      mode: showArrows ? RenderMode.Arrows : RenderMode.Paths,
+    });
+    renderer.render(latticeA);
   }, [latticeA, showArrows, cellSize]);
 
   // Render simulation B
   useEffect(() => {
     if (!latticeB || !canvasBRef.current) return;
 
-    const ctx = canvasBRef.current.getContext('2d');
-    if (!ctx) return;
-
-    const renderer = new PathRenderer(ctx, cellSize);
-    renderer.render(latticeB, showArrows);
+    const renderer = new PathRenderer(canvasBRef.current, {
+      cellSize,
+      mode: showArrows ? RenderMode.Arrows : RenderMode.Paths,
+    });
+    renderer.render(latticeB);
   }, [latticeB, showArrows, cellSize]);
 
   const formatNumber = (num: number) => {
@@ -74,7 +75,7 @@ export function DualSimulationDisplay({
   const convergenceStatus = getConvergenceStatus();
 
   const renderSimulationPanel = (
-    canvasRef: React.RefObject<HTMLCanvasElement>,
+    canvasRef: React.RefObject<HTMLCanvasElement | null>,
     stats: SimulationStats | null,
     label: string,
     configType: string,
