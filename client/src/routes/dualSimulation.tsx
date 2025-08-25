@@ -1,11 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { DualSimulationManager } from '../lib/six-vertex/dualSimulation';
 import { DualSimulationDisplay } from '../components/DualSimulationDisplay';
-import type {
-  DualSimulationConfig,
-  SimulationStats,
-  ConvergenceMetrics,
-} from '../lib/six-vertex/dualSimulation';
+import type { DualSimulationConfig } from '../lib/six-vertex/dualSimulation';
 import type { LatticeState } from '../lib/six-vertex/types';
 import '../App.css';
 
@@ -26,9 +22,6 @@ export function DualSimulation() {
 
   const [latticeA, setLatticeA] = useState<LatticeState | null>(null);
   const [latticeB, setLatticeB] = useState<LatticeState | null>(null);
-  const [statsA, setStatsA] = useState<SimulationStats | null>(null);
-  const [statsB, setStatsB] = useState<SimulationStats | null>(null);
-  const [convergenceMetrics, setConvergenceMetrics] = useState<ConvergenceMetrics | null>(null);
 
   const managerRef = useRef<DualSimulationManager | null>(null);
   const animationFrameRef = useRef<number | null>(null);
@@ -50,9 +43,6 @@ export function DualSimulation() {
     // Get initial states
     setLatticeA(managerRef.current.getLatticeA());
     setLatticeB(managerRef.current.getLatticeB());
-    setStatsA(managerRef.current.getStatsA());
-    setStatsB(managerRef.current.getStatsB());
-    setConvergenceMetrics(managerRef.current.getConvergenceMetrics());
   }, [size, temperature, weights]);
 
   // Animation loop
@@ -65,9 +55,6 @@ export function DualSimulation() {
     // Update states
     setLatticeA(managerRef.current.getLatticeA());
     setLatticeB(managerRef.current.getLatticeB());
-    setStatsA(managerRef.current.getStatsA());
-    setStatsB(managerRef.current.getStatsB());
-    setConvergenceMetrics(managerRef.current.getConvergenceMetrics());
 
     // Check for auto-stop on convergence
     const metrics = managerRef.current.getConvergenceMetrics();
@@ -140,9 +127,6 @@ export function DualSimulation() {
     // Update states
     setLatticeA(managerRef.current.getLatticeA());
     setLatticeB(managerRef.current.getLatticeB());
-    setStatsA(managerRef.current.getStatsA());
-    setStatsB(managerRef.current.getStatsB());
-    setConvergenceMetrics(managerRef.current.getConvergenceMetrics());
   };
 
   const cellSize = Math.min(20, 400 / size);
@@ -314,9 +298,6 @@ export function DualSimulation() {
       <DualSimulationDisplay
         latticeA={latticeA}
         latticeB={latticeB}
-        statsA={statsA}
-        statsB={statsB}
-        convergenceMetrics={convergenceMetrics}
         showArrows={showArrows}
         cellSize={cellSize}
       />

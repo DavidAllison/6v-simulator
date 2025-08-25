@@ -55,13 +55,12 @@ export function DualSimulationDisplay({
     const maxCellSizeByWidth = availableWidth / latticeA.width;
     const maxCellSizeByHeight = heightPerSimulation / latticeA.height;
 
-    // Use the minimum to ensure the lattice fits in both dimensions
-    // Make it larger since PanZoomCanvas will scale to fit the viewport
-    // This gives us better resolution while still fitting properly
-    const optimalCellSize = Math.min(maxCellSizeByWidth, maxCellSizeByHeight) * 2;
+    // Use the width-based cell size for better horizontal fill
+    // Since we're aligning top-center, width is more important
+    const optimalCellSize = maxCellSizeByWidth;
 
     // Set a reasonable range for cell size
-    const finalCellSize = Math.max(20, Math.min(optimalCellSize, 150));
+    const finalCellSize = Math.max(30, Math.min(optimalCellSize, 120));
 
     // Calculate actual canvas dimensions
     const canvasWidth = Math.floor(latticeA.width * finalCellSize);

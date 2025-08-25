@@ -108,11 +108,6 @@ export function PanZoomCanvas({
     setZoom((z) => Math.max(z / 1.2, minZoom));
   }, [minZoom]);
 
-  const resetView = useCallback(() => {
-    setZoom(1);
-    setPan({ x: 0, y: 0 });
-  }, []);
-
   const fitToScreen = useCallback(() => {
     if (!containerRef.current) return;
     const container = containerRef.current;
@@ -123,32 +118,40 @@ export function PanZoomCanvas({
     const containerWidth = viewportRect.width;
     const containerHeight = viewportRect.height;
 
-    // Add small padding so content doesn't touch edges
-    const padding = 20;
+    // Small padding from edges
+    const padding = 10;
     const availableWidth = containerWidth - padding * 2;
-    const availableHeight = containerHeight - padding * 2;
+    const availableHeight = containerHeight - padding;
 
     // Calculate scale to fit within available space
     const scaleX = availableWidth / width;
     const scaleY = availableHeight / height;
 
     // Use the smaller scale to ensure the entire canvas fits
-    // Apply a multiplier to use more of the available space (0.95 = 95% usage)
-    const scale = Math.min(scaleX, scaleY) * 0.95;
+    const scale = Math.min(scaleX, scaleY);
 
-    // Calculate pan to center the content
+    // Calculate pan to align top-center of matrix with top-center of container
     const scaledWidth = width * scale;
-    const scaledHeight = height * scale;
+    // const scaledHeight = height * scale; // Not used for top alignment
+
+    // Center horizontally
     const panX = (containerWidth - scaledWidth) / 2;
-    const panY = (containerHeight - scaledHeight) / 2;
+    // Align to top with small padding
+    const panY = padding;
 
     console.log(
       `FitToScreen: viewport ${containerWidth}x${containerHeight}, canvas ${width}x${height}, scale ${scale.toFixed(2)}`,
     );
+    console.log(`Positioning: panX=${panX.toFixed(1)}, panY=${panY.toFixed(1)}`);
 
     setZoom(scale);
     setPan({ x: panX, y: panY });
   }, [width, height]);
+
+  const resetView = useCallback(() => {
+    // Reset to default view with top-center alignment
+    fitToScreen();
+  }, [fitToScreen]);
 
   // Setup wheel event listener
   useEffect(() => {
