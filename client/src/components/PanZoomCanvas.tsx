@@ -146,8 +146,8 @@ export function PanZoomCanvas({
     let scale: number;
     if (fitMode === 'fill') {
       // For fill mode, maximize the canvas size while keeping it fully visible
-      // Use 95% to ensure proper centering and no overflow
-      scale = Math.min(scaleX, scaleY) * 0.95;
+      // Use 98% to maximize space usage while ensuring visibility
+      scale = Math.min(scaleX, scaleY) * 0.98;
     } else {
       // 'contain' mode - ensure entire canvas fits with more padding
       scale = Math.min(scaleX, scaleY) * 0.9;
@@ -165,9 +165,9 @@ export function PanZoomCanvas({
     const scaledHeight = height * scale;
 
     // To center: translate by half the difference between container and scaled canvas
-    // Ensure non-negative values to prevent cutting off
-    const panX = Math.max(0, (containerWidth - scaledWidth) / 2);
-    const panY = Math.max(0, (containerHeight - scaledHeight) / 2);
+    // Allow negative values when canvas is larger than viewport (scale > 1)
+    const panX = (containerWidth - scaledWidth) / 2;
+    const panY = (containerHeight - scaledHeight) / 2;
 
     console.log(
       `FitToScreen [${fitMode}]: viewport ${containerWidth}x${containerHeight}, ` +
