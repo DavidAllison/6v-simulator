@@ -6,6 +6,7 @@ import DwbcVerify from './routes/dwbcVerify';
 import { PerformanceDemo } from './routes/performanceDemo';
 import { DWBCDebug } from './routes/dwbcDebug';
 import { FlipDebug } from './routes/flipDebug';
+import { HeightDemo } from './routes/heightDemo';
 import ErrorBoundary from './components/ErrorBoundary';
 import { ThemeToggle } from './components/ThemeToggle';
 
@@ -145,6 +146,7 @@ function App() {
             <Link to="/dwbc-verify">DWBC Verify</Link>
             <Link to="/dwbc-debug">DWBC Debug</Link>
             <Link to="/flip-debug">Flip Debug</Link>
+            <Link to="/height-demo">Height Function</Link>
             <Link to="/performance">Performance</Link>
             <Link to="/model-tests">Tests</Link>
             <ThemeToggle />
@@ -158,6 +160,7 @@ function App() {
           <Route path="/dwbc-verify" element={<DwbcVerify />} />
           <Route path="/dwbc-debug" element={<DWBCDebug />} />
           <Route path="/flip-debug" element={<FlipDebug />} />
+          <Route path="/height-demo" element={<HeightDemo />} />
           <Route path="/performance" element={<PerformanceDemo />} />
           <Route path="/model-tests" element={<ModelTests />} />
         </Routes>

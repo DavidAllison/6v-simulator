@@ -134,6 +134,14 @@
   animation: fadeIn 0.3s ease-out;
 }
 
+/* Ensure visualization container fills available space in grid */
+.visualization-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0; /* Important for flexbox children */
+}
+
 /* Responsive Design */
 @media (max-width: 1400px) {
   .main-content {
