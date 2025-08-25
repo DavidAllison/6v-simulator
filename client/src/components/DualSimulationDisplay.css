@@ -8,6 +8,8 @@
   background: var(--color-bg-primary);
   box-sizing: border-box;
   min-height: 0; /* Important for nested flexbox */
+  position: relative;
+  overflow: hidden; /* Prevent any overflow */
 }
 
 /* Loading state */
@@ -23,8 +25,10 @@
 /* Canvas styling within PanZoomCanvas */
 .simulation-canvas {
   display: block;
-  image-rendering: crisp-edges;
-  image-rendering: pixelated;
+  /* Use auto for better quality when scaled */
+  image-rendering: auto;
+  /* Fallback for older browsers */
+  image-rendering: -webkit-optimize-contrast;
 }
 
 /* Dark mode adjustments */

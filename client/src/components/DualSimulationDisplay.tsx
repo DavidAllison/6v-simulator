@@ -50,28 +50,50 @@ export function DualSimulationDisplay({
     // Each simulation gets approximately half the height
     const heightPerSimulation = availableHeight / 2;
 
-    // For square lattices, we want to maximize the display size while fitting
-    // Since the lattice is square, we need to find the limiting dimension
-    const maxCellSizeByWidth = availableWidth / latticeA.width;
-    const maxCellSizeByHeight = heightPerSimulation / latticeA.height;
+    // Account for PanZoomCanvas internal elements (controls, label)
+    // Label height: 2.5rem (~40px), Controls padding: ~20px
+    const panZoomOverhead = 60;
+    const effectiveHeightPerSimulation = heightPerSimulation - panZoomOverhead;
 
-    // Use the smaller of the two to ensure it fits in both dimensions
-    // This ensures the matrix fills as much space as possible
+    // Calculate the optimal cell size to fill available space
+    // Add small padding (5%) to prevent edge clipping
+    const paddingFactor = 0.95;
+    const maxCellSizeByWidth = (availableWidth * paddingFactor) / latticeA.width;
+    const maxCellSizeByHeight = (effectiveHeightPerSimulation * paddingFactor) / latticeA.height;
     const optimalCellSize = Math.min(maxCellSizeByWidth, maxCellSizeByHeight);
 
-    // Use a high multiplier to render at high resolution, PanZoomCanvas will scale it down
-    const finalCellSize = Math.floor(optimalCellSize * 0.95);
+    // Set minimum and maximum cell sizes for quality
+    const MIN_CELL_SIZE = 20; // Minimum for visibility
+    const MAX_CELL_SIZE = 100; // Maximum for performance
+
+    // Clamp the cell size within reasonable bounds
+    const finalCellSize = Math.floor(
+      Math.max(MIN_CELL_SIZE, Math.min(MAX_CELL_SIZE, optimalCellSize)),
+    );
 
     // Calculate actual canvas dimensions
     const canvasWidth = Math.floor(latticeA.width * finalCellSize);
     const canvasHeight = Math.floor(latticeA.height * finalCellSize);
 
-    console.log('Container:', containerRect.width, 'x', containerRect.height);
+    console.log('=== DualSimulationDisplay Sizing Debug ===');
+    console.log('Container rect:', containerRect.width, 'x', containerRect.height);
+    console.log('Container padding H/V:', containerPaddingH, containerPaddingV);
     console.log('Available space:', availableWidth, 'x', availableHeight);
-    console.log('Per simulation:', availableWidth, 'x', heightPerSimulation);
-    console.log('Cell size options - width:', maxCellSizeByWidth, 'height:', maxCellSizeByHeight);
-    console.log('Optimal cell size:', optimalCellSize, '→ Final:', finalCellSize);
+    console.log('Per simulation (raw):', availableWidth, 'x', heightPerSimulation);
+    console.log('Per simulation (effective):', availableWidth, 'x', effectiveHeightPerSimulation);
+    console.log('Lattice size:', latticeA.width, 'x', latticeA.height);
+    console.log('Max cell size by width:', maxCellSizeByWidth.toFixed(2));
+    console.log('Max cell size by height:', maxCellSizeByHeight.toFixed(2));
+    console.log('Optimal cell size:', optimalCellSize.toFixed(2));
+    console.log('Final cell size (clamped):', finalCellSize);
     console.log('Canvas dimensions:', canvasWidth, 'x', canvasHeight);
+    console.log(
+      'Expected scale in PanZoomCanvas:',
+      Math.min(availableWidth / canvasWidth, effectiveHeightPerSimulation / canvasHeight).toFixed(
+        2,
+      ),
+    );
+    console.log('=========================================');
 
     setDimensions({
       canvasWidth,
@@ -84,8 +106,13 @@ export function DualSimulationDisplay({
   useEffect(() => {
     if (!containerRef.current) return;
 
-    const resizeObserver = new ResizeObserver(() => {
-      updateDimensions();
+    const resizeObserver = new ResizeObserver((entries) => {
+      // Only update if the container has meaningful dimensions
+      for (const entry of entries) {
+        if (entry.contentRect.width > 100 && entry.contentRect.height > 100) {
+          updateDimensions();
+        }
+      }
     });
 
     resizeObserver.observe(containerRef.current);
@@ -140,6 +167,7 @@ export function DualSimulationDisplay({
         label="Simulation A"
         minZoom={0.3}
         maxZoom={5}
+        fitMode="fill"
       >
         <canvas
           ref={canvasARef}
@@ -156,6 +184,7 @@ export function DualSimulationDisplay({
         label="Simulation B"
         minZoom={0.3}
         maxZoom={5}
+        fitMode="fill"
       >
         <canvas
           ref={canvasBRef}

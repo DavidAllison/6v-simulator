@@ -11,6 +11,8 @@ interface PanZoomCanvasProps {
   enableZoom?: boolean;
   showControls?: boolean;
   label?: string;
+  fitMode?: 'contain' | 'fill'; // 'contain' fits entire canvas, 'fill' maximizes usage
+  initialScale?: number; // Override initial scale
 }
 
 export function PanZoomCanvas({
@@ -23,6 +25,8 @@ export function PanZoomCanvas({
   enableZoom = true,
   showControls = true,
   label,
+  fitMode = 'fill',
+  initialScale,
 }: PanZoomCanvasProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [zoom, setZoom] = useState(1);
@@ -118,38 +122,51 @@ export function PanZoomCanvas({
     const containerWidth = viewportRect.width;
     const containerHeight = viewportRect.height;
 
-    // Small padding from edges
-    const padding = 10;
+    // Adjust padding based on fit mode
+    const padding = fitMode === 'fill' ? 5 : 10;
     const availableWidth = containerWidth - padding * 2;
-    const availableHeight = containerHeight - padding;
+    const availableHeight = containerHeight - padding * 2;
 
     // Calculate scale to fit within available space
     const scaleX = availableWidth / width;
     const scaleY = availableHeight / height;
 
-    // Use the smaller scale to ensure the entire canvas fits
-    const scale = Math.min(scaleX, scaleY);
+    // Choose scale based on fit mode
+    let scale: number;
+    if (fitMode === 'fill') {
+      // For fill mode, use the scale that fits without clipping
+      // This ensures the entire matrix is visible while maximizing size
+      scale = Math.min(scaleX, scaleY);
+    } else {
+      // 'contain' mode - ensure entire canvas fits with more padding
+      scale = Math.min(scaleX, scaleY) * 0.95;
+    }
 
-    // Calculate pan to align top-center of matrix with top-center of container
+    // Override with initial scale if provided
+    if (initialScale !== undefined) {
+      scale = initialScale;
+    }
+
+    // Calculate pan to center the canvas
     const scaledWidth = width * scale;
-    // const scaledHeight = height * scale; // Not used for top alignment
+    const scaledHeight = height * scale;
 
-    // Center horizontally
+    // Center both horizontally and vertically
     const panX = (containerWidth - scaledWidth) / 2;
-    // Align to top with small padding
-    const panY = padding;
+    const panY = (containerHeight - scaledHeight) / 2;
 
     console.log(
-      `FitToScreen: viewport ${containerWidth}x${containerHeight}, canvas ${width}x${height}, scale ${scale.toFixed(2)}`,
+      `FitToScreen [${fitMode}]: viewport ${containerWidth}x${containerHeight}, ` +
+        `canvas ${width}x${height}, scale ${scale.toFixed(2)}`,
     );
     console.log(`Positioning: panX=${panX.toFixed(1)}, panY=${panY.toFixed(1)}`);
 
     setZoom(scale);
     setPan({ x: panX, y: panY });
-  }, [width, height]);
+  }, [width, height, fitMode, initialScale]);
 
   const resetView = useCallback(() => {
-    // Reset to default view with top-center alignment
+    // Reset to default view
     fitToScreen();
   }, [fitToScreen]);
 
