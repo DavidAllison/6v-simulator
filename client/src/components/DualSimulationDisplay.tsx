@@ -35,6 +35,12 @@ export function DualSimulationDisplay({
     const container = containerRef.current;
     const containerRect = container.getBoundingClientRect();
 
+    // Validate container dimensions are reasonable
+    if (containerRect.width < 100 || containerRect.height < 100) {
+      console.log('Container dimensions too small, skipping update');
+      return;
+    }
+
     // Get the actual computed styles to account for padding
     const containerStyles = window.getComputedStyle(container);
     const containerPaddingH =
@@ -45,26 +51,52 @@ export function DualSimulationDisplay({
     // Calculate available space accounting for container padding and gap
     const gap = 8; // Gap between simulations (from CSS: 0.5rem)
     const availableWidth = containerRect.width - containerPaddingH;
-    const availableHeight = containerRect.height - containerPaddingV - gap;
+    const availableHeight = containerRect.height - containerPaddingV;
 
-    // Each simulation gets approximately half the height
-    const heightPerSimulation = availableHeight / 2;
+    // Calculate expected height per simulation
+    let effectiveHeightPerSimulation = (availableHeight - gap) / 2;
 
-    // Account for PanZoomCanvas internal elements (controls, label)
-    // Label height: 2.5rem (~40px), Controls padding: ~20px
-    const panZoomOverhead = 60;
-    const effectiveHeightPerSimulation = heightPerSimulation - panZoomOverhead;
+    // Try to get actual viewport dimensions if PanZoomCanvas is rendered
+    const panZoomContainers = container.querySelectorAll('.pan-zoom-container');
+    if (panZoomContainers.length === 2) {
+      const firstContainer = panZoomContainers[0];
+      const viewport = firstContainer.querySelector('.pan-zoom-viewport');
+      if (viewport) {
+        const viewportRect = viewport.getBoundingClientRect();
+        // Only use viewport height if it's reasonable (less than container height)
+        if (viewportRect.height > 0 && viewportRect.height < containerRect.height) {
+          effectiveHeightPerSimulation = viewportRect.height;
+        } else {
+          // Fallback: estimate based on container structure
+          // Each PanZoomCanvas gets half height minus gap
+          // Viewport is container minus label (40px)
+          effectiveHeightPerSimulation = (availableHeight - gap) / 2 - 40;
+        }
+      }
+    }
 
     // Calculate the optimal cell size to fill available space
-    // Add small padding (5%) to prevent edge clipping
-    const paddingFactor = 0.95;
+    // For small lattices (10x10), we want to maximize the cell size
+    const paddingFactor = latticeA.width <= 10 ? 0.9 : 0.95; // Less padding for small lattices
     const maxCellSizeByWidth = (availableWidth * paddingFactor) / latticeA.width;
     const maxCellSizeByHeight = (effectiveHeightPerSimulation * paddingFactor) / latticeA.height;
-    const optimalCellSize = Math.min(maxCellSizeByWidth, maxCellSizeByHeight);
 
-    // Set minimum and maximum cell sizes for quality
-    const MIN_CELL_SIZE = 20; // Minimum for visibility
-    const MAX_CELL_SIZE = 100; // Maximum for performance
+    // Choose the limiting dimension
+    let optimalCellSize = Math.min(maxCellSizeByWidth, maxCellSizeByHeight);
+
+    // For small lattices, be more aggressive with cell size
+    if (latticeA.width <= 10 && optimalCellSize < 30) {
+      // Try to get at least 30 pixels per cell for small lattices
+      const aggressiveCellSize = Math.min(
+        (availableWidth * 0.85) / latticeA.width,
+        (effectiveHeightPerSimulation * 0.85) / latticeA.height,
+      );
+      optimalCellSize = Math.max(optimalCellSize, aggressiveCellSize);
+    }
+
+    // Set minimum and maximum cell sizes
+    const MIN_CELL_SIZE = latticeA.width <= 10 ? 25 : 20; // Higher minimum for small lattices
+    const MAX_CELL_SIZE = 120;
 
     // Clamp the cell size within reasonable bounds
     const finalCellSize = Math.floor(
@@ -79,8 +111,7 @@ export function DualSimulationDisplay({
     console.log('Container rect:', containerRect.width, 'x', containerRect.height);
     console.log('Container padding H/V:', containerPaddingH, containerPaddingV);
     console.log('Available space:', availableWidth, 'x', availableHeight);
-    console.log('Per simulation (raw):', availableWidth, 'x', heightPerSimulation);
-    console.log('Per simulation (effective):', availableWidth, 'x', effectiveHeightPerSimulation);
+    console.log('Effective height per simulation:', effectiveHeightPerSimulation.toFixed(1));
     console.log('Lattice size:', latticeA.width, 'x', latticeA.height);
     console.log('Max cell size by width:', maxCellSizeByWidth.toFixed(2));
     console.log('Max cell size by height:', maxCellSizeByHeight.toFixed(2));
@@ -117,13 +148,23 @@ export function DualSimulationDisplay({
 
     resizeObserver.observe(containerRef.current);
 
-    // Initial calculation with a small delay to ensure DOM is ready
-    const timeoutId = setTimeout(() => {
+    // Multiple update attempts to ensure we get the correct viewport dimensions
+    // First update: immediate
+    updateDimensions();
+
+    // Second update: after a small delay for DOM to settle
+    const timeoutId1 = setTimeout(() => {
       updateDimensions();
-    }, 100);
+    }, 50);
+
+    // Third update: after PanZoomCanvas should be fully rendered
+    const timeoutId2 = setTimeout(() => {
+      updateDimensions();
+    }, 200);
 
     return () => {
-      clearTimeout(timeoutId);
+      clearTimeout(timeoutId1);
+      clearTimeout(timeoutId2);
       resizeObserver.disconnect();
     };
   }, [updateDimensions]);

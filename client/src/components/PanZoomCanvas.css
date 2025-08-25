@@ -9,6 +9,7 @@
   border-radius: 0.5rem;
   overflow: hidden;
   box-sizing: border-box;
+  min-height: 200px; /* Ensure minimum height for visibility */
 }
 
 .pan-zoom-viewport {

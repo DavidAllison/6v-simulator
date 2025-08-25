@@ -122,8 +122,8 @@ export function PanZoomCanvas({
     const containerWidth = viewportRect.width;
     const containerHeight = viewportRect.height;
 
-    // Adjust padding based on fit mode
-    const padding = fitMode === 'fill' ? 5 : 10;
+    // Adjust padding based on fit mode - minimal padding for fill mode
+    const padding = fitMode === 'fill' ? 2 : 10;
     const availableWidth = containerWidth - padding * 2;
     const availableHeight = containerHeight - padding * 2;
 
@@ -134,9 +134,9 @@ export function PanZoomCanvas({
     // Choose scale based on fit mode
     let scale: number;
     if (fitMode === 'fill') {
-      // For fill mode, use the scale that fits without clipping
-      // This ensures the entire matrix is visible while maximizing size
-      scale = Math.min(scaleX, scaleY);
+      // For fill mode, maximize the canvas size while keeping it fully visible
+      // Use 99% of the available scale to ensure no clipping
+      scale = Math.min(scaleX, scaleY) * 0.99;
     } else {
       // 'contain' mode - ensure entire canvas fits with more padding
       scale = Math.min(scaleX, scaleY) * 0.95;
