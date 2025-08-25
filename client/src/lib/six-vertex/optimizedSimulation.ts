@@ -333,7 +333,11 @@ export class OptimizedPhysicsSimulation {
    * For simplicity and correctness, we just rebuild the entire list
    * This ensures we don't miss any new flippable positions
    */
-  private updateFlippableListAfterFlip(_row: number, _col: number, _direction: FlipDirection): void {
+  private updateFlippableListAfterFlip(
+    _row: number,
+    _col: number,
+    _direction: FlipDirection,
+  ): void {
     // Simply rebuild the entire list to ensure correctness
     // This is more robust than trying to do incremental updates
     this.buildFlippableList();
@@ -636,29 +640,29 @@ export class OptimizedPhysicsSimulation {
     for (let row = 0; row < this.size; row++) {
       const rowVertices: any[] = [];
       const rowHorizontalEdges: any[] = [];
-      
+
       for (let col = 0; col < this.size; col++) {
         const idx = row * this.size + col;
         const type = NUM_TO_VERTEX_TYPE[this.vertices[idx]];
         const config = this.getVertexConfiguration(type);
-        
+
         rowVertices.push({
           position: { row, col },
           type,
           configuration: config,
         });
-        
+
         // Add horizontal edge (except for last column)
         if (col < this.size - 1) {
           // Edge state is determined by the vertex's right configuration
           rowHorizontalEdges.push(config.right === 'out' ? 'out' : 'in');
         }
       }
-      
+
       vertices.push(rowVertices);
       horizontalEdges.push(rowHorizontalEdges);
     }
-    
+
     // Build vertical edges array
     for (let row = 0; row < this.size - 1; row++) {
       const rowVerticalEdges: any[] = [];

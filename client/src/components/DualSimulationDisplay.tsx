@@ -1,16 +1,13 @@
-import React, { useRef, useEffect, useState } from 'react';
+import React, { useRef, useEffect, useState, useCallback } from 'react';
 import type { LatticeState } from '../lib/six-vertex/types';
-import type { SimulationStats, ConvergenceMetrics } from '../lib/six-vertex/dualSimulation';
 import { PathRenderer } from '../lib/six-vertex/renderer/pathRenderer';
 import { RenderMode } from '../lib/six-vertex/types';
+import { PanZoomCanvas } from './PanZoomCanvas';
 import './DualSimulationDisplay.css';
 
 interface DualSimulationDisplayProps {
   latticeA: LatticeState | null;
   latticeB: LatticeState | null;
-  statsA: SimulationStats | null;
-  statsB: SimulationStats | null;
-  convergenceMetrics: ConvergenceMetrics | null;
   showArrows: boolean;
   cellSize: number;
 }
@@ -18,195 +15,156 @@ interface DualSimulationDisplayProps {
 export function DualSimulationDisplay({
   latticeA,
   latticeB,
-  statsA,
-  statsB,
-  convergenceMetrics,
   showArrows,
-  cellSize,
+  cellSize: baseCellSize,
 }: DualSimulationDisplayProps) {
   const canvasARef = useRef<HTMLCanvasElement>(null);
   const canvasBRef = useRef<HTMLCanvasElement>(null);
-  const [activeTab, setActiveTab] = useState<'side-by-side' | 'tabbed'>('side-by-side');
-  const [selectedSimulation, setSelectedSimulation] = useState<'A' | 'B'>('A');
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  const [dimensions, setDimensions] = useState({
+    canvasWidth: 800,
+    canvasHeight: 800,
+    cellSize: baseCellSize,
+  });
+
+  // Calculate optimal dimensions to fill available space
+  const updateDimensions = useCallback(() => {
+    if (!containerRef.current || !latticeA) return;
+
+    const container = containerRef.current;
+    const containerRect = container.getBoundingClientRect();
+
+    // Get the actual computed styles to account for padding
+    const containerStyles = window.getComputedStyle(container);
+    const containerPaddingH =
+      parseFloat(containerStyles.paddingLeft) + parseFloat(containerStyles.paddingRight);
+    const containerPaddingV =
+      parseFloat(containerStyles.paddingTop) + parseFloat(containerStyles.paddingBottom);
+
+    // Calculate available space accounting for container padding and gap
+    const gap = 8; // Gap between simulations (from CSS: 0.5rem)
+    const availableWidth = containerRect.width - containerPaddingH;
+    const availableHeight = containerRect.height - containerPaddingV - gap;
+
+    // Each simulation gets approximately half the height
+    const heightPerSimulation = availableHeight / 2;
+
+    // For square lattices, we want to maximize the display size while fitting
+    // Since the lattice is square, we need to find the limiting dimension
+    const maxCellSizeByWidth = availableWidth / latticeA.width;
+    const maxCellSizeByHeight = heightPerSimulation / latticeA.height;
+
+    // Use the minimum to ensure the lattice fits in both dimensions
+    // Make it larger since PanZoomCanvas will scale to fit the viewport
+    // This gives us better resolution while still fitting properly
+    const optimalCellSize = Math.min(maxCellSizeByWidth, maxCellSizeByHeight) * 2;
+
+    // Set a reasonable range for cell size
+    const finalCellSize = Math.max(20, Math.min(optimalCellSize, 150));
+
+    // Calculate actual canvas dimensions
+    const canvasWidth = Math.floor(latticeA.width * finalCellSize);
+    const canvasHeight = Math.floor(latticeA.height * finalCellSize);
+
+    console.log('Container:', containerRect.width, 'x', containerRect.height);
+    console.log('Available space:', availableWidth, 'x', availableHeight);
+    console.log('Per simulation:', availableWidth, 'x', heightPerSimulation);
+    console.log('Cell size options - width:', maxCellSizeByWidth, 'height:', maxCellSizeByHeight);
+    console.log('Optimal cell size:', optimalCellSize, '→ Final:', finalCellSize);
+    console.log('Canvas dimensions:', canvasWidth, 'x', canvasHeight);
+
+    setDimensions({
+      canvasWidth,
+      canvasHeight,
+      cellSize: finalCellSize,
+    });
+  }, [latticeA]);
+
+  // Setup resize observer
+  useEffect(() => {
+    if (!containerRef.current) return;
+
+    const resizeObserver = new ResizeObserver(() => {
+      updateDimensions();
+    });
+
+    resizeObserver.observe(containerRef.current);
+
+    // Initial calculation with a small delay to ensure DOM is ready
+    const timeoutId = setTimeout(() => {
+      updateDimensions();
+    }, 100);
+
+    return () => {
+      clearTimeout(timeoutId);
+      resizeObserver.disconnect();
+    };
+  }, [updateDimensions]);
 
   // Render simulation A
   useEffect(() => {
     if (!latticeA || !canvasARef.current) return;
 
     const renderer = new PathRenderer(canvasARef.current, {
-      cellSize,
+      cellSize: dimensions.cellSize,
       mode: showArrows ? RenderMode.Arrows : RenderMode.Paths,
     });
     renderer.render(latticeA);
-  }, [latticeA, showArrows, cellSize]);
+  }, [latticeA, showArrows, dimensions.cellSize]);
 
   // Render simulation B
   useEffect(() => {
     if (!latticeB || !canvasBRef.current) return;
 
     const renderer = new PathRenderer(canvasBRef.current, {
-      cellSize,
+      cellSize: dimensions.cellSize,
       mode: showArrows ? RenderMode.Arrows : RenderMode.Paths,
     });
     renderer.render(latticeB);
-  }, [latticeB, showArrows, cellSize]);
+  }, [latticeB, showArrows, dimensions.cellSize]);
 
-  const formatNumber = (num: number) => {
-    if (num >= 1000000) {
-      return `${(num / 1000000).toFixed(2)}M`;
-    } else if (num >= 1000) {
-      return `${(num / 1000).toFixed(1)}K`;
-    }
-    return num.toString();
-  };
-
-  const getConvergenceStatus = () => {
-    if (!convergenceMetrics) return { text: 'Initializing...', className: 'status-init' };
-
-    if (convergenceMetrics.isConverged) {
-      return { text: 'Converged', className: 'status-converged' };
-    } else if (convergenceMetrics.volumeRatio > 0.9) {
-      return { text: 'Converging...', className: 'status-converging' };
-    } else {
-      return { text: 'Divergent', className: 'status-divergent' };
-    }
-  };
-
-  const convergenceStatus = getConvergenceStatus();
-
-  const renderSimulationPanel = (
-    canvasRef: React.RefObject<HTMLCanvasElement | null>,
-    stats: SimulationStats | null,
-    label: string,
-    configType: string,
-  ) => {
-    const width = latticeA?.width || 0;
-    const height = latticeA?.height || 0;
-    const canvasSize = cellSize * Math.max(width, height);
-
+  if (!latticeA || !latticeB) {
     return (
-      <div className="simulation-panel">
-        <div className="simulation-header">
-          <h3>{label}</h3>
-          <span className="config-badge">{configType}</span>
-        </div>
-
-        <div className="canvas-container">
-          <canvas
-            ref={canvasRef}
-            width={canvasSize}
-            height={canvasSize}
-            className="simulation-canvas"
-          />
-        </div>
-
-        {stats && stats.heightData && (
-          <div className="simulation-stats">
-            <div className="stat-row">
-              <span>Volume:</span>
-              <strong>{stats.heightData.totalVolume.toFixed(1)}</strong>
-            </div>
-            <div className="stat-row">
-              <span>Avg Height:</span>
-              <strong>{stats.heightData.averageHeight.toFixed(3)}</strong>
-            </div>
-            <div className="stat-row">
-              <span>Steps:</span>
-              <strong>{formatNumber(stats.totalSteps)}</strong>
-            </div>
-            <div className="stat-row">
-              <span>Success Rate:</span>
-              <strong>
-                {((stats.flipSuccesses / Math.max(1, stats.flipAttempts)) * 100).toFixed(1)}%
-              </strong>
-            </div>
-          </div>
-        )}
+      <div className="dual-simulation-display">
+        <div className="loading-message">Initializing simulations...</div>
       </div>
     );
-  };
+  }
 
   return (
-    <div className="dual-simulation-display">
-      <div className="convergence-header">
-        <div className="convergence-status">
-          <span className={`status-indicator ${convergenceStatus.className}`}>
-            {convergenceStatus.text}
-          </span>
-          {convergenceMetrics && (
-            <>
-              <span className="metric">
-                Volume Ratio: {(convergenceMetrics.volumeRatio * 100).toFixed(1)}%
-              </span>
-              <span className="metric">
-                Volume Diff: {convergenceMetrics.volumeDifference.toFixed(1)}
-              </span>
-              <span className="metric">
-                Smoothed: {(convergenceMetrics.smoothedDifference * 100).toFixed(2)}%
-              </span>
-            </>
-          )}
-        </div>
+    <div className="dual-simulation-display" ref={containerRef}>
+      {/* Simulation A */}
+      <PanZoomCanvas
+        width={dimensions.canvasWidth}
+        height={dimensions.canvasHeight}
+        label="Simulation A"
+        minZoom={0.3}
+        maxZoom={5}
+      >
+        <canvas
+          ref={canvasARef}
+          width={dimensions.canvasWidth}
+          height={dimensions.canvasHeight}
+          className="simulation-canvas"
+        />
+      </PanZoomCanvas>
 
-        <div className="view-toggle">
-          <button
-            className={activeTab === 'side-by-side' ? 'active' : ''}
-            onClick={() => setActiveTab('side-by-side')}
-          >
-            Side by Side
-          </button>
-          <button
-            className={activeTab === 'tabbed' ? 'active' : ''}
-            onClick={() => setActiveTab('tabbed')}
-          >
-            Tabbed
-          </button>
-        </div>
-      </div>
-
-      {activeTab === 'side-by-side' ? (
-        <div className="simulations-container side-by-side">
-          {renderSimulationPanel(canvasARef, statsA, 'Simulation A', 'DWBC High')}
-          {renderSimulationPanel(canvasBRef, statsB, 'Simulation B', 'DWBC Low')}
-        </div>
-      ) : (
-        <div className="simulations-container tabbed">
-          <div className="tab-buttons">
-            <button
-              className={selectedSimulation === 'A' ? 'active' : ''}
-              onClick={() => setSelectedSimulation('A')}
-            >
-              Simulation A (DWBC High)
-            </button>
-            <button
-              className={selectedSimulation === 'B' ? 'active' : ''}
-              onClick={() => setSelectedSimulation('B')}
-            >
-              Simulation B (DWBC Low)
-            </button>
-          </div>
-
-          {selectedSimulation === 'A'
-            ? renderSimulationPanel(canvasARef, statsA, 'Simulation A', 'DWBC High')
-            : renderSimulationPanel(canvasBRef, statsB, 'Simulation B', 'DWBC Low')}
-        </div>
-      )}
-
-      {convergenceMetrics && convergenceMetrics.historyLength > 0 && (
-        <div className="convergence-progress">
-          <div className="progress-bar">
-            <div
-              className="progress-fill"
-              style={{
-                width: `${Math.min(100, (1 - convergenceMetrics.smoothedDifference) * 100)}%`,
-              }}
-            />
-          </div>
-          <div className="progress-label">
-            Convergence Progress: {((1 - convergenceMetrics.smoothedDifference) * 100).toFixed(1)}%
-          </div>
-        </div>
-      )}
+      {/* Simulation B */}
+      <PanZoomCanvas
+        width={dimensions.canvasWidth}
+        height={dimensions.canvasHeight}
+        label="Simulation B"
+        minZoom={0.3}
+        maxZoom={5}
+      >
+        <canvas
+          ref={canvasBRef}
+          width={dimensions.canvasWidth}
+          height={dimensions.canvasHeight}
+          className="simulation-canvas"
+        />
+      </PanZoomCanvas>
     </div>
   );
 }

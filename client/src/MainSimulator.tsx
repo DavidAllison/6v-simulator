@@ -546,90 +546,64 @@ function MainSimulator() {
           renderConfig={renderConfig}
         />
       ) : (
-        <div
-          className="dual-simulation-container"
-          style={{
-            flex: 1,
-            display: 'flex',
-            flexDirection: 'column',
-            padding: '20px',
-            overflow: 'auto',
-          }}
-        >
+        <div className="visualization-container">
           <DualSimulationDisplay
             latticeA={dualLatticeA}
             latticeB={dualLatticeB}
-            statsA={dualStatsA}
-            statsB={dualStatsB}
-            convergenceMetrics={convergenceMetrics}
             showArrows={renderMode === RenderMode.Arrows}
-            cellSize={Math.min(30, 600 / latticeSize)}
+            cellSize={Math.min(40, 800 / latticeSize)}
           />
         </div>
       )}
 
       <CollapsiblePanel title="Info" side="right" className="panel-section">
-        {simulationMode === 'single' ? (
-          <>
-            <StatisticsPanel stats={stats} fps={fps} />
-            <SaveLoadPanel
-              getCurrentData={getCurrentSimulationData}
-              onLoadData={loadSimulationData}
-            />
-          </>
-        ) : (
-          <>
-            {/* Dual mode statistics */}
-            <div className="dual-stats-section">
-              <h3>Convergence Status</h3>
-              {convergenceMetrics && (
-                <div className="convergence-info">
-                  <p>Volume Ratio: {(convergenceMetrics.volumeRatio * 100).toFixed(1)}%</p>
-                  <p>Status: {convergenceMetrics.isConverged ? 'Converged' : 'Running'}</p>
-                  <p>Smoothed Diff: {(convergenceMetrics.smoothedDifference * 100).toFixed(2)}%</p>
-                </div>
-              )}
-            </div>
-            {dualStatsA && dualStatsB && (
-              <div className="dual-stats-comparison">
-                <h4>Simulation A</h4>
-                <StatisticsPanel
-                  stats={
-                    {
-                      step: dualStatsA.totalSteps,
-                      energy: 0,
-                      vertexCounts: {} as Record<string, number>,
-                      acceptanceRate:
-                        dualStatsA.flipSuccesses / Math.max(1, dualStatsA.flipAttempts),
-                      flipAttempts: dualStatsA.flipAttempts,
-                      successfulFlips: dualStatsA.flipSuccesses,
-                      beta: 1 / temperature,
-                      height: dualStatsA.heightData?.totalVolume || 0,
-                    } as SimulationStats
-                  }
-                  fps={fps}
-                />
-
-                <h4>Simulation B</h4>
-                <StatisticsPanel
-                  stats={
-                    {
-                      step: dualStatsB.totalSteps,
-                      energy: 0,
-                      vertexCounts: {} as Record<string, number>,
-                      acceptanceRate:
-                        dualStatsB.flipSuccesses / Math.max(1, dualStatsB.flipAttempts),
-                      flipAttempts: dualStatsB.flipAttempts,
-                      successfulFlips: dualStatsB.flipSuccesses,
-                      beta: 1 / temperature,
-                      height: dualStatsB.heightData?.totalVolume || 0,
-                    } as SimulationStats
-                  }
-                  fps={fps}
-                />
-              </div>
-            )}
-          </>
+        <StatisticsPanel
+          stats={stats}
+          fps={fps}
+          simulationMode={simulationMode}
+          statsA={
+            dualStatsA
+              ? ({
+                  step: dualStatsA.totalSteps,
+                  energy: 0,
+                  vertexCounts: {} as Record<string, number>,
+                  acceptanceRate: dualStatsA.flipSuccesses / Math.max(1, dualStatsA.flipAttempts),
+                  flipAttempts: dualStatsA.flipAttempts,
+                  successfulFlips: dualStatsA.flipSuccesses,
+                  beta: 1 / temperature,
+                  height: dualStatsA.heightData?.avgHeight,
+                  volume: dualStatsA.heightData?.totalVolume,
+                  delta: 0,
+                  entropy: 0,
+                } as SimulationStats)
+              : null
+          }
+          statsB={
+            dualStatsB
+              ? ({
+                  step: dualStatsB.totalSteps,
+                  energy: 0,
+                  vertexCounts: {} as Record<string, number>,
+                  acceptanceRate: dualStatsB.flipSuccesses / Math.max(1, dualStatsB.flipAttempts),
+                  flipAttempts: dualStatsB.flipAttempts,
+                  successfulFlips: dualStatsB.flipSuccesses,
+                  beta: 1 / temperature,
+                  height: dualStatsB.heightData?.avgHeight,
+                  volume: dualStatsB.heightData?.totalVolume,
+                  delta: 0,
+                  entropy: 0,
+                } as SimulationStats)
+              : null
+          }
+          convergenceMetrics={convergenceMetrics}
+          configA={configA}
+          configB={configB}
+        />
+        {simulationMode === 'single' && (
+          <SaveLoadPanel
+            getCurrentData={getCurrentSimulationData}
+            onLoadData={loadSimulationData}
+          />
         )}
       </CollapsiblePanel>
     </div>
