@@ -392,43 +392,6 @@ export function PanZoomCanvas({
           cursor: isDragging ? 'grabbing' : enablePan ? 'grab' : 'default',
         }}
       >
-        {/* Debug: Center crosshair */}
-        <div
-          style={{
-            position: 'absolute',
-            top: '50%',
-            left: '50%',
-            transform: 'translate(-50%, -50%)',
-            width: '20px',
-            height: '20px',
-            pointerEvents: 'none',
-            zIndex: 1000,
-          }}
-        >
-          <div
-            style={{
-              position: 'absolute',
-              top: '50%',
-              left: 0,
-              right: 0,
-              height: '1px',
-              backgroundColor: 'red',
-              transform: 'translateY(-50%)',
-            }}
-          />
-          <div
-            style={{
-              position: 'absolute',
-              left: '50%',
-              top: 0,
-              bottom: 0,
-              width: '1px',
-              backgroundColor: 'red',
-              transform: 'translateX(-50%)',
-            }}
-          />
-        </div>
-
         <div
           className={`pan-zoom-content ${isDragging ? 'dragging' : ''} ${isInitialized ? 'initialized' : ''}`}
           style={{
