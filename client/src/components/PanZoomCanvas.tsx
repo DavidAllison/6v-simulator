@@ -34,6 +34,7 @@ export function PanZoomCanvas({
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
   const [lastPan, setLastPan] = useState({ x: 0, y: 0 });
+  const [isInitialized, setIsInitialized] = useState(false);
 
   // Handle mouse wheel zoom
   const handleWheel = useCallback(
@@ -116,11 +117,21 @@ export function PanZoomCanvas({
     if (!containerRef.current) return;
     const container = containerRef.current;
     const viewport = container.querySelector('.pan-zoom-viewport');
-    if (!viewport) return;
+    if (!viewport) {
+      console.warn('Viewport not found');
+      return;
+    }
 
+    // Use getBoundingClientRect to get actual rendered dimensions
     const viewportRect = viewport.getBoundingClientRect();
     const containerWidth = viewportRect.width;
     const containerHeight = viewportRect.height;
+
+    // Early return if dimensions are invalid
+    if (containerWidth <= 0 || containerHeight <= 0) {
+      console.warn('Invalid viewport dimensions:', containerWidth, containerHeight);
+      return;
+    }
 
     // Adjust padding based on fit mode - minimal padding for fill mode
     const padding = fitMode === 'fill' ? 2 : 10;
@@ -148,10 +159,12 @@ export function PanZoomCanvas({
     }
 
     // Calculate pan to center the canvas
+    // Since we're using transformOrigin: '0 0', the canvas scales from top-left
+    // After scaling, the canvas dimensions become width*scale and height*scale
     const scaledWidth = width * scale;
     const scaledHeight = height * scale;
 
-    // Center both horizontally and vertically
+    // To center: translate by half the difference between container and scaled canvas
     const panX = (containerWidth - scaledWidth) / 2;
     const panY = (containerHeight - scaledHeight) / 2;
 
@@ -159,11 +172,19 @@ export function PanZoomCanvas({
       `FitToScreen [${fitMode}]: viewport ${containerWidth}x${containerHeight}, ` +
         `canvas ${width}x${height}, scale ${scale.toFixed(2)}`,
     );
-    console.log(`Positioning: panX=${panX.toFixed(1)}, panY=${panY.toFixed(1)}`);
+    console.log(
+      `Scaled dimensions: ${scaledWidth.toFixed(1)}x${scaledHeight.toFixed(1)}, ` +
+        `pan: (${panX.toFixed(1)}, ${panY.toFixed(1)})`,
+    );
 
     setZoom(scale);
     setPan({ x: panX, y: panY });
-  }, [width, height, fitMode, initialScale]);
+
+    // Mark as initialized after first successful fit
+    if (!isInitialized) {
+      setTimeout(() => setIsInitialized(true), 100);
+    }
+  }, [width, height, fitMode, initialScale, isInitialized]);
 
   const resetView = useCallback(() => {
     // Reset to default view
@@ -192,35 +213,90 @@ export function PanZoomCanvas({
 
   // Initial fit to screen and when dimensions change
   useEffect(() => {
-    // Wait for next frame to ensure DOM is fully rendered
-    // Use a small delay to ensure container dimensions are settled
-    const timeoutId = setTimeout(() => {
-      requestAnimationFrame(() => {
-        fitToScreen();
-      });
-    }, 50);
+    // Multiple attempts to ensure proper initialization
+    const attemptFit = () => {
+      // Only attempt if container exists
+      if (containerRef.current) {
+        const viewport = containerRef.current.querySelector('.pan-zoom-viewport');
+        if (viewport) {
+          requestAnimationFrame(() => {
+            fitToScreen();
+          });
+        }
+      }
+    };
 
-    return () => clearTimeout(timeoutId);
+    // Use mutation observer to detect when viewport is added
+    const mutationObserver = new MutationObserver(() => {
+      attemptFit();
+    });
+
+    if (containerRef.current) {
+      mutationObserver.observe(containerRef.current, {
+        childList: true,
+        subtree: true,
+      });
+    }
+
+    // First attempt: immediate (might work if already rendered)
+    attemptFit();
+
+    // Second attempt: after a short delay
+    const timeout1 = setTimeout(attemptFit, 50);
+
+    // Third attempt: after layout should be complete
+    const timeout2 = setTimeout(attemptFit, 150);
+
+    // Fourth attempt: failsafe
+    const timeout3 = setTimeout(attemptFit, 300);
+
+    return () => {
+      clearTimeout(timeout1);
+      clearTimeout(timeout2);
+      clearTimeout(timeout3);
+      mutationObserver.disconnect();
+    };
   }, [fitToScreen, width, height]);
 
   // Also fit to screen when container resizes
   useEffect(() => {
     if (!containerRef.current) return;
 
+    let lastWidth = 0;
+    let lastHeight = 0;
+    let resizeTimeout: NodeJS.Timeout;
+
     const resizeObserver = new ResizeObserver((entries) => {
+      // Clear any pending resize timeout
+      clearTimeout(resizeTimeout);
+
       // Only refit if size actually changed significantly (avoid infinite loops)
       for (const entry of entries) {
         const { width: newWidth, height: newHeight } = entry.contentRect;
-        if (Math.abs(newWidth) > 10 && Math.abs(newHeight) > 10) {
-          requestAnimationFrame(() => {
-            fitToScreen();
-          });
+
+        // Check if size changed significantly (more than 5px difference)
+        const widthChanged = Math.abs(newWidth - lastWidth) > 5;
+        const heightChanged = Math.abs(newHeight - lastHeight) > 5;
+
+        if ((widthChanged || heightChanged) && newWidth > 10 && newHeight > 10) {
+          lastWidth = newWidth;
+          lastHeight = newHeight;
+
+          // Debounce resize calls
+          resizeTimeout = setTimeout(() => {
+            requestAnimationFrame(() => {
+              fitToScreen();
+            });
+          }, 100);
         }
       }
     });
 
     resizeObserver.observe(containerRef.current);
-    return () => resizeObserver.disconnect();
+    return () => {
+      clearTimeout(resizeTimeout);
+      resizeObserver.disconnect();
+    };
   }, [fitToScreen]);
 
   return (
@@ -236,7 +312,7 @@ export function PanZoomCanvas({
         }}
       >
         <div
-          className="pan-zoom-content"
+          className={`pan-zoom-content ${isDragging ? 'dragging' : ''} ${isInitialized ? 'initialized' : ''}`}
           style={{
             transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`,
             transformOrigin: '0 0',

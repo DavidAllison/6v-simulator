@@ -24,6 +24,10 @@
 .pan-zoom-content {
   position: absolute;
   will-change: transform;
+  /* No transition by default during initialization */
+}
+
+.pan-zoom-content.initialized {
   transition: transform 0.1s ease-out;
 }
 
