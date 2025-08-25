@@ -1,7 +1,7 @@
 .pan-zoom-container {
   position: relative;
   width: 100%;
-  height: calc(50% - 0.25rem); /* Each takes half minus gap */
+  height: calc(50% - 0.125rem); /* Each takes half minus half of gap */
   display: flex;
   flex-direction: column;
   background: var(--color-bg-secondary);

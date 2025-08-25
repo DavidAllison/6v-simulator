@@ -76,8 +76,8 @@ export function DualSimulationDisplay({
     }
 
     // Calculate the optimal cell size to fill available space
-    // Use conservative sizing to ensure the canvas fits within PanZoomCanvas viewport
-    const paddingFactor = 0.7; // Conservative padding to ensure proper fit
+    // Use aggressive sizing to maximize space usage
+    const paddingFactor = 0.95; // Use 95% of available space
     const maxCellSizeByWidth = (availableWidth * paddingFactor) / latticeA.width;
     const maxCellSizeByHeight = (effectiveHeightPerSimulation * paddingFactor) / latticeA.height;
 

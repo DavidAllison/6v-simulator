@@ -3,8 +3,8 @@
   height: 100%;
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
-  padding: 0.5rem;
+  gap: 0.25rem; /* Smaller gap */
+  padding: 0.25rem; /* Minimal padding */
   background: var(--color-bg-primary);
   box-sizing: border-box;
   min-height: 0; /* Important for nested flexbox */
