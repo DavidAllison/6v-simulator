@@ -7,6 +7,7 @@ import { PerformanceDemo } from './routes/performanceDemo';
 import { DWBCDebug } from './routes/dwbcDebug';
 import { FlipDebug } from './routes/flipDebug';
 import { HeightDemo } from './routes/heightDemo';
+import { DualSimulation } from './routes/dualSimulation';
 import ErrorBoundary from './components/ErrorBoundary';
 import { ThemeToggle } from './components/ThemeToggle';
 
@@ -143,6 +144,7 @@ function App() {
           </div>
           <nav className="header-nav">
             <Link to="/">Simulator</Link>
+            <Link to="/dual-simulation">Dual Sim</Link>
             <Link to="/dwbc-verify">DWBC Verify</Link>
             <Link to="/dwbc-debug">DWBC Debug</Link>
             <Link to="/flip-debug">Flip Debug</Link>
@@ -157,6 +159,7 @@ function App() {
       <ErrorBoundary>
         <Routes>
           <Route path="/" element={<MainSimulator />} />
+          <Route path="/dual-simulation" element={<DualSimulation />} />
           <Route path="/dwbc-verify" element={<DwbcVerify />} />
           <Route path="/dwbc-debug" element={<DWBCDebug />} />
           <Route path="/flip-debug" element={<FlipDebug />} />
