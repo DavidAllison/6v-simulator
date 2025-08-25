@@ -76,27 +76,17 @@ export function DualSimulationDisplay({
     }
 
     // Calculate the optimal cell size to fill available space
-    // For small lattices (10x10), we want to maximize the cell size
-    const paddingFactor = latticeA.width <= 10 ? 0.9 : 0.95; // Less padding for small lattices
+    // Use conservative sizing to ensure the canvas fits within PanZoomCanvas viewport
+    const paddingFactor = 0.7; // Conservative padding to ensure proper fit
     const maxCellSizeByWidth = (availableWidth * paddingFactor) / latticeA.width;
     const maxCellSizeByHeight = (effectiveHeightPerSimulation * paddingFactor) / latticeA.height;
 
     // Choose the limiting dimension
-    let optimalCellSize = Math.min(maxCellSizeByWidth, maxCellSizeByHeight);
-
-    // For small lattices, be more aggressive with cell size
-    if (latticeA.width <= 10 && optimalCellSize < 30) {
-      // Try to get at least 30 pixels per cell for small lattices
-      const aggressiveCellSize = Math.min(
-        (availableWidth * 0.85) / latticeA.width,
-        (effectiveHeightPerSimulation * 0.85) / latticeA.height,
-      );
-      optimalCellSize = Math.max(optimalCellSize, aggressiveCellSize);
-    }
+    const optimalCellSize = Math.min(maxCellSizeByWidth, maxCellSizeByHeight);
 
     // Set minimum and maximum cell sizes
-    const MIN_CELL_SIZE = latticeA.width <= 10 ? 25 : 20; // Higher minimum for small lattices
-    const MAX_CELL_SIZE = 120;
+    const MIN_CELL_SIZE = 15; // Lower minimum to allow better fitting
+    const MAX_CELL_SIZE = 80; // Lower maximum to prevent overflow
 
     // Clamp the cell size within reasonable bounds
     const finalCellSize = Math.floor(
