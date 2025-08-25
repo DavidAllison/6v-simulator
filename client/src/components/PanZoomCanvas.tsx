@@ -114,22 +114,64 @@ export function PanZoomCanvas({
   }, [minZoom]);
 
   const fitToScreen = useCallback(() => {
-    if (!containerRef.current) return;
-    const container = containerRef.current;
-    const viewport = container.querySelector('.pan-zoom-viewport');
-    if (!viewport) {
-      console.warn('Viewport not found');
+    console.log('🔍 fitToScreen called');
+
+    if (!containerRef.current) {
+      console.warn('❌ containerRef.current is null');
       return;
     }
 
-    // Use getBoundingClientRect to get actual rendered dimensions
+    const container = containerRef.current;
+    console.log('📦 Container element:', container);
+
+    const viewport = container.querySelector('.pan-zoom-viewport');
+    if (!viewport) {
+      console.warn('❌ Viewport not found');
+      return;
+    }
+    console.log('🖼️ Viewport element:', viewport);
+
+    // Get various dimension measurements for debugging
+    const containerRect = container.getBoundingClientRect();
     const viewportRect = viewport.getBoundingClientRect();
+    const containerStyles = window.getComputedStyle(container);
+    const viewportStyles = window.getComputedStyle(viewport as Element);
+
+    console.log('📏 Container getBoundingClientRect:', {
+      width: containerRect.width,
+      height: containerRect.height,
+      top: containerRect.top,
+      left: containerRect.left,
+    });
+
+    console.log('📏 Viewport getBoundingClientRect:', {
+      width: viewportRect.width,
+      height: viewportRect.height,
+      top: viewportRect.top,
+      left: viewportRect.left,
+    });
+
+    console.log('🎨 Container computed styles:', {
+      width: containerStyles.width,
+      height: containerStyles.height,
+      padding: containerStyles.padding,
+      position: containerStyles.position,
+    });
+
+    console.log('🎨 Viewport computed styles:', {
+      width: viewportStyles.width,
+      height: viewportStyles.height,
+      padding: viewportStyles.padding,
+      position: viewportStyles.position,
+      overflow: viewportStyles.overflow,
+    });
+
     const containerWidth = viewportRect.width;
     const containerHeight = viewportRect.height;
 
     // Early return if dimensions are invalid
     if (containerWidth <= 0 || containerHeight <= 0) {
-      console.warn('Invalid viewport dimensions:', containerWidth, containerHeight);
+      console.warn('❌ Invalid viewport dimensions:', containerWidth, containerHeight);
       return;
     }
 
@@ -138,25 +180,42 @@ export function PanZoomCanvas({
     const availableWidth = containerWidth - padding * 2;
     const availableHeight = containerHeight - padding * 2;
 
+    console.log('📐 Sizing calculations:', {
+      padding,
+      availableWidth,
+      availableHeight,
+      canvasWidth: width,
+      canvasHeight: height,
+    });
+
     // Calculate scale to fit within available space
     const scaleX = availableWidth / width;
     const scaleY = availableHeight / height;
+
+    console.log('⚖️ Scale calculations:', {
+      scaleX: scaleX.toFixed(4),
+      scaleY: scaleY.toFixed(4),
+      minScale: Math.min(scaleX, scaleY).toFixed(4),
+    });
 
     // Choose scale based on fit mode
     let scale: number;
     if (fitMode === 'fill') {
       // For fill mode, maximize the canvas size while keeping it fully visible
-      // Use 98% to maximize space usage while ensuring visibility
-      scale = Math.min(scaleX, scaleY) * 0.98;
+      // Use 90% to ensure the canvas fits with proper margins for centering
+      scale = Math.min(scaleX, scaleY) * 0.9;
     } else {
       // 'contain' mode - ensure entire canvas fits with more padding
-      scale = Math.min(scaleX, scaleY) * 0.9;
+      scale = Math.min(scaleX, scaleY) * 0.85;
     }
 
     // Override with initial scale if provided
     if (initialScale !== undefined) {
+      console.log('🔄 Overriding scale with initialScale:', initialScale);
       scale = initialScale;
     }
+
+    console.log('✅ Final scale:', scale.toFixed(4));
 
     // Calculate pan to center the canvas
     // Since we're using transformOrigin: '0 0', the canvas scales from top-left
@@ -169,22 +228,43 @@ export function PanZoomCanvas({
     const panX = (containerWidth - scaledWidth) / 2;
     const panY = (containerHeight - scaledHeight) / 2;
 
+    console.log('🎯 Centering calculations:', {
+      scaledWidth: scaledWidth.toFixed(2),
+      scaledHeight: scaledHeight.toFixed(2),
+      containerWidth,
+      containerHeight,
+      panX: panX.toFixed(2),
+      panY: panY.toFixed(2),
+      'diff X': (containerWidth - scaledWidth).toFixed(2),
+      'diff Y': (containerHeight - scaledHeight).toFixed(2),
+    });
+
     console.log(
-      `FitToScreen [${fitMode}]: viewport ${containerWidth}x${containerHeight}, ` +
-        `canvas ${width}x${height}, scale ${scale.toFixed(2)}`,
+      `📊 FitToScreen Summary [${fitMode}]: viewport ${containerWidth}x${containerHeight}, ` +
+        `canvas ${width}x${height}, scale ${scale.toFixed(2)} (${Math.round(scale * 100)}%)`,
     );
     console.log(
-      `Scaled dimensions: ${scaledWidth.toFixed(1)}x${scaledHeight.toFixed(1)}, ` +
+      `📍 Position: scaled ${scaledWidth.toFixed(1)}x${scaledHeight.toFixed(1)}, ` +
         `pan: (${panX.toFixed(1)}, ${panY.toFixed(1)})`,
     );
+
+    // Log the actual state update
+    console.log('🔄 Setting state:', {
+      zoom: scale,
+      pan: { x: panX, y: panY },
+    });
 
     setZoom(scale);
     setPan({ x: panX, y: panY });
 
     // Mark as initialized after first successful fit
     if (!isInitialized) {
+      console.log('✨ Marking as initialized');
       setTimeout(() => setIsInitialized(true), 100);
     }
+
+    console.log('✅ fitToScreen completed');
+    console.log('════════════════════════════════════');
   }, [width, height, fitMode, initialScale, isInitialized]);
 
   const resetView = useCallback(() => {
@@ -312,11 +392,67 @@ export function PanZoomCanvas({
           cursor: isDragging ? 'grabbing' : enablePan ? 'grab' : 'default',
         }}
       >
+        {/* Debug: Center crosshair */}
+        <div
+          style={{
+            position: 'absolute',
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)',
+            width: '20px',
+            height: '20px',
+            pointerEvents: 'none',
+            zIndex: 1000,
+          }}
+        >
+          <div
+            style={{
+              position: 'absolute',
+              top: '50%',
+              left: 0,
+              right: 0,
+              height: '1px',
+              backgroundColor: 'red',
+              transform: 'translateY(-50%)',
+            }}
+          />
+          <div
+            style={{
+              position: 'absolute',
+              left: '50%',
+              top: 0,
+              bottom: 0,
+              width: '1px',
+              backgroundColor: 'red',
+              transform: 'translateX(-50%)',
+            }}
+          />
+        </div>
+
         <div
           className={`pan-zoom-content ${isDragging ? 'dragging' : ''} ${isInitialized ? 'initialized' : ''}`}
           style={{
             transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`,
             transformOrigin: '0 0',
+          }}
+          ref={(el) => {
+            if (el) {
+              // Log the actual computed transform
+              const computedStyle = window.getComputedStyle(el);
+              const transform = computedStyle.transform;
+              const transformOrigin = computedStyle.transformOrigin;
+
+              // Only log if we have meaningful values
+              if (pan.x !== 0 || pan.y !== 0 || zoom !== 1) {
+                console.log('🎭 Applied transform:', {
+                  expectedTransform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`,
+                  actualTransform: transform,
+                  transformOrigin: transformOrigin,
+                  pan: { x: pan.x, y: pan.y },
+                  zoom: zoom,
+                });
+              }
+            }
           }}
         >
           {React.cloneElement(children, {
