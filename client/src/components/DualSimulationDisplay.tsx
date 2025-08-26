@@ -75,9 +75,9 @@ export function DualSimulationDisplay({
       }
     }
 
-    // Calculate the optimal cell size to fill available space
-    // Use aggressive sizing to maximize space usage
-    const paddingFactor = 0.95; // Use 95% of available space
+    // Calculate the optimal cell size to fit within viewport
+    // Use conservative sizing to ensure canvas fits without scaling above 100%
+    const paddingFactor = 0.75; // Use 75% of available space to ensure proper centering
     const maxCellSizeByWidth = (availableWidth * paddingFactor) / latticeA.width;
     const maxCellSizeByHeight = (effectiveHeightPerSimulation * paddingFactor) / latticeA.height;
 
@@ -85,8 +85,8 @@ export function DualSimulationDisplay({
     const optimalCellSize = Math.min(maxCellSizeByWidth, maxCellSizeByHeight);
 
     // Set minimum and maximum cell sizes
-    const MIN_CELL_SIZE = 15; // Lower minimum to allow better fitting
-    const MAX_CELL_SIZE = 80; // Lower maximum to prevent overflow
+    const MIN_CELL_SIZE = 10; // Allow smaller cells for larger lattices
+    const MAX_CELL_SIZE = 60; // Conservative maximum to prevent overflow
 
     // Clamp the cell size within reasonable bounds
     const finalCellSize = Math.floor(
