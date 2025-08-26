@@ -181,3 +181,92 @@
     min-width: 280px;
   }
 }
+
+/* Convergence Section Styles */
+.convergence-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.config-display {
+  display: flex;
+  gap: 1rem;
+  padding: 0.5rem;
+  background: var(--color-bg-tertiary, #f9fafb);
+  border-radius: 4px;
+  font-size: 0.8rem;
+}
+
+.config-item {
+  font-weight: 500;
+  color: var(--color-text-secondary, #6b7280);
+}
+
+.convergence-status {
+  display: flex;
+  justify-content: center;
+  padding: 0.5rem 0;
+}
+
+.status-badge {
+  padding: 0.25rem 0.75rem;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.status-converging {
+  background: rgba(251, 191, 36, 0.1);
+  color: #d97706;
+}
+
+.status-converged {
+  background: rgba(34, 197, 94, 0.1);
+  color: #059669;
+}
+
+.dual-stats-comparison {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+  padding: 0.5rem;
+  background: var(--color-bg-tertiary, #f9fafb);
+  border-radius: 4px;
+  font-size: 0.8rem;
+}
+
+.comparison-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.comparison-label {
+  color: var(--color-text-secondary, #6b7280);
+  font-size: 0.75rem;
+}
+
+.comparison-value {
+  font-weight: 600;
+  color: var(--color-text-primary, #111827);
+  font-size: 0.8rem;
+}
+
+/* Dark mode adjustments */
+[data-theme='dark'] .status-converging {
+  background: rgba(251, 191, 36, 0.2);
+  color: #fbbf24;
+}
+
+[data-theme='dark'] .status-converged {
+  background: rgba(34, 197, 94, 0.2);
+  color: #4ade80;
+}
+
+[data-theme='dark'] .config-display,
+[data-theme='dark'] .dual-stats-comparison {
+  background: rgba(31, 41, 55, 0.5);
+}

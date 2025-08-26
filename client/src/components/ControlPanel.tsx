@@ -7,6 +7,16 @@ interface ControlPanelProps {
   // Simulation state
   isRunning: boolean;
 
+  // Simulation mode
+  simulationMode?: 'single' | 'dual';
+  onSimulationModeChange?: (mode: 'single' | 'dual') => void;
+
+  // Dual mode configuration
+  configA?: 'high' | 'low';
+  configB?: 'high' | 'low';
+  onConfigAChange?: (config: 'high' | 'low') => void;
+  onConfigBChange?: (config: 'high' | 'low') => void;
+
   // Lattice parameters
   latticeSize: number;
   temperature: number;
@@ -50,6 +60,12 @@ interface ControlPanelProps {
 
 const ControlPanel: React.FC<ControlPanelProps> = ({
   isRunning,
+  simulationMode = 'single',
+  onSimulationModeChange,
+  configA = 'high',
+  configB = 'low',
+  onConfigAChange,
+  onConfigBChange,
   latticeSize,
   temperature,
   seed,
@@ -108,6 +124,20 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
           </svg>
           Simulation Controls
         </h3>
+
+        {/* Dual Simulation Mode Toggle */}
+        <div className="control-group" style={{ marginBottom: '15px' }}>
+          <label className="checkbox-label">
+            <input
+              type="checkbox"
+              checked={simulationMode === 'dual'}
+              onChange={(e) => onSimulationModeChange?.(e.target.checked ? 'dual' : 'single')}
+              disabled={isRunning}
+            />
+            <span>Dual Simulation Mode</span>
+          </label>
+        </div>
+
         <div className="button-group">
           <button onClick={onStep} disabled={isRunning} className="control-button">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
@@ -224,7 +254,7 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
           </label>
         </div>
 
-        {boundaryCondition === BoundaryCondition.DWBC && (
+        {boundaryCondition === BoundaryCondition.DWBC && simulationMode === 'single' && (
           <div className="control-item">
             <label>
               <span>DWBC Type</span>
@@ -250,6 +280,67 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
               </div>
             </label>
           </div>
+        )}
+
+        {/* Dual Mode Configuration */}
+        {boundaryCondition === BoundaryCondition.DWBC && simulationMode === 'dual' && (
+          <>
+            <div className="control-item">
+              <label>
+                <span>Simulation A Configuration</span>
+                <div className="radio-group">
+                  <label className="radio-label">
+                    <input
+                      type="radio"
+                      value="high"
+                      checked={configA === 'high'}
+                      onChange={() => onConfigAChange?.('high')}
+                      disabled={isRunning}
+                    />
+                    <span>High</span>
+                  </label>
+                  <label className="radio-label">
+                    <input
+                      type="radio"
+                      value="low"
+                      checked={configA === 'low'}
+                      onChange={() => onConfigAChange?.('low')}
+                      disabled={isRunning}
+                    />
+                    <span>Low</span>
+                  </label>
+                </div>
+              </label>
+            </div>
+
+            <div className="control-item">
+              <label>
+                <span>Simulation B Configuration</span>
+                <div className="radio-group">
+                  <label className="radio-label">
+                    <input
+                      type="radio"
+                      value="high"
+                      checked={configB === 'high'}
+                      onChange={() => onConfigBChange?.('high')}
+                      disabled={isRunning}
+                    />
+                    <span>High</span>
+                  </label>
+                  <label className="radio-label">
+                    <input
+                      type="radio"
+                      value="low"
+                      checked={configB === 'low'}
+                      onChange={() => onConfigBChange?.('low')}
+                      disabled={isRunning}
+                    />
+                    <span>Low</span>
+                  </label>
+                </div>
+              </label>
+            </div>
+          </>
         )}
 
         <div className="control-item">

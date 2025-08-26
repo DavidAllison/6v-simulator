@@ -1,0 +1,62 @@
+.dual-simulation-display {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem; /* Smaller gap */
+  padding: 0.25rem; /* Minimal padding */
+  background: var(--color-bg-primary);
+  box-sizing: border-box;
+  min-height: 0; /* Important for nested flexbox */
+  position: relative;
+  overflow: hidden; /* Prevent any overflow */
+  max-height: 100%; /* Ensure doesn't exceed parent */
+}
+
+/* Each PanZoomCanvas container gets equal height */
+.dual-simulation-display > .pan-zoom-container {
+  flex: 1 1 0; /* Equal distribution with flex-grow */
+  min-height: 0; /* Allow shrinking */
+  max-height: calc(50% - 0.125rem); /* Exactly half minus half of gap */
+  overflow: hidden; /* Ensure no overflow */
+}
+
+/* Loading state */
+.loading-message {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  font-size: 1.125rem;
+  color: var(--color-text-secondary);
+}
+
+/* Canvas styling within PanZoomCanvas */
+.simulation-canvas {
+  display: block;
+  /* Use auto for better quality when scaled */
+  image-rendering: auto;
+  /* Fallback for older browsers */
+  image-rendering: -webkit-optimize-contrast;
+}
+
+/* Dark mode adjustments */
+[data-theme='dark'] .dual-simulation-display {
+  background: var(--color-bg-tertiary);
+}
+
+/* Mobile responsive */
+@media (max-width: 768px) {
+  .dual-simulation-display {
+    gap: 0.25rem;
+    padding: 0.25rem;
+  }
+}
+
+/* High resolution displays */
+@media (min-width: 1920px) {
+  .dual-simulation-display {
+    gap: 0.5rem; /* Keep gap small even on large displays */
+    padding: 0.5rem;
+  }
+}

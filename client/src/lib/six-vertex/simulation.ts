@@ -29,6 +29,7 @@ import {
   createWorkerSimulation,
   isWorkerSupported,
 } from './worker/workerInterface';
+import { calculateHeightFunction } from './heightFunction';
 
 /**
  * Configuration for simulation mode
@@ -118,6 +119,8 @@ export class MonteCarloSimulation implements SimulationController {
       flipAttempts: 0,
       successfulFlips: 0,
       beta: this.params?.beta || 1.0,
+      height: 0,
+      volume: 0,
     };
   }
 
@@ -498,6 +501,11 @@ export class MonteCarloSimulation implements SimulationController {
     }
 
     this.stats.energy = energy;
+
+    // Calculate height function
+    const heightData = calculateHeightFunction(this.state);
+    this.stats.height = heightData.averageHeight;
+    this.stats.volume = heightData.totalVolume;
 
     // Update acceptance rate
     if (this.stats.flipAttempts > 0) {

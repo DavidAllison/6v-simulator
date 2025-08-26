@@ -5,10 +5,12 @@
 body {
   margin: 0;
   min-width: 320px;
-  min-height: 100vh;
+  height: 100vh; /* Use exact height to prevent scrolling */
+  overflow: hidden; /* Prevent body scrolling */
 }
 
 #root {
   width: 100%;
-  min-height: 100vh;
+  height: 100vh; /* Use exact height instead of min-height */
+  overflow: hidden; /* Prevent root scrolling */
 }

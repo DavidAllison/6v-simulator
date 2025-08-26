@@ -1,0 +1,26 @@
+{
+  "maxLines": 300,
+  "extendedMaxLines": 500,
+  "excludePaths": [
+    "tests/",
+    "*.test.ts",
+    "*.spec.ts",
+    "*.test.tsx",
+    "*.spec.tsx"
+  ],
+  "requireTests": true,
+  "allowedTodos": false,
+  "checks": {
+    "consoleLogs": "error",
+    "commentedCode": "warning",
+    "largeFiles": "error",
+    "branchNaming": "warning",
+    "todoComments": "warning"
+  },
+  "branchPattern": "^(feat|fix|docs|style|refactor|test|chore)/issue-[0-9]+-.+$",
+  "emergencyOverride": {
+    "enabled": true,
+    "requiresJustification": true,
+    "maxLines": 1000
+  }
+}

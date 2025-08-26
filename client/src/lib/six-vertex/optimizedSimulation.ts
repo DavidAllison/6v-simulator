@@ -26,7 +26,8 @@ import {
 
 // Vertex type constants are now imported from fixedFlipLogic
 
-// Map between enum and numeric values
+// Map between enum and numeric values (kept for potential future use)
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const VERTEX_TYPE_TO_NUM: Record<VertexType, number> = {
   [VertexType.a1]: VERTEX_A1,
   [VertexType.a2]: VERTEX_A2,
@@ -283,13 +284,11 @@ export class OptimizedPhysicsSimulation {
     this.flippableUpList = [];
     this.flippableDownList = [];
 
-    let flippableCount = 0;
     for (let row = 0; row < this.size; row++) {
       for (let col = 0; col < this.size; col++) {
         const capability = this.checkFlippable(row, col);
 
         if (capability.canFlipUp || capability.canFlipDown) {
-          flippableCount++;
           const pos: FlippablePosition = {
             row,
             col,
@@ -334,7 +333,11 @@ export class OptimizedPhysicsSimulation {
    * For simplicity and correctness, we just rebuild the entire list
    * This ensures we don't miss any new flippable positions
    */
-  private updateFlippableListAfterFlip(row: number, col: number, direction: FlipDirection): void {
+  private updateFlippableListAfterFlip(
+    _row: number,
+    _col: number,
+    _direction: FlipDirection,
+  ): void {
     // Simply rebuild the entire list to ensure correctness
     // This is more robust than trying to do incremental updates
     this.buildFlippableList();
@@ -630,27 +633,55 @@ export class OptimizedPhysicsSimulation {
   public getState(): any {
     // Convert back to standard format for compatibility
     const vertices: any[][] = [];
+    const horizontalEdges: any[][] = [];
+    const verticalEdges: any[][] = [];
 
+    // Build vertices array and derive edges from vertex configurations
     for (let row = 0; row < this.size; row++) {
       const rowVertices: any[] = [];
+      const rowHorizontalEdges: any[] = [];
+
       for (let col = 0; col < this.size; col++) {
         const idx = row * this.size + col;
         const type = NUM_TO_VERTEX_TYPE[this.vertices[idx]];
+        const config = this.getVertexConfiguration(type);
+
         rowVertices.push({
           position: { row, col },
           type,
-          configuration: this.getVertexConfiguration(type),
+          configuration: config,
         });
+
+        // Add horizontal edge (except for last column)
+        if (col < this.size - 1) {
+          // Edge state is determined by the vertex's right configuration
+          rowHorizontalEdges.push(config.right === 'out' ? 'out' : 'in');
+        }
       }
+
       vertices.push(rowVertices);
+      horizontalEdges.push(rowHorizontalEdges);
+    }
+
+    // Build vertical edges array
+    for (let row = 0; row < this.size - 1; row++) {
+      const rowVerticalEdges: any[] = [];
+      for (let col = 0; col < this.size; col++) {
+        const idx = row * this.size + col;
+        const type = NUM_TO_VERTEX_TYPE[this.vertices[idx]];
+        const config = this.getVertexConfiguration(type);
+        // Edge state is determined by the vertex's bottom configuration
+        rowVerticalEdges.push(config.bottom === 'out' ? 'out' : 'in');
+      }
+      verticalEdges.push(rowVerticalEdges);
     }
 
     return {
       width: this.size,
       height: this.size,
       vertices,
-      horizontalEdges: [], // Not needed for physics simulation
-      verticalEdges: [], // Not needed for physics simulation
+      horizontalEdges,
+      verticalEdges,
     };
   }
 

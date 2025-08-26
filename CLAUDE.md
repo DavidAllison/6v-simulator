@@ -688,3 +688,4 @@ For each feature or fix, ensure:
 - **Validation**: The `/dwbc-verify` route must visually match paper figures exactly
 - **Code Style**: Follow existing patterns, avoid unnecessary comments, maintain consistency
 - **SDLC Compliance**: Every change should follow the complete software development lifecycle
+- **PR Preview Links**: When pushing updates to a PR branch, ALWAYS mention the PR preview link (https://pr-NUMBER.dev.6v.allison.la) when informing the user about updates, including in GitHub PR comments
