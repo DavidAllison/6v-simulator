@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Canvas Centering Test</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: monospace;
+        }
+        
+        .test-info {
+            background: #f0f0f0;
+            padding: 10px;
+            margin-bottom: 20px;
+            border: 1px solid #ccc;
+        }
+        
+        .instructions {
+            background: #e8f5e8;
+            padding: 10px;
+            margin-bottom: 20px;
+            border: 1px solid #4caf50;
+        }
+        
+        .success {
+            color: green;
+            font-weight: bold;
+        }
+        
+        .error {
+            color: red;
+            font-weight: bold;
+        }
+        
+        .warning {
+            color: orange;
+            font-weight: bold;
+        }
+        
+        pre {
+            background: #f5f5f5;
+            padding: 10px;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>Canvas Centering Debug Test</h1>
+    
+    <div class="instructions">
+        <h3>Instructions:</h3>
+        <ol>
+            <li>Open the React app at http://localhost:5173</li>
+            <li>Open browser DevTools Console (F12)</li>
+            <li>Look for logs starting with 🔍, 📏, 📐, 🎯</li>
+            <li>Check the results below</li>
+        </ol>
+    </div>
+
+    <div class="test-info">
+        <h3>Expected Behavior:</h3>
+        <ul>
+            <li>Canvas should be centered in the viewport</li>
+            <li>Viewport dimensions should be approximately 700-800px wide</li>
+            <li>Pan position should center the canvas (not at 119.5, 30.5)</li>
+        </ul>
+    </div>
+
+    <div id="results">
+        <h3>What to Look For in Console:</h3>
+        <pre>
+🚀 Starting fitToScreen attempts
+🔄 Attempt 1/10 to fit to screen
+📏 Attempt 1 viewport check: {
+    offsetWidth: [should be > 700],
+    offsetHeight: [should be > 300],
+    hasValidDimensions: true
+}
+✅ Valid dimensions detected, calling fitToScreen
+
+🔍 fitToScreen called
+📐 Using offset dimensions: {
+    containerWidth: [should be > 700],
+    containerHeight: [should be > 300]
+}
+
+🎯 Centering calculations: {
+    panX: [should be around 350-400, NOT 119.5],
+    panY: [should be around 150-200, NOT 30.5]
+}
+        </pre>
+        
+        <h3>Common Issues:</h3>
+        <ul>
+            <li class="error">If panX = 119.5, panY = 30.5: Viewport dimensions are wrong</li>
+            <li class="warning">If containerWidth < 400: Layout not complete</li>
+            <li class="success">If panX ≈ 350-400: Canvas is properly centered!</li>
+        </ul>
+        
+        <h3>Visual Check:</h3>
+        <p>The lattice should appear in the center of its container, not in the upper-left corner.</p>
+        <p>Both High and Low lattices should be centered in their respective panels.</p>
+    </div>
+
+    <script>
+        // This script would normally grab console data, but for now it's just informational
+        console.log('Test page loaded. Please check the React app console for debug output.');
+    </script>
+</body>
+</html>

@@ -116,6 +116,16 @@ export function DualSimulationDisplay({
     );
     console.log('=========================================');
 
+    // Extra debug: What dimensions are we passing to PanZoomCanvas?
+    console.log('🎯 Passing to PanZoomCanvas:', {
+      width: canvasWidth,
+      height: canvasHeight,
+      'viewport should be': {
+        width: availableWidth,
+        height: effectiveHeightPerSimulation,
+      },
+    });
+
     setDimensions({
       canvasWidth,
       canvasHeight,

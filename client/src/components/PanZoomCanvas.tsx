@@ -130,6 +130,17 @@ export function PanZoomCanvas({
       return;
     }
     console.log('🖼️ Viewport element:', viewport);
+    console.log('🏷️ Viewport class:', viewport.className);
+    console.log('📦 Viewport parent class:', viewport.parentElement?.className);
+
+    const viewportElement = viewport as HTMLElement;
+
+    // Force a complete layout recalculation
+    // This ensures all flexbox calculations are complete
+    viewportElement.style.display = 'none';
+    void viewportElement.offsetHeight; // Flush layout
+    viewportElement.style.display = '';
+    void viewportElement.offsetHeight; // Flush again
 
     // Get various dimension measurements for debugging
     const containerRect = container.getBoundingClientRect();
@@ -166,30 +177,93 @@ export function PanZoomCanvas({
       overflow: viewportStyles.overflow,
     });
 
-    // Use the viewport's client dimensions instead of getBoundingClientRect
-    // This gives us the actual inner dimensions without borders
-    const viewportElement = viewport as HTMLElement;
+    // Try multiple methods to get the correct dimensions
+    // Priority order: offsetWidth/Height > getBoundingClientRect > clientWidth/Height
+    let containerWidth = 0;
+    let containerHeight = 0;
 
-    // Force layout recalculation by reading offsetHeight
-    void viewportElement.offsetHeight;
+    // Method 1: Use offset dimensions (most reliable for actual rendered size)
+    if (viewportElement.offsetWidth > 0 && viewportElement.offsetHeight > 0) {
+      containerWidth = viewportElement.offsetWidth;
+      containerHeight = viewportElement.offsetHeight;
+      console.log('📐 Using offset dimensions:', { containerWidth, containerHeight });
+    }
+    // Method 2: Use getBoundingClientRect (includes borders but more reliable than client)
+    else if (viewportRect.width > 0 && viewportRect.height > 0) {
+      containerWidth = viewportRect.width;
+      containerHeight = viewportRect.height;
+      console.log('📐 Using getBoundingClientRect dimensions:', {
+        containerWidth,
+        containerHeight,
+      });
+    }
+    // Method 3: Use client dimensions (inner content area)
+    else if (viewportElement.clientWidth > 0 && viewportElement.clientHeight > 0) {
+      containerWidth = viewportElement.clientWidth;
+      containerHeight = viewportElement.clientHeight;
+      console.log('📐 Using client dimensions:', { containerWidth, containerHeight });
+    }
+    // Method 4: If all else fails, try parent container
+    else if (container.offsetWidth > 0 && container.offsetHeight > 0) {
+      // Subtract some padding to account for container padding/borders
+      containerWidth = container.offsetWidth - 2;
+      containerHeight = container.offsetHeight - 42; // Account for label height if present
+      console.log('📐 Using parent container dimensions (fallback):', {
+        containerWidth,
+        containerHeight,
+      });
+    }
 
-    const containerWidth = viewportElement.clientWidth || viewportRect.width;
-    const containerHeight = viewportElement.clientHeight || viewportRect.height;
-
-    console.log('📐 Using dimensions:', {
+    console.log('📐 Final dimension analysis:', {
       clientWidth: viewportElement.clientWidth,
       clientHeight: viewportElement.clientHeight,
       offsetWidth: viewportElement.offsetWidth,
       offsetHeight: viewportElement.offsetHeight,
+      scrollWidth: viewportElement.scrollWidth,
+      scrollHeight: viewportElement.scrollHeight,
       rectWidth: viewportRect.width,
       rectHeight: viewportRect.height,
       final: { width: containerWidth, height: containerHeight },
+      parentOffsetWidth: container.offsetWidth,
+      parentOffsetHeight: container.offsetHeight,
     });
 
     // Early return if dimensions are invalid
     if (containerWidth <= 0 || containerHeight <= 0) {
       console.warn('❌ Invalid viewport dimensions:', containerWidth, containerHeight);
+      console.warn('❌ Will be retried by useEffect hook...');
       return;
+    }
+
+    // Additional check: if dimensions seem suspiciously small, warn but continue
+    if (containerWidth < 400 || containerHeight < 200) {
+      console.warn('⚠️ Suspiciously small dimensions detected:', {
+        containerWidth,
+        containerHeight,
+      });
+      console.warn('⚠️ This might indicate incomplete layout. Expected roughly 700x400 or larger.');
+
+      // If we detect the problematic dimensions that were causing the issue
+      if (Math.abs(containerWidth - 239) < 20 || Math.abs(containerHeight - 151) < 20) {
+        console.error(
+          '🚨 DETECTED PROBLEM DIMENSIONS! These are the wrong values that cause mis-centering.',
+        );
+        console.error('🚨 The viewport is likely not properly sized yet. Will be retried.');
+
+        // Try to get parent dimensions as a sanity check
+        const grandparent = container.parentElement;
+        if (grandparent) {
+          console.log('👴 Grandparent dimensions:', {
+            offsetWidth: grandparent.offsetWidth,
+            offsetHeight: grandparent.offsetHeight,
+            clientWidth: grandparent.clientWidth,
+            clientHeight: grandparent.clientHeight,
+          });
+        }
+
+        // Don't proceed with these bad dimensions
+        return;
+      }
     }
 
     // Adjust padding based on fit mode - minimal padding for fill mode
@@ -237,6 +311,13 @@ export function PanZoomCanvas({
 
     console.log('✅ Final scale:', scale.toFixed(4));
 
+    // Log the actual canvas dimensions we're working with
+    console.log('📏 Canvas dimensions being centered:', {
+      originalWidth: width,
+      originalHeight: height,
+      scale: scale.toFixed(4),
+    });
+
     // Calculate pan to center the canvas
     // Since we're using transformOrigin: '0 0', the canvas scales from top-left
     // After scaling, the canvas dimensions become width*scale and height*scale
@@ -258,6 +339,20 @@ export function PanZoomCanvas({
       'diff X': (containerWidth - scaledWidth).toFixed(2),
       'diff Y': (containerHeight - scaledHeight).toFixed(2),
     });
+
+    // Debug: What would these specific bad values mean?
+    if (Math.abs(panX - 119.5) < 1) {
+      console.warn('🚨 Detected bad panX=119.5, this means:');
+      console.log('  - containerWidth - scaledWidth = 239');
+      console.log('  - If canvas is 480px, container would be 719px');
+      console.log('  - Or canvas is bigger than we think');
+    }
+    if (Math.abs(panY - 30.5) < 1) {
+      console.warn('🚨 Detected bad panY=30.5, this means:');
+      console.log('  - containerHeight - scaledHeight = 61');
+      console.log('  - If canvas is 480px, container would be 541px');
+      console.log('  - Or canvas is bigger than we think');
+    }
 
     // Additional debugging for the centering issue
     if (Math.abs(panX - 164.5) < 10 || Math.abs(panY - 75.5) < 10) {
@@ -323,67 +418,106 @@ export function PanZoomCanvas({
 
   // Initial fit to screen and when dimensions change
   useEffect(() => {
-    let timeout1: NodeJS.Timeout;
-    let timeout2: NodeJS.Timeout;
-    let timeout3: NodeJS.Timeout;
+    let attemptCount = 0;
+    const maxAttempts = 10;
 
     // More robust attempt that ensures proper layout
     const attemptFit = () => {
+      attemptCount++;
+      console.log(`🔄 Attempt ${attemptCount}/${maxAttempts} to fit to screen`);
+
       // Only attempt if container exists
       if (containerRef.current) {
         const viewport = containerRef.current.querySelector('.pan-zoom-viewport') as HTMLElement;
         if (viewport) {
-          // Check if viewport has actual dimensions
-          const hasValidDimensions = viewport.clientWidth > 0 && viewport.clientHeight > 0;
+          // Check multiple dimension properties to ensure element is properly rendered
+          const offsetWidth = viewport.offsetWidth;
+          const offsetHeight = viewport.offsetHeight;
+          const clientWidth = viewport.clientWidth;
+          const clientHeight = viewport.clientHeight;
+
+          // Use offsetWidth/Height as primary check since it's most reliable
+          const hasValidDimensions = offsetWidth > 100 && offsetHeight > 100;
+
+          console.log(`📏 Attempt ${attemptCount} viewport check:`, {
+            offsetWidth,
+            offsetHeight,
+            clientWidth,
+            clientHeight,
+            hasValidDimensions,
+          });
 
           if (hasValidDimensions) {
-            // Use requestAnimationFrame to ensure layout is complete
+            console.log('✅ Valid dimensions detected, calling fitToScreen');
+            // Use double requestAnimationFrame to ensure layout is complete
             requestAnimationFrame(() => {
-              fitToScreen();
+              requestAnimationFrame(() => {
+                fitToScreen();
+              });
             });
+          } else if (attemptCount < maxAttempts) {
+            // Schedule another attempt with exponential backoff
+            const delay = Math.min(50 * Math.pow(1.5, attemptCount - 1), 1000);
+            console.log(`⏳ Invalid dimensions, scheduling retry in ${delay}ms`);
+            setTimeout(attemptFit, delay);
           } else {
-            console.log(
-              '⏳ Viewport not ready, dimensions:',
-              viewport.clientWidth,
-              'x',
-              viewport.clientHeight,
-            );
+            console.error('❌ Max attempts reached, unable to get valid dimensions');
+          }
+        } else {
+          console.log('⏳ Viewport element not found yet');
+          if (attemptCount < maxAttempts) {
+            setTimeout(attemptFit, 50);
           }
         }
       }
     };
 
-    // Use mutation observer to detect when viewport is added
-    const mutationObserver = new MutationObserver(() => {
-      attemptFit();
+    // Use mutation observer to detect when viewport is added or changed
+    const mutationObserver = new MutationObserver((mutations) => {
+      // Check if any mutation affected the viewport
+      for (const mutation of mutations) {
+        if (mutation.type === 'childList' || mutation.type === 'attributes') {
+          const viewport = containerRef.current?.querySelector('.pan-zoom-viewport') as HTMLElement;
+          if (viewport && viewport.offsetWidth > 100) {
+            console.log('👁️ MutationObserver detected viewport change');
+            attemptFit();
+            break;
+          }
+        }
+      }
     });
 
     if (containerRef.current) {
       mutationObserver.observe(containerRef.current, {
         childList: true,
         subtree: true,
+        attributes: true,
+        attributeFilter: ['style', 'class'],
       });
     }
 
-    // Wait for next frame to ensure DOM is ready
+    // Start attempting to fit after various delays
+    console.log('🚀 Starting fitToScreen attempts');
+
+    // Immediate attempt (might fail)
+    attemptFit();
+
+    // Try after next frame
     requestAnimationFrame(() => {
-      // First attempt: after initial render
       attemptFit();
-
-      // Second attempt: after a short delay
-      timeout1 = setTimeout(attemptFit, 50);
-
-      // Third attempt: after layout should be complete
-      timeout2 = setTimeout(attemptFit, 150);
-
-      // Fourth attempt: failsafe
-      timeout3 = setTimeout(attemptFit, 300);
     });
+
+    // Try after short delays with exponential backoff handled by attemptFit
+    const timeout1 = setTimeout(() => attemptFit(), 10);
+    const timeout2 = setTimeout(() => attemptFit(), 100);
+    const timeout3 = setTimeout(() => attemptFit(), 500);
+    const timeout4 = setTimeout(() => attemptFit(), 1000);
 
     return () => {
       clearTimeout(timeout1);
       clearTimeout(timeout2);
       clearTimeout(timeout3);
+      clearTimeout(timeout4);
       mutationObserver.disconnect();
     };
   }, [fitToScreen, width, height]);
