@@ -76,8 +76,8 @@ export function DualSimulationDisplay({
     }
 
     // Calculate the optimal cell size to fit within viewport
-    // Use conservative sizing to ensure canvas fits without scaling above 100%
-    const paddingFactor = 0.75; // Use 75% of available space to ensure proper centering
+    // Use a higher padding factor now that centering is fixed
+    const paddingFactor = 0.9; // Use 90% of available space for better space utilization
     const maxCellSizeByWidth = (availableWidth * paddingFactor) / latticeA.width;
     const maxCellSizeByHeight = (effectiveHeightPerSimulation * paddingFactor) / latticeA.height;
 

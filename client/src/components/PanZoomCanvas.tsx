@@ -166,8 +166,25 @@ export function PanZoomCanvas({
       overflow: viewportStyles.overflow,
     });
 
-    const containerWidth = viewportRect.width;
-    const containerHeight = viewportRect.height;
+    // Use the viewport's client dimensions instead of getBoundingClientRect
+    // This gives us the actual inner dimensions without borders
+    const viewportElement = viewport as HTMLElement;
+
+    // Force layout recalculation by reading offsetHeight
+    void viewportElement.offsetHeight;
+
+    const containerWidth = viewportElement.clientWidth || viewportRect.width;
+    const containerHeight = viewportElement.clientHeight || viewportRect.height;
+
+    console.log('📐 Using dimensions:', {
+      clientWidth: viewportElement.clientWidth,
+      clientHeight: viewportElement.clientHeight,
+      offsetWidth: viewportElement.offsetWidth,
+      offsetHeight: viewportElement.offsetHeight,
+      rectWidth: viewportRect.width,
+      rectHeight: viewportRect.height,
+      final: { width: containerWidth, height: containerHeight },
+    });
 
     // Early return if dimensions are invalid
     if (containerWidth <= 0 || containerHeight <= 0) {
@@ -227,9 +244,9 @@ export function PanZoomCanvas({
     const scaledHeight = height * scale;
 
     // To center: translate by half the difference between container and scaled canvas
-    // This will always be positive when scale <= 1
-    const panX = Math.max(0, (containerWidth - scaledWidth) / 2);
-    const panY = Math.max(0, (containerHeight - scaledHeight) / 2);
+    // Force calculation even if container seems smaller (layout might not be complete)
+    const panX = (containerWidth - scaledWidth) / 2;
+    const panY = (containerHeight - scaledHeight) / 2;
 
     console.log('🎯 Centering calculations:', {
       scaledWidth: scaledWidth.toFixed(2),
@@ -241,6 +258,15 @@ export function PanZoomCanvas({
       'diff X': (containerWidth - scaledWidth).toFixed(2),
       'diff Y': (containerHeight - scaledHeight).toFixed(2),
     });
+
+    // Additional debugging for the centering issue
+    if (Math.abs(panX - 164.5) < 10 || Math.abs(panY - 75.5) < 10) {
+      console.warn('⚠️ Incorrect centering detected! This suggests wrong container dimensions.');
+      console.log('Expected center would be around:', {
+        x: (containerWidth / 2).toFixed(1),
+        y: (containerHeight / 2).toFixed(1),
+      });
+    }
 
     console.log(
       `📊 FitToScreen Summary [${fitMode}]: viewport ${containerWidth}x${containerHeight}, ` +
@@ -297,15 +323,32 @@ export function PanZoomCanvas({
 
   // Initial fit to screen and when dimensions change
   useEffect(() => {
-    // Multiple attempts to ensure proper initialization
+    let timeout1: NodeJS.Timeout;
+    let timeout2: NodeJS.Timeout;
+    let timeout3: NodeJS.Timeout;
+
+    // More robust attempt that ensures proper layout
     const attemptFit = () => {
       // Only attempt if container exists
       if (containerRef.current) {
-        const viewport = containerRef.current.querySelector('.pan-zoom-viewport');
+        const viewport = containerRef.current.querySelector('.pan-zoom-viewport') as HTMLElement;
         if (viewport) {
-          requestAnimationFrame(() => {
-            fitToScreen();
-          });
+          // Check if viewport has actual dimensions
+          const hasValidDimensions = viewport.clientWidth > 0 && viewport.clientHeight > 0;
+
+          if (hasValidDimensions) {
+            // Use requestAnimationFrame to ensure layout is complete
+            requestAnimationFrame(() => {
+              fitToScreen();
+            });
+          } else {
+            console.log(
+              '⏳ Viewport not ready, dimensions:',
+              viewport.clientWidth,
+              'x',
+              viewport.clientHeight,
+            );
+          }
         }
       }
     };
@@ -322,17 +365,20 @@ export function PanZoomCanvas({
       });
     }
 
-    // First attempt: immediate (might work if already rendered)
-    attemptFit();
+    // Wait for next frame to ensure DOM is ready
+    requestAnimationFrame(() => {
+      // First attempt: after initial render
+      attemptFit();
 
-    // Second attempt: after a short delay
-    const timeout1 = setTimeout(attemptFit, 50);
+      // Second attempt: after a short delay
+      timeout1 = setTimeout(attemptFit, 50);
 
-    // Third attempt: after layout should be complete
-    const timeout2 = setTimeout(attemptFit, 150);
+      // Third attempt: after layout should be complete
+      timeout2 = setTimeout(attemptFit, 150);
 
-    // Fourth attempt: failsafe
-    const timeout3 = setTimeout(attemptFit, 300);
+      // Fourth attempt: failsafe
+      timeout3 = setTimeout(attemptFit, 300);
+    });
 
     return () => {
       clearTimeout(timeout1);
@@ -349,6 +395,7 @@ export function PanZoomCanvas({
     let lastWidth = 0;
     let lastHeight = 0;
     let resizeTimeout: NodeJS.Timeout;
+    let isFirstResize = true;
 
     const resizeObserver = new ResizeObserver((entries) => {
       // Clear any pending resize timeout
@@ -362,21 +409,30 @@ export function PanZoomCanvas({
         const widthChanged = Math.abs(newWidth - lastWidth) > 5;
         const heightChanged = Math.abs(newHeight - lastHeight) > 5;
 
-        if ((widthChanged || heightChanged) && newWidth > 10 && newHeight > 10) {
+        if ((widthChanged || heightChanged || isFirstResize) && newWidth > 10 && newHeight > 10) {
           lastWidth = newWidth;
           lastHeight = newHeight;
+          isFirstResize = false;
 
-          // Debounce resize calls
+          // Debounce resize calls (but faster on first resize)
+          const delay = isFirstResize ? 10 : 100;
           resizeTimeout = setTimeout(() => {
             requestAnimationFrame(() => {
               fitToScreen();
             });
-          }, 100);
+          }, delay);
         }
       }
     });
 
-    resizeObserver.observe(containerRef.current);
+    // Observe the viewport element if it exists, otherwise observe container
+    const viewport = containerRef.current.querySelector('.pan-zoom-viewport');
+    if (viewport) {
+      resizeObserver.observe(viewport);
+    } else {
+      resizeObserver.observe(containerRef.current);
+    }
+
     return () => {
       clearTimeout(resizeTimeout);
       resizeObserver.disconnect();
