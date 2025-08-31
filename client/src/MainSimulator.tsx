@@ -551,7 +551,7 @@ function MainSimulator() {
             latticeA={dualLatticeA}
             latticeB={dualLatticeB}
             showArrows={renderMode === RenderMode.Arrows}
-            cellSize={30} // Base cell size, will be recalculated internally
+            cellSize={30}
           />
         </div>
       )}

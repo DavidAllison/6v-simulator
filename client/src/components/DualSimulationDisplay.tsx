@@ -22,9 +22,10 @@ export function DualSimulationDisplay({
   const canvasBRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
+  // Calculate canvas dimensions based on lattice size
   const [dimensions, setDimensions] = useState({
-    canvasWidth: 800,
-    canvasHeight: 800,
+    canvasWidth: latticeA ? latticeA.width * baseCellSize : 400,
+    canvasHeight: latticeA ? latticeA.height * baseCellSize : 400,
     cellSize: baseCellSize,
   });
 
@@ -49,23 +50,25 @@ export function DualSimulationDisplay({
 
     // Calculate available space accounting for container padding and gap
     const gap = 4; // Gap between simulations (from CSS: 0.25rem)
-    const availableWidth = containerRect.width - containerPaddingH - 32; // Subtract side label width
+    const controlsHeight = 40; // Height for controls in each PanZoomCanvas
+    const labelHeight = 24; // Height for label in each PanZoomCanvas
+    const availableWidth = containerRect.width - containerPaddingH;
     const availableHeight = containerRect.height - containerPaddingV;
 
-    // Each simulation gets half the height minus gap
-    const effectiveHeightPerSimulation = (availableHeight - gap) / 2;
+    // Each simulation gets half the height minus gap and UI elements
+    const effectiveHeightPerSimulation = (availableHeight - gap) / 2 - controlsHeight - labelHeight;
 
     // Calculate the optimal cell size to fit within viewport
-    const paddingFactor = 0.95; // Use 95% of available space
-    const maxCellSizeByWidth = (availableWidth * paddingFactor) / latticeA.width;
-    const maxCellSizeByHeight = (effectiveHeightPerSimulation * paddingFactor) / latticeA.height;
+    // Use a higher factor to maximize space usage
+    const maxCellSizeByWidth = availableWidth / latticeA.width;
+    const maxCellSizeByHeight = effectiveHeightPerSimulation / latticeA.height;
 
     // Choose the limiting dimension
     const optimalCellSize = Math.min(maxCellSizeByWidth, maxCellSizeByHeight);
 
     // Set minimum and maximum cell sizes
-    const MIN_CELL_SIZE = 10;
-    const MAX_CELL_SIZE = 60;
+    const MIN_CELL_SIZE = 8;
+    const MAX_CELL_SIZE = 80;
 
     // Clamp the cell size within reasonable bounds
     const finalCellSize = Math.floor(
@@ -155,6 +158,9 @@ export function DualSimulationDisplay({
           width={dimensions.canvasWidth}
           height={dimensions.canvasHeight}
           className="simulation-canvas"
+          style={{
+            display: 'block',
+          }}
         />
       </PanZoomCanvas>
 
@@ -172,6 +178,9 @@ export function DualSimulationDisplay({
           width={dimensions.canvasWidth}
           height={dimensions.canvasHeight}
           className="simulation-canvas"
+          style={{
+            display: 'block',
+          }}
         />
       </PanZoomCanvas>
     </div>

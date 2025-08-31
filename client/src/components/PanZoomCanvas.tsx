@@ -162,9 +162,9 @@ export function PanZoomCanvas({
     // Choose scale based on fit mode
     let scale: number;
     if (fitMode === 'fill') {
-      // For fill mode, maximize the canvas size while keeping it fully visible
-      // Never exceed 100% scale to avoid centering issues
-      scale = Math.min(scaleX, scaleY, 1.0);
+      // For fill mode, use 95% of available space for better visibility
+      // This ensures the matrix fills most of the viewport
+      scale = Math.min(scaleX, scaleY) * 0.95;
     } else {
       // 'contain' mode - ensure entire canvas fits with more padding
       scale = Math.min(scaleX, scaleY) * 0.85;
@@ -175,8 +175,8 @@ export function PanZoomCanvas({
       scale = initialScale;
     }
 
-    // Clamp scale to never exceed 100% for better centering
-    scale = Math.min(scale, 1.0);
+    // Apply reasonable scale limits but allow scaling above 100% if needed
+    scale = Math.min(Math.max(scale, minZoom), maxZoom);
 
     // Calculate pan to center the canvas
     const scaledWidth = width * scale;
@@ -191,7 +191,7 @@ export function PanZoomCanvas({
     if (!isInitialized) {
       setTimeout(() => setIsInitialized(true), 100);
     }
-  }, [width, height, fitMode, initialScale, isInitialized]);
+  }, [width, height, fitMode, initialScale, isInitialized, minZoom, maxZoom]);
 
   const resetView = useCallback(() => {
     // Reset to default view
