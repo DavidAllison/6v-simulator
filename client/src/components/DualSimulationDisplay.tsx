@@ -49,18 +49,24 @@ export function DualSimulationDisplay({
       parseFloat(containerStyles.paddingTop) + parseFloat(containerStyles.paddingBottom);
 
     // Calculate available space accounting for container padding and gap
-    const gap = 4; // Gap between simulations (from CSS: 0.25rem)
-    const controlsHeight = 40; // Height for controls in each PanZoomCanvas
-    const labelHeight = 24; // Height for label in each PanZoomCanvas
+    const gap = 8; // Gap between simulation containers
+    const labelHeight = 32; // Height for each simulation label
+    const containerBorder = 2; // Border width for each container
+    const containerPadding = 16; // Padding inside each container
     const availableWidth = containerRect.width - containerPaddingH;
     const availableHeight = containerRect.height - containerPaddingV;
 
-    // Each simulation gets half the height minus gap and UI elements
-    const effectiveHeightPerSimulation = (availableHeight - gap) / 2 - controlsHeight - labelHeight;
+    // Each simulation container gets half the height minus gap
+    const containerHeight = (availableHeight - gap) / 2;
+    // Subtract label, borders, and padding from container height for canvas area
+    const effectiveHeightPerSimulation =
+      containerHeight - labelHeight - containerBorder * 2 - containerPadding * 2;
+    // Width accounting for container borders and padding
+    const effectiveWidth = availableWidth - containerBorder * 2 - containerPadding * 2;
 
     // Calculate the optimal cell size to fit within viewport
     // Use a higher factor to maximize space usage
-    const maxCellSizeByWidth = availableWidth / latticeA.width;
+    const maxCellSizeByWidth = effectiveWidth / latticeA.width;
     const maxCellSizeByHeight = effectiveHeightPerSimulation / latticeA.height;
 
     // Choose the limiting dimension
@@ -144,45 +150,55 @@ export function DualSimulationDisplay({
 
   return (
     <div className="dual-simulation-display" ref={containerRef}>
-      {/* Simulation A */}
-      <PanZoomCanvas
-        width={dimensions.canvasWidth}
-        height={dimensions.canvasHeight}
-        label="Simulation A"
-        minZoom={0.3}
-        maxZoom={5}
-        fitMode="fill"
-      >
-        <canvas
-          ref={canvasARef}
-          width={dimensions.canvasWidth}
-          height={dimensions.canvasHeight}
-          className="simulation-canvas"
-          style={{
-            display: 'block',
-          }}
-        />
-      </PanZoomCanvas>
+      {/* Simulation A Container */}
+      <div className="simulation-container">
+        <div className="simulation-label">Simulation A</div>
+        <div className="simulation-content">
+          <PanZoomCanvas
+            width={dimensions.canvasWidth}
+            height={dimensions.canvasHeight}
+            minZoom={0.3}
+            maxZoom={5}
+            fitMode="fill"
+            showControls={false}
+          >
+            <canvas
+              ref={canvasARef}
+              width={dimensions.canvasWidth}
+              height={dimensions.canvasHeight}
+              className="simulation-canvas"
+              style={{
+                display: 'block',
+              }}
+            />
+          </PanZoomCanvas>
+        </div>
+      </div>
 
-      {/* Simulation B */}
-      <PanZoomCanvas
-        width={dimensions.canvasWidth}
-        height={dimensions.canvasHeight}
-        label="Simulation B"
-        minZoom={0.3}
-        maxZoom={5}
-        fitMode="fill"
-      >
-        <canvas
-          ref={canvasBRef}
-          width={dimensions.canvasWidth}
-          height={dimensions.canvasHeight}
-          className="simulation-canvas"
-          style={{
-            display: 'block',
-          }}
-        />
-      </PanZoomCanvas>
+      {/* Simulation B Container */}
+      <div className="simulation-container">
+        <div className="simulation-label">Simulation B</div>
+        <div className="simulation-content">
+          <PanZoomCanvas
+            width={dimensions.canvasWidth}
+            height={dimensions.canvasHeight}
+            minZoom={0.3}
+            maxZoom={5}
+            fitMode="fill"
+            showControls={false}
+          >
+            <canvas
+              ref={canvasBRef}
+              width={dimensions.canvasWidth}
+              height={dimensions.canvasHeight}
+              className="simulation-canvas"
+              style={{
+                display: 'block',
+              }}
+            />
+          </PanZoomCanvas>
+        </div>
+      </div>
     </div>
   );
 }
