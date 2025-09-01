@@ -9,6 +9,7 @@ import { FlipDebug } from './routes/flipDebug';
 import { HeightDemo } from './routes/heightDemo';
 import ErrorBoundary from './components/ErrorBoundary';
 import { ThemeToggle } from './components/ThemeToggle';
+import TestDualLayout from './components/TestDualLayout';
 
 function ModelTests() {
   return (
@@ -149,6 +150,7 @@ function App() {
             <Link to="/height-demo">Height Function</Link>
             <Link to="/performance">Performance</Link>
             <Link to="/model-tests">Tests</Link>
+            <Link to="/test-dual-layout">Test Layout</Link>
             <ThemeToggle />
           </nav>
         </div>
@@ -163,6 +165,7 @@ function App() {
           <Route path="/height-demo" element={<HeightDemo />} />
           <Route path="/performance" element={<PerformanceDemo />} />
           <Route path="/model-tests" element={<ModelTests />} />
+          <Route path="/test-dual-layout" element={<TestDualLayout />} />
         </Routes>
       </ErrorBoundary>
     </div>
