@@ -14,7 +14,8 @@ export function CollapsiblePanel({
   children,
   title,
   side,
-  defaultCollapsed = false,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  defaultCollapsed = false, // Default to expanded
   className = '',
 }: CollapsiblePanelProps) {
   // Create a unique key for this panel's state in localStorage
@@ -22,8 +23,10 @@ export function CollapsiblePanel({
 
   // Initialize state from localStorage if available, otherwise use defaultCollapsed
   const [isCollapsed, setIsCollapsed] = useState(() => {
-    const stored = localStorage.getItem(storageKey);
-    return stored !== null ? stored === 'true' : defaultCollapsed;
+    // For debugging: ignore localStorage and always start expanded
+    // const stored = localStorage.getItem(storageKey);
+    // return stored !== null ? stored === 'true' : defaultCollapsed;
+    return false; // Always start expanded for now
   });
 
   // Save collapsed state to localStorage whenever it changes

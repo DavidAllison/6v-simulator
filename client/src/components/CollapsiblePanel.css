@@ -6,24 +6,29 @@
   transition: all 0.25s ease-out;
   height: 100%;
   align-self: stretch; /* Ensure panel stretches to full grid cell height */
+  overflow: visible; /* Ensure content is visible */
 }
 
 /* When expanded, show the content panel */
 .collapsible-panel:not(.collapsed) {
   align-items: stretch;
   justify-content: stretch;
+  overflow: visible; /* Ensure expanded content is visible */
 }
 
 /* Left side panel */
 .collapsible-panel.left {
   width: 300px;
   min-width: 300px;
+  max-width: 300px;
   position: relative;
+  grid-column: 1; /* Explicitly place in first column */
 }
 
 .collapsible-panel.left.collapsed {
   width: 24px; /* Just enough for button with some padding */
   min-width: 24px;
+  max-width: 24px;
   background: transparent; /* Remove any background when collapsed */
   padding: 0;
   border: none;
@@ -46,12 +51,15 @@
 .collapsible-panel.right {
   width: 300px;
   min-width: 300px;
+  max-width: 300px;
   position: relative;
+  grid-column: 3; /* Explicitly place in third column */
 }
 
 .collapsible-panel.right.collapsed {
   width: 24px; /* Just enough for button with some padding */
   min-width: 24px;
+  max-width: 24px;
   background: transparent; /* Remove any background when collapsed */
   padding: 0;
   border: none;
@@ -113,7 +121,7 @@
 .panel-content {
   flex: 1;
   width: 100%;
-  overflow: hidden;
+  overflow: auto; /* Allow scrolling if content is too long */
   background: transparent;
   border-radius: 0;
   box-shadow: none;
@@ -125,6 +133,7 @@
   transition:
     opacity 0.2s ease-out,
     transform 0.2s ease-out;
+  min-width: 0; /* Allow content to shrink */
 }
 
 /* Add padding to prevent content from going under buttons */

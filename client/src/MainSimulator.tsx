@@ -538,23 +538,23 @@ function MainSimulator() {
         />
       </CollapsiblePanel>
 
-      {simulationMode === 'single' ? (
-        <VisualizationCanvas
-          renderer={rendererRef.current}
-          latticeState={latticeState}
-          onRendererReady={handleRendererReady}
-          renderConfig={renderConfig}
-        />
-      ) : (
-        <div className="visualization-container">
+      <div className="visualization-container">
+        {simulationMode === 'single' ? (
+          <VisualizationCanvas
+            renderer={rendererRef.current}
+            latticeState={latticeState}
+            onRendererReady={handleRendererReady}
+            renderConfig={renderConfig}
+          />
+        ) : (
           <DualSimulationDisplay
             latticeA={dualLatticeA}
             latticeB={dualLatticeB}
             showArrows={renderMode === RenderMode.Arrows}
             cellSize={30}
           />
-        </div>
-      )}
+        )}
+      </div>
 
       <CollapsiblePanel title="Info" side="right" className="panel-section">
         <StatisticsPanel

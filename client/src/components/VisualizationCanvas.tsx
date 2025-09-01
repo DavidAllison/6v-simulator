@@ -134,7 +134,7 @@ const VisualizationCanvas: React.FC<VisualizationCanvasProps> = ({
   }, [handleWheel]);
 
   return (
-    <div className="visualization-container" ref={containerRef}>
+    <div className="visualization-canvas-component" ref={containerRef}>
       <div className="canvas-wrapper">
         <div
           className="canvas-transform"

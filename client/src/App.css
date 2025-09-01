@@ -113,7 +113,7 @@
 /* Main Content - Using CSS Grid for equal-height columns */
 .main-content {
   display: grid;
-  grid-template-columns: minmax(250px, auto) 1fr minmax(250px, auto);
+  grid-template-columns: auto 1fr auto; /* Use auto for side panels so they can collapse */
   grid-template-rows: 1fr; /* Take full available height */
   align-items: stretch;
   flex: 1; /* Take all remaining space */
@@ -132,6 +132,7 @@
 .panel-section {
   height: 100%;
   align-self: stretch;
+  min-width: 0; /* Allow panels to shrink when collapsed */
 }
 
 /* Animations */
@@ -166,6 +167,7 @@
   border-radius: 12px;
   box-shadow: var(--shadow-md);
   border: 1px solid var(--color-border);
+  grid-column: 2; /* Explicitly place in middle column */
 }
 
 /* Ensure the visualization container's direct children respect boundaries */
