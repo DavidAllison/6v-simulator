@@ -14,7 +14,7 @@
 
 /* Individual simulation container - exactly 50% height each */
 .simulation-container {
-  flex: 1 1 0; /* Equal distribution with flex-grow: 1, flex-shrink: 1, flex-basis: 0 */
+  flex: 1 1 50%; /* Each container takes 50% of available height */
   display: flex;
   flex-direction: column;
   background: var(--color-bg-secondary);
@@ -22,7 +22,6 @@
   border-radius: 0.5rem;
   overflow: hidden; /* Critical: Prevent container overflow */
   min-height: 0; /* Critical: Allow flexbox to shrink below content size */
-  max-height: calc(50% - 0.25rem); /* Explicit max-height: 50% minus half the gap */
   box-sizing: border-box;
   position: relative; /* Establish positioning context */
 }
@@ -42,7 +41,7 @@
 
 /* Content area containing the PanZoomCanvas */
 .simulation-content {
-  flex: 1 1 0; /* Take remaining space after label */
+  flex: 1 1 auto; /* Take remaining space after label */
   display: flex;
   align-items: center;
   justify-content: center;
