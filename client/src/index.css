@@ -2,6 +2,11 @@
 @import './styles/global.css';
 
 /* Base reset - minimal overrides since global.css handles most styling */
+html {
+  height: 100%;
+  overflow: hidden; /* Prevent document scrolling */
+}
+
 body {
   margin: 0;
   min-width: 320px;
@@ -12,5 +17,7 @@ body {
 #root {
   width: 100%;
   height: 100vh; /* Use exact height instead of min-height */
+  display: flex;
+  flex-direction: column;
   overflow: hidden; /* Prevent root scrolling */
 }

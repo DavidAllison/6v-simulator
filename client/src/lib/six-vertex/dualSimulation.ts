@@ -3,7 +3,7 @@
  * with convergence tracking based on height function similarity
  */
 
-import { OptimizedSimulation } from './optimizedSimulation';
+import { OptimizedPhysicsSimulation as OptimizedSimulation } from './optimizedSimulation';
 import { calculateHeightFunction } from './heightFunction';
 import type { LatticeState, DWBCConfig } from './types';
 import type { HeightData } from './heightFunction';
@@ -44,10 +44,8 @@ export interface ConvergenceMetrics {
 }
 
 export class DualSimulationManager {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  private simulationA: any; // OptimizedSimulation instance
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  private simulationB: any; // OptimizedSimulation instance
+  private simulationA: OptimizedSimulation;
+  private simulationB: OptimizedSimulation;
   private config: DualSimulationConfig;
   private convergenceHistory: number[] = [];
   private readonly HISTORY_SIZE = 100;
@@ -87,14 +85,18 @@ export class DualSimulationManager {
    * Get the current state of simulation A
    */
   public getLatticeA(): LatticeState {
-    return this.simulationA.getState();
+    const state = this.simulationA.getState();
+    console.log('getLatticeA returning:', state);
+    return state;
   }
 
   /**
    * Get the current state of simulation B
    */
   public getLatticeB(): LatticeState {
-    return this.simulationB.getState();
+    const state = this.simulationB.getState();
+    console.log('getLatticeB returning:', state);
+    return state;
   }
 
   /**

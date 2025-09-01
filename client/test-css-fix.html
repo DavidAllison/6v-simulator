@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CSS Fix Test - 50/50 Split No Scroll</title>
+    <style>
+        /* Reset */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        /* Full viewport setup */
+        html, body {
+            height: 100%;
+            overflow: hidden; /* Prevent body scrolling */
+        }
+
+        /* Main container mimicking app layout */
+        .app {
+            width: 100%;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            background: #f3f4f6;
+        }
+
+        /* Header */
+        .header {
+            flex-shrink: 0;
+            height: 60px;
+            background: #1f2937;
+            color: white;
+            display: flex;
+            align-items: center;
+            padding: 0 20px;
+            font-size: 20px;
+            font-weight: bold;
+        }
+
+        /* Main content area with 3-column grid */
+        .main-content {
+            display: grid;
+            grid-template-columns: 250px 1fr 250px;
+            grid-template-rows: 1fr;
+            flex: 1;
+            min-height: 0; /* Critical for preventing overflow */
+            gap: 8px;
+            padding: 8px;
+        }
+
+        /* Sidebars */
+        .sidebar {
+            background: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 16px;
+            overflow-y: auto; /* Sidebars can scroll */
+        }
+
+        /* Middle visualization container */
+        .visualization-container {
+            display: flex;
+            flex-direction: column;
+            min-height: 0; /* Critical: Allow shrinking */
+            overflow: hidden; /* Critical: No scrolling */
+            background: white;
+            border-radius: 8px;
+        }
+
+        /* Dual simulation display container */
+        .dual-simulation-display {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            padding: 8px;
+            min-height: 0; /* Critical: Allow shrinking */
+            overflow: hidden; /* Critical: No scrolling */
+        }
+
+        /* Individual simulation containers - exactly 50% each */
+        .simulation-container {
+            flex: 1 1 0; /* Equal distribution */
+            display: flex;
+            flex-direction: column;
+            background: #f9fafb;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            overflow: hidden; /* Critical: No overflow */
+            min-height: 0; /* Critical: Allow shrinking */
+            max-height: calc(50% - 4px); /* Explicit 50% minus half gap */
+        }
+
+        /* Simulation label */
+        .simulation-label {
+            flex-shrink: 0;
+            height: 32px;
+            background: #e5e7eb;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 14px;
+            letter-spacing: 0.05em;
+        }
+
+        /* Simulation content area */
+        .simulation-content {
+            flex: 1 1 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 8px;
+            min-height: 0; /* Critical: Allow shrinking */
+            overflow: hidden; /* Critical: No overflow */
+            position: relative;
+        }
+
+        /* Canvas mock */
+        .canvas-mock {
+            width: 300px;
+            height: 300px;
+            background: linear-gradient(45deg, #3b82f6 25%, transparent 25%, transparent 75%, #3b82f6 75%, #3b82f6),
+                        linear-gradient(45deg, #3b82f6 25%, transparent 25%, transparent 75%, #3b82f6 75%, #3b82f6);
+            background-size: 20px 20px;
+            background-position: 0 0, 10px 10px;
+            border: 2px solid #3b82f6;
+            border-radius: 4px;
+        }
+
+        /* Test content for sidebars */
+        .test-content {
+            height: 1000px;
+            background: linear-gradient(to bottom, #3b82f6, #10b981);
+            border-radius: 4px;
+            padding: 16px;
+            color: white;
+        }
+
+        /* Status indicator */
+        .status {
+            position: fixed;
+            top: 70px;
+            right: 10px;
+            background: #10b981;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 4px;
+            font-size: 14px;
+            font-weight: 600;
+            z-index: 1000;
+        }
+    </style>
+</head>
+<body>
+    <div class="status">✅ No Vertical Scroll in Middle</div>
+    
+    <div class="app">
+        <div class="header">
+            6-Vertex Model - CSS Fix Test
+        </div>
+        
+        <div class="main-content">
+            <!-- Left sidebar -->
+            <div class="sidebar">
+                <h3>Left Sidebar</h3>
+                <p>This can scroll vertically</p>
+                <div class="test-content">
+                    <p>Long content to test scrolling...</p>
+                </div>
+            </div>
+            
+            <!-- Middle visualization area -->
+            <div class="visualization-container">
+                <div class="dual-simulation-display">
+                    <!-- Simulation A -->
+                    <div class="simulation-container">
+                        <div class="simulation-label">Simulation A (50%)</div>
+                        <div class="simulation-content">
+                            <div class="canvas-mock"></div>
+                        </div>
+                    </div>
+                    
+                    <!-- Simulation B -->
+                    <div class="simulation-container">
+                        <div class="simulation-label">Simulation B (50%)</div>
+                        <div class="simulation-content">
+                            <div class="canvas-mock"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Right sidebar -->
+            <div class="sidebar">
+                <h3>Right Sidebar</h3>
+                <p>This can scroll vertically</p>
+                <div class="test-content">
+                    <p>Long content to test scrolling...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Test that middle area has no scrollbar
+        window.addEventListener('load', () => {
+            const vizContainer = document.querySelector('.visualization-container');
+            const dualDisplay = document.querySelector('.dual-simulation-display');
+            const simContainers = document.querySelectorAll('.simulation-container');
+            
+            // Check for scroll overflow
+            const checkOverflow = (element, name) => {
+                const hasVerticalScroll = element.scrollHeight > element.clientHeight;
+                const hasHorizontalScroll = element.scrollWidth > element.clientWidth;
+                
+                console.log(`${name}:`, {
+                    hasVerticalScroll,
+                    hasHorizontalScroll,
+                    scrollHeight: element.scrollHeight,
+                    clientHeight: element.clientHeight,
+                    scrollWidth: element.scrollWidth,
+                    clientWidth: element.clientWidth
+                });
+                
+                return hasVerticalScroll || hasHorizontalScroll;
+            };
+            
+            const vizOverflow = checkOverflow(vizContainer, 'Visualization Container');
+            const dualOverflow = checkOverflow(dualDisplay, 'Dual Display');
+            
+            simContainers.forEach((container, index) => {
+                checkOverflow(container, `Simulation Container ${index + 1}`);
+            });
+            
+            // Update status indicator
+            const status = document.querySelector('.status');
+            if (!vizOverflow && !dualOverflow) {
+                status.textContent = '✅ Success: No scrolling in middle area!';
+                status.style.background = '#10b981';
+            } else {
+                status.textContent = '❌ Failed: Middle area has scroll overflow!';
+                status.style.background = '#ef4444';
+            }
+            
+            // Log heights for verification
+            console.log('Container Heights:', {
+                visualization: vizContainer.offsetHeight,
+                dualDisplay: dualDisplay.offsetHeight,
+                simA: simContainers[0].offsetHeight,
+                simB: simContainers[1].offsetHeight,
+                total: simContainers[0].offsetHeight + simContainers[1].offsetHeight,
+                percentA: (simContainers[0].offsetHeight / dualDisplay.offsetHeight * 100).toFixed(1) + '%',
+                percentB: (simContainers[1].offsetHeight / dualDisplay.offsetHeight * 100).toFixed(1) + '%'
+            });
+        });
+    </script>
+</body>
+</html>

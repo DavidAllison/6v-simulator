@@ -64,12 +64,14 @@
       "WebFetch(domain:pr-29.dev.6v.allison.la)",
       "Bash(./scripts/update-pr-preview-url.sh:*)",
       "WebFetch(domain:pr-33.dev.6v.allison.la)",
-      "Bash(echo:*)"
+      "Bash(echo:*)",
+      "Bash(git reset:*)"
     ],
     "deny": [],
     "ask": [],
     "additionalDirectories": [
-      "/Users/dja/Desktop/.husky"
+      "/Users/dja/Desktop/.husky",
+      "/Users/dja/.config"
     ]
   }
 }

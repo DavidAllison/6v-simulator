@@ -13,6 +13,13 @@
   min-width: 0; /* Critical: Allow shrinking below content size */
 }
 
+/* When used inside DualSimulationDisplay, remove extra styling */
+.simulation-content .pan-zoom-container {
+  border: none;
+  background: transparent;
+  border-radius: 0;
+}
+
 .pan-zoom-viewport {
   flex: 1 1 0; /* Take remaining space after label */
   position: relative;

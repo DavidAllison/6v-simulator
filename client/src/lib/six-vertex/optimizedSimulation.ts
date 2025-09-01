@@ -9,7 +9,8 @@
  * - Object pooling to reduce GC pressure
  */
 
-import { VertexType } from './types';
+import type { LatticeState, Vertex } from './types';
+import { VertexType, EdgeState } from './types';
 import { FlipDirection } from './physicsFlips';
 import {
   isFlipValidCStyle as isFlipValid,
@@ -161,6 +162,12 @@ export class OptimizedPhysicsSimulation {
 
     // Initialize state
     this.initializeState(config.initialState || 'dwbc-high');
+    console.log('OptimizedSimulation initialized:', {
+      size: this.size,
+      initialState: config.initialState || 'dwbc-high',
+      firstVertex: this.vertices[0],
+      totalVertices: this.vertices.length,
+    });
 
     // Build initial flippable list
     this.buildFlippableList();
@@ -630,16 +637,22 @@ export class OptimizedPhysicsSimulation {
   /**
    * Get current state as a standard LatticeState (for rendering)
    */
-  public getState(): any {
+  public getState(): LatticeState {
     // Convert back to standard format for compatibility
-    const vertices: any[][] = [];
-    const horizontalEdges: any[][] = [];
-    const verticalEdges: any[][] = [];
+    const vertices: Vertex[][] = [];
+    const horizontalEdges: EdgeState[][] = [];
+    const verticalEdges: EdgeState[][] = [];
+
+    console.log('getState called:', {
+      size: this.size,
+      verticesLength: this.vertices.length,
+      firstVertex: this.vertices[0],
+    });
 
     // Build vertices array and derive edges from vertex configurations
     for (let row = 0; row < this.size; row++) {
-      const rowVertices: any[] = [];
-      const rowHorizontalEdges: any[] = [];
+      const rowVertices: Vertex[] = [];
+      const rowHorizontalEdges: EdgeState[] = [];
 
       for (let col = 0; col < this.size; col++) {
         const idx = row * this.size + col;
@@ -655,7 +668,7 @@ export class OptimizedPhysicsSimulation {
         // Add horizontal edge (except for last column)
         if (col < this.size - 1) {
           // Edge state is determined by the vertex's right configuration
-          rowHorizontalEdges.push(config.right === 'out' ? 'out' : 'in');
+          rowHorizontalEdges.push((config.right === 'out' ? 'out' : 'in') as EdgeState);
         }
       }
 
@@ -665,13 +678,13 @@ export class OptimizedPhysicsSimulation {
 
     // Build vertical edges array
     for (let row = 0; row < this.size - 1; row++) {
-      const rowVerticalEdges: any[] = [];
+      const rowVerticalEdges: EdgeState[] = [];
       for (let col = 0; col < this.size; col++) {
         const idx = row * this.size + col;
         const type = NUM_TO_VERTEX_TYPE[this.vertices[idx]];
         const config = this.getVertexConfiguration(type);
         // Edge state is determined by the vertex's bottom configuration
-        rowVerticalEdges.push(config.bottom === 'out' ? 'out' : 'in');
+        rowVerticalEdges.push((config.bottom === 'out' ? 'out' : 'in') as EdgeState);
       }
       verticalEdges.push(rowVerticalEdges);
     }
@@ -688,7 +701,12 @@ export class OptimizedPhysicsSimulation {
   /**
    * Get vertex configuration from type
    */
-  private getVertexConfiguration(type: VertexType): any {
+  private getVertexConfiguration(type: VertexType): {
+    left: 'in' | 'out';
+    right: 'in' | 'out';
+    top: 'in' | 'out';
+    bottom: 'in' | 'out';
+  } {
     // Simplified configuration for compatibility
     const configs: Record<VertexType, any> = {
       [VertexType.a1]: { left: 'in', right: 'out', top: 'in', bottom: 'out' },

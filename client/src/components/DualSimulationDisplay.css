@@ -5,11 +5,12 @@
   flex-direction: column;
   gap: 0.5rem; /* Gap between simulation containers */
   padding: 0.5rem;
-  background: var(--color-bg-primary);
+  background: transparent; /* Transparent since parent has styling */
   box-sizing: border-box;
   min-height: 0; /* Critical: Allow shrinking below content size */
   overflow: hidden; /* Critical: No scrolling in the dual display container */
   position: relative; /* Establish positioning context */
+  flex: 1; /* Take all available space from parent */
 }
 
 /* Individual simulation container - exactly 50% height each */

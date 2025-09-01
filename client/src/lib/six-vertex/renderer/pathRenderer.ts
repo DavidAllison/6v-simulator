@@ -68,6 +68,12 @@ export class PathRenderer {
    * Render the lattice state
    */
   render(state: LatticeState): void {
+    console.log('PathRenderer.render called:', {
+      state: { width: state.width, height: state.height },
+      canvas: { width: this.canvas.width, height: this.canvas.height },
+      config: this.config,
+    });
+
     // Clear canvas
     this.clear();
 
@@ -76,6 +82,16 @@ export class PathRenderer {
     const height = (state.height + 1) * this.config.cellSize;
 
     if (this.canvas.width !== width || this.canvas.height !== height) {
+      console.log(
+        'Resizing canvas from',
+        this.canvas.width,
+        'x',
+        this.canvas.height,
+        'to',
+        width,
+        'x',
+        height,
+      );
       this.canvas.width = width;
       this.canvas.height = height;
     }
@@ -91,12 +107,15 @@ export class PathRenderer {
     // Draw based on render mode
     switch (this.config.mode) {
       case RenderMode.Paths:
+        console.log('Drawing paths...');
         this.drawPaths(state);
         break;
       case RenderMode.Arrows:
+        console.log('Drawing arrows...');
         this.drawArrows(state);
         break;
       case RenderMode.Both:
+        console.log('Drawing both paths and arrows...');
         this.drawPaths(state);
         this.drawArrows(state);
         break;
@@ -119,6 +138,12 @@ export class PathRenderer {
   private drawBackground(): void {
     this.ctx.fillStyle = this.config.colors.background;
     this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+
+    // Debug: Draw a visible red border to confirm canvas is rendering
+    this.ctx.strokeStyle = 'red';
+    this.ctx.lineWidth = 5;
+    this.ctx.strokeRect(0, 0, this.canvas.width, this.canvas.height);
+    console.log('Drew red border on canvas:', this.canvas.width, 'x', this.canvas.height);
   }
 
   /**
@@ -301,7 +326,7 @@ export class PathRenderer {
    */
   private drawArrows(state: LatticeState): void {
     // Use semi-transparent arrows when overlaying on paths
-    const alpha = this.config.mode === RenderMode.Both ? 0.7 : 1.0;
+    // Remove unused alpha variable - transparency is already handled in the hex color
     this.ctx.strokeStyle =
       this.config.mode === RenderMode.Both
         ? `${this.config.colors.arrow}B3` // Add transparency
