@@ -10,6 +10,9 @@ import { HeightDemo } from './routes/heightDemo';
 import ErrorBoundary from './components/ErrorBoundary';
 import { ThemeToggle } from './components/ThemeToggle';
 import TestDualLayout from './components/TestDualLayout';
+import TestSimpleMatrix from './components/TestSimpleMatrix';
+import TestManualRender from './components/TestManualRender';
+import { TestCanvasPage } from './TestCanvasPage';
 
 function ModelTests() {
   return (
@@ -151,6 +154,9 @@ function App() {
             <Link to="/performance">Performance</Link>
             <Link to="/model-tests">Tests</Link>
             <Link to="/test-dual-layout">Test Layout</Link>
+            <Link to="/test-simple">Simple Test</Link>
+            <Link to="/test-manual">Manual Test</Link>
+            <Link to="/test-canvas">Canvas Test</Link>
             <ThemeToggle />
           </nav>
         </div>
@@ -166,6 +172,9 @@ function App() {
           <Route path="/performance" element={<PerformanceDemo />} />
           <Route path="/model-tests" element={<ModelTests />} />
           <Route path="/test-dual-layout" element={<TestDualLayout />} />
+          <Route path="/test-simple" element={<TestSimpleMatrix />} />
+          <Route path="/test-manual" element={<TestManualRender />} />
+          <Route path="/test-canvas" element={<TestCanvasPage />} />
         </Routes>
       </ErrorBoundary>
     </div>

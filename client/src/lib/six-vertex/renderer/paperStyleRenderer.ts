@@ -15,12 +15,17 @@ export function renderPaperStyle(
   state: LatticeState,
   cellSize: number,
 ): void {
-  // Clear canvas
-  ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
-
-  // Set up drawing style for bold paths
-  ctx.strokeStyle = '#000000';
-  ctx.lineWidth = cellSize / 8;
+  console.log('renderPaperStyle called with:', {
+    stateSize: `${state.width}x${state.height}`,
+    cellSize,
+    currentStrokeStyle: ctx.strokeStyle,
+    currentLineWidth: ctx.lineWidth,
+  });
+  
+  // Don't clear canvas - let PathRenderer handle that
+  // Don't set strokeStyle or lineWidth - use what PathRenderer set
+  
+  // Set line cap and join for crisp corners
   ctx.lineCap = 'square';
   ctx.lineJoin = 'miter';
 
@@ -56,9 +61,10 @@ export function renderPaperStyle(
   // - c1: L-shape left-bottom
   // - c2: L-shape top-right
 
-  ctx.strokeStyle = '#000000';
-  ctx.lineWidth = cellSize / 8;
+  // Use the strokeStyle and lineWidth that were already set by PathRenderer
+  // Don't override them here
 
+  let pathCount = 0;
   for (let row = 0; row < state.height; row++) {
     for (let col = 0; col < state.width; col++) {
       const vertex = state.vertices[row][col];
@@ -78,6 +84,7 @@ export function renderPaperStyle(
           ctx.moveTo(cx, cy - half);
           ctx.lineTo(cx, cy + half);
           ctx.stroke();
+          pathCount += 2;
           break;
 
         case VertexType.a2:
@@ -90,6 +97,7 @@ export function renderPaperStyle(
           ctx.moveTo(cx, cy - half);
           ctx.lineTo(cx, cy + half);
           ctx.stroke();
+          pathCount++;
           break;
 
         case VertexType.b2:
@@ -98,6 +106,7 @@ export function renderPaperStyle(
           ctx.moveTo(cx - half, cy);
           ctx.lineTo(cx + half, cy);
           ctx.stroke();
+          pathCount++;
           break;
 
         case VertexType.c1:
@@ -107,6 +116,7 @@ export function renderPaperStyle(
           ctx.lineTo(cx, cy);
           ctx.lineTo(cx, cy + half);
           ctx.stroke();
+          pathCount++;
           break;
 
         case VertexType.c2:
@@ -116,10 +126,13 @@ export function renderPaperStyle(
           ctx.lineTo(cx, cy);
           ctx.lineTo(cx + half, cy);
           ctx.stroke();
+          pathCount++;
           break;
       }
     }
   }
+
+  console.log(`Drew ${pathCount} path segments across ${state.width}x${state.height} lattice`);
 
   // Add vertex dots for clarity (optional)
   ctx.fillStyle = '#666666';

@@ -147,6 +147,7 @@ export function PanZoomCanvas({
 
     // Early return if dimensions are invalid
     if (containerWidth <= 0 || containerHeight <= 0) {
+      console.log('FitToScreen: Invalid container dimensions', { containerWidth, containerHeight });
       return;
     }
 
@@ -183,6 +184,14 @@ export function PanZoomCanvas({
     const scaledHeight = height * scale;
     const panX = (containerWidth - scaledWidth) / 2;
     const panY = (containerHeight - scaledHeight) / 2;
+
+    console.log('FitToScreen calculations:', {
+      containerDimensions: { width: containerWidth, height: containerHeight },
+      canvasDimensions: { width, height },
+      scales: { scaleX, scaleY, finalScale: scale },
+      pan: { x: panX, y: panY },
+      scaledDimensions: { width: scaledWidth, height: scaledHeight },
+    });
 
     setZoom(scale);
     setPan({ x: panX, y: panY });
@@ -330,6 +339,7 @@ export function PanZoomCanvas({
             transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`,
             transformOrigin: '0 0',
           }}
+          data-debug={`pan: ${pan.x.toFixed(1)}, ${pan.y.toFixed(1)} | zoom: ${zoom.toFixed(2)}`}
         >
           {React.cloneElement(children, {
             width,

@@ -35,11 +35,11 @@ export class PathRenderer {
     return {
       mode: RenderMode.Paths,
       cellSize: 30,
-      lineWidth: 2,
+      lineWidth: 3,  // Thicker lines for visibility
       colors: {
-        background: '#ffffff',
+        background: '#ffffff',  // White background
         grid: '#e0e0e0',
-        pathSegment: '#000000',
+        pathSegment: '#ff0000',  // Bright red for debugging
         arrow: '#4444ff',
         vertexTypes: {
           [VertexType.a1]: '#ff4444',
@@ -98,6 +98,17 @@ export class PathRenderer {
 
     // Draw background
     this.drawBackground();
+    
+    // DEBUG: Draw a big red X to verify canvas is working
+    this.ctx.strokeStyle = '#ff0000';
+    this.ctx.lineWidth = 5;
+    this.ctx.beginPath();
+    this.ctx.moveTo(0, 0);
+    this.ctx.lineTo(this.canvas.width, this.canvas.height);
+    this.ctx.moveTo(this.canvas.width, 0);
+    this.ctx.lineTo(0, this.canvas.height);
+    this.ctx.stroke();
+    console.log('Drew red X across entire canvas');
 
     // Draw grid if enabled
     if (this.config.showGrid) {
@@ -138,12 +149,6 @@ export class PathRenderer {
   private drawBackground(): void {
     this.ctx.fillStyle = this.config.colors.background;
     this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
-
-    // Debug: Draw a visible red border to confirm canvas is rendering
-    this.ctx.strokeStyle = 'red';
-    this.ctx.lineWidth = 5;
-    this.ctx.strokeRect(0, 0, this.canvas.width, this.canvas.height);
-    console.log('Drew red border on canvas:', this.canvas.width, 'x', this.canvas.height);
   }
 
   /**
@@ -192,8 +197,38 @@ export class PathRenderer {
    * Draw paths (bold edges) - Paper style with continuous paths
    */
   private drawPaths(state: LatticeState): void {
+    console.log('drawPaths called with:', {
+      strokeStyle: this.config.colors.pathSegment,
+      lineWidth: this.config.lineWidth,
+      cellSize: this.config.cellSize,
+      stateSize: `${state.width}x${state.height}`,
+    });
+    
+    // Save current context state
+    this.ctx.save();
+    
+    // Set the path color from config
+    this.ctx.strokeStyle = this.config.colors.pathSegment;
+    this.ctx.lineWidth = this.config.lineWidth;
+    
+    // Draw a test line to verify canvas is working
+    this.ctx.strokeStyle = '#00ff00'; // Bright green test line
+    this.ctx.lineWidth = 5;
+    this.ctx.beginPath();
+    this.ctx.moveTo(10, 10);
+    this.ctx.lineTo(100, 100);
+    this.ctx.stroke();
+    console.log('Drew green test line from (10,10) to (100,100)');
+    
+    // Reset to config colors
+    this.ctx.strokeStyle = this.config.colors.pathSegment;
+    this.ctx.lineWidth = this.config.lineWidth;
+    
     // Use the new continuous path renderer that matches the paper style
     renderContinuousPaths(this.ctx, state, this.config.cellSize);
+    
+    // Restore context state
+    this.ctx.restore();
   }
 
   /**

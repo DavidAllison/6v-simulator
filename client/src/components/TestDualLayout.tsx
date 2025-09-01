@@ -11,31 +11,37 @@ const TestDualLayout: React.FC = () => {
   
   const [dimensions, setDimensions] = useState({ width: 600, height: 300 });
   
-  // Refs for states and renderers
+  // Refs for states
   const state1Ref = useRef<LatticeState | null>(null);
   const state2Ref = useRef<LatticeState | null>(null);
-  const renderer1Ref = useRef<PathRenderer | null>(null);
-  const renderer2Ref = useRef<PathRenderer | null>(null);
   
   // Configuration for simulations
-  const N = 24; // Lattice size
+  const N = 16; // Smaller lattice size for better performance and visibility
 
   // Initialize states
   const initializeStates = () => {
     // Create DWBC High state
     state1Ref.current = generateDWBCHigh(N);
+    console.log('Generated DWBC High state:', state1Ref.current);
     
     // Create DWBC Low state
     state2Ref.current = generateDWBCLow(N);
+    console.log('Generated DWBC Low state:', state2Ref.current);
   };
   
   // Render a state to a canvas
   const renderState = (
     canvas: HTMLCanvasElement, 
-    renderer: PathRenderer, 
     state: LatticeState,
-    label: string
+    label: string,
+    pathColor: string
   ) => {
+    console.log(`Rendering ${label}:`, {
+      canvasSize: { width: canvas.width, height: canvas.height },
+      stateSize: { width: state.width, height: state.height },
+      pathColor
+    });
+    
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
     
@@ -44,31 +50,83 @@ const TestDualLayout: React.FC = () => {
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     
     // Calculate scale to fit canvas with padding
-    const padding = 40;
+    const padding = 60;
+    const cellSize = 20;
     const availableWidth = canvas.width - (2 * padding);
     const availableHeight = canvas.height - (2 * padding);
-    const scale = Math.min(
-      availableWidth / (N * 20),
-      availableHeight / (N * 20)
-    );
     
-    // Center the matrix
-    const matrixWidth = N * 20 * scale;
-    const matrixHeight = N * 20 * scale;
-    const offsetX = (canvas.width - matrixWidth) / 2;
-    const offsetY = (canvas.height - matrixHeight) / 2;
+    // Create a temporary canvas for the PathRenderer
+    // Don't set size - PathRenderer will do it based on lattice
+    const tempCanvas = document.createElement('canvas');
     
-    // Save context state
-    ctx.save();
+    // Create PathRenderer with the temporary canvas
+    const renderer = new PathRenderer(tempCanvas, {
+      cellSize: cellSize,
+      lineWidth: 3,
+      colors: {
+        background: '#1a1a1a', // Use dark background instead of transparent
+        grid: '#333',
+        pathSegment: pathColor,
+        arrow: '#666',
+        vertexTypes: {
+          'a1': '#ff4444',
+          'a2': '#44ff44',
+          'b1': '#4444ff',
+          'b2': '#ffff44',
+          'c1': '#ff44ff',
+          'c2': '#44ffff',
+        },
+      },
+      showGrid: false,
+      animateFlips: false,
+      animationDuration: 0,
+      mode: 'paths' as const,
+    });
     
-    // Apply transformations
-    ctx.translate(offsetX, offsetY);
-    ctx.scale(scale, scale);
-    
-    // Render the lattice
+    // Render to temporary canvas
     renderer.render(state);
     
-    // Restore context
+    // Now get the actual dimensions after PathRenderer sets them
+    const matrixWidth = tempCanvas.width;
+    const matrixHeight = tempCanvas.height;
+    
+    // Calculate scale to fit
+    const scale = Math.min(
+      availableWidth / matrixWidth,
+      availableHeight / matrixHeight,
+      2 // Max scale of 2x to avoid pixelation
+    );
+    
+    // Calculate actual dimensions and center position
+    const scaledWidth = matrixWidth * scale;
+    const scaledHeight = matrixHeight * scale;
+    const offsetX = (canvas.width - scaledWidth) / 2;
+    const offsetY = (canvas.height - scaledHeight) / 2;
+    
+    // Log temp canvas details for debugging
+    console.log(`Temp canvas rendered for ${label}:`, {
+      tempCanvasSize: { width: tempCanvas.width, height: tempCanvas.height },
+      scale: scale,
+      offset: { x: offsetX, y: offsetY },
+      hasContent: tempCanvas.getContext('2d')?.getImageData(0, 0, 1, 1).data.some(v => v > 0)
+    });
+    
+    // Draw the rendered matrix to our main canvas with scaling
+    ctx.save();
+    ctx.imageSmoothingEnabled = false; // Crisp pixels
+    
+    // Draw the temp canvas to the main canvas
+    try {
+      ctx.drawImage(
+        tempCanvas,
+        0, 0, matrixWidth, matrixHeight,
+        offsetX, offsetY, scaledWidth, scaledHeight
+      );
+      console.log(`Successfully drew ${label} to main canvas`);
+    } catch (error) {
+      console.error(`Error drawing ${label}:`, error);
+    }
+    
     ctx.restore();
     
     // Add label overlay
@@ -78,13 +136,19 @@ const TestDualLayout: React.FC = () => {
     ctx.textBaseline = 'top';
     ctx.fillText(label, 10, 10);
     
+    // Add matrix info
+    ctx.font = '12px Arial';
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+    ctx.fillText(`Size: ${state.width}×${state.height}`, 10, 32);
+    ctx.fillText(`Scale: ${scale.toFixed(2)}x`, 10, 48);
+    
     // Add subtle border
     ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
     ctx.lineWidth = 1;
     ctx.strokeRect(0, 0, canvas.width, canvas.height);
   };
 
-  // Resize canvases and reinitialize renderers
+  // Resize canvases and render states
   const resizeCanvases = () => {
     if (container1Ref.current && canvas1Ref.current) {
       const rect = container1Ref.current.getBoundingClientRect();
@@ -94,33 +158,9 @@ const TestDualLayout: React.FC = () => {
       canvas1Ref.current.width = width;
       canvas1Ref.current.height = height;
       
-      // Create renderer for canvas 1
-      renderer1Ref.current = new PathRenderer(canvas1Ref.current, {
-        cellSize: 20,
-        lineWidth: 3,
-        colors: {
-          background: 'transparent',
-          grid: '#333',
-          pathSegment: '#4ECDC4',
-          arrow: '#666',
-          vertexTypes: {
-            'a1': '#ff4444',
-            'a2': '#44ff44',
-            'b1': '#4444ff',
-            'b2': '#ffff44',
-            'c1': '#ff44ff',
-            'c2': '#44ffff',
-          },
-        },
-        showGrid: false,
-        animateFlips: false,
-        animationDuration: 0,
-        mode: 'paths' as const,
-      });
-      
-      // Render initial state if it exists
+      // Render DWBC High state if it exists
       if (state1Ref.current) {
-        renderState(canvas1Ref.current, renderer1Ref.current, state1Ref.current, 'DWBC High');
+        renderState(canvas1Ref.current, state1Ref.current, 'DWBC High', '#4ECDC4');
       }
     }
 
@@ -132,33 +172,9 @@ const TestDualLayout: React.FC = () => {
       canvas2Ref.current.width = width;
       canvas2Ref.current.height = height;
       
-      // Create renderer for canvas 2
-      renderer2Ref.current = new PathRenderer(canvas2Ref.current, {
-        cellSize: 20,
-        lineWidth: 3,
-        colors: {
-          background: 'transparent',
-          grid: '#333',
-          pathSegment: '#F38181',
-          arrow: '#666',
-          vertexTypes: {
-            'a1': '#ff4444',
-            'a2': '#44ff44',
-            'b1': '#4444ff',
-            'b2': '#ffff44',
-            'c1': '#ff44ff',
-            'c2': '#44ffff',
-          },
-        },
-        showGrid: false,
-        animateFlips: false,
-        animationDuration: 0,
-        mode: 'paths' as const,
-      });
-      
-      // Render initial state if it exists
+      // Render DWBC Low state if it exists
       if (state2Ref.current) {
-        renderState(canvas2Ref.current, renderer2Ref.current, state2Ref.current, 'DWBC Low');
+        renderState(canvas2Ref.current, state2Ref.current, 'DWBC Low', '#F38181');
       }
     }
   };
