@@ -1,16 +1,16 @@
 .pan-zoom-container {
   position: relative;
   width: 100%;
-  height: 100%; /* Take full height of parent - parent handles distribution */
+  height: 100%;
   display: flex;
-  flex-direction: column; /* Stack label and viewport vertically */
+  flex-direction: column;
   background: var(--color-bg-secondary);
   border: 1px solid var(--color-border);
   border-radius: 0.5rem;
-  overflow: hidden; /* Critical: Prevent container overflow */
+  overflow: hidden;
   box-sizing: border-box;
-  min-height: 0; /* Critical: Allow shrinking below content size */
-  min-width: 0; /* Critical: Allow shrinking below content size */
+  min-height: 0;
+  min-width: 0;
 }
 
 /* When used inside DualSimulationDisplay, remove extra styling */
@@ -21,31 +21,30 @@
 }
 
 .pan-zoom-viewport {
-  flex: 1 1 0; /* Take remaining space after label */
+  flex: 1 1 0;
   position: relative;
-  overflow: hidden; /* Critical: Clip content that exceeds viewport */
-  min-width: 0; /* Critical: Allow shrinking below content size */
-  min-height: 0; /* Critical: Allow shrinking below content size */
-  width: 100%; /* Take full width */
+  overflow: hidden;
+  min-width: 0;
+  min-height: 0;
+  width: 100%;
   box-sizing: border-box;
 }
 
 .pan-zoom-content {
   position: absolute;
   will-change: transform;
-  /* No transition by default during initialization */
-  opacity: 1; /* Ensure it's visible */
-  visibility: visible; /* Ensure it's visible */
+  opacity: 1;
+  visibility: visible;
 }
 
 .pan-zoom-content.initialized {
   transition: transform 0.1s ease-out;
-  opacity: 1; /* Ensure it's visible */
+  opacity: 1;
 }
 
 .pan-zoom-content.dragging {
   transition: none;
-  opacity: 1; /* Ensure it's visible */
+  opacity: 1;
 }
 
 .pan-zoom-controls {

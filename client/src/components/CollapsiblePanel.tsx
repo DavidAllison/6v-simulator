@@ -14,8 +14,7 @@ export function CollapsiblePanel({
   children,
   title,
   side,
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  defaultCollapsed = false, // Default to expanded
+  defaultCollapsed = false,
   className = '',
 }: CollapsiblePanelProps) {
   // Create a unique key for this panel's state in localStorage
@@ -23,10 +22,8 @@ export function CollapsiblePanel({
 
   // Initialize state from localStorage if available, otherwise use defaultCollapsed
   const [isCollapsed, setIsCollapsed] = useState(() => {
-    // For debugging: ignore localStorage and always start expanded
-    // const stored = localStorage.getItem(storageKey);
-    // return stored !== null ? stored === 'true' : defaultCollapsed;
-    return false; // Always start expanded for now
+    // Always start expanded for now to ensure visibility
+    return false;
   });
 
   // Save collapsed state to localStorage whenever it changes
@@ -38,20 +35,30 @@ export function CollapsiblePanel({
     setIsCollapsed(!isCollapsed);
   };
 
+  // Determine panel classes based on side and state
+  const panelClass = `panel-section panel-${side} ${isCollapsed ? 'collapsed' : ''} ${className}`;
+
   return (
-    <div className={`collapsible-panel ${side} ${isCollapsed ? 'collapsed' : ''} ${className}`}>
-      <button
-        className="collapse-toggle"
-        onClick={toggleCollapse}
-        aria-label={isCollapsed ? `Expand ${title}` : `Collapse ${title}`}
-        title={isCollapsed ? `Expand ${title}` : `Collapse ${title}`}
-      >
-        <span className="toggle-icon">
-          {side === 'left' ? (isCollapsed ? '▶' : '◀') : isCollapsed ? '◀' : '▶'}
-        </span>
-        {isCollapsed && <span className="collapsed-title">{title}</span>}
-      </button>
-      <div className="panel-content">{children}</div>
+    <div className={panelClass}>
+      <div className="panel-header">
+        <button
+          className="collapse-toggle"
+          onClick={toggleCollapse}
+          aria-label={isCollapsed ? `Expand ${title}` : `Collapse ${title}`}
+          title={isCollapsed ? `Expand ${title}` : `Collapse ${title}`}
+        >
+          <span className="toggle-icon">
+            {side === 'left' ? (isCollapsed ? '▶' : '◀') : isCollapsed ? '◀' : '▶'}
+          </span>
+        </button>
+        {!isCollapsed && <h3 className="panel-title">{title}</h3>}
+        {isCollapsed && (
+          <div className="collapsed-label">
+            <span>{title}</span>
+          </div>
+        )}
+      </div>
+      {!isCollapsed && <div className="panel-content">{children}</div>}
     </div>
   );
 }

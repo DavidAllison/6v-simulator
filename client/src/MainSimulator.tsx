@@ -476,7 +476,7 @@ function MainSimulator() {
 
   return (
     <div className="main-content">
-      <CollapsiblePanel title="Controls" side="left" className="panel-section">
+      <CollapsiblePanel title="Controls" side="left">
         <ControlPanel
           isRunning={isRunning}
           simulationMode={simulationMode}
@@ -556,7 +556,7 @@ function MainSimulator() {
         )}
       </div>
 
-      <CollapsiblePanel title="Info" side="right" className="panel-section">
+      <CollapsiblePanel title="Info" side="right">
         <StatisticsPanel
           stats={stats}
           fps={fps}
