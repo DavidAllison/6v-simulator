@@ -1,8 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { generateDWBCHigh, generateDWBCLow } from '../lib/six-vertex/initialStates';
-import { OptimizedSimulation } from '../lib/six-vertex/optimizedSimulation';
 import { PathRenderer } from '../lib/six-vertex/renderer/pathRenderer';
-import { SimulationConfig } from '../lib/six-vertex/types';
+import type { LatticeState } from '../lib/six-vertex/types';
 
 const TestDualLayout: React.FC = () => {
   const canvas1Ref = useRef<HTMLCanvasElement>(null);
@@ -11,54 +10,30 @@ const TestDualLayout: React.FC = () => {
   const container2Ref = useRef<HTMLDivElement>(null);
   
   const [dimensions, setDimensions] = useState({ width: 600, height: 300 });
-  const [isRunning, setIsRunning] = useState(false);
-  const [stats, setStats] = useState({ 
-    sim1Steps: 0, 
-    sim2Steps: 0,
-    sim1FlipRate: 0,
-    sim2FlipRate: 0 
-  });
   
-  // Refs for simulations and renderers
-  const sim1Ref = useRef<OptimizedSimulation | null>(null);
-  const sim2Ref = useRef<OptimizedSimulation | null>(null);
+  // Refs for states and renderers
+  const state1Ref = useRef<LatticeState | null>(null);
+  const state2Ref = useRef<LatticeState | null>(null);
   const renderer1Ref = useRef<PathRenderer | null>(null);
   const renderer2Ref = useRef<PathRenderer | null>(null);
-  const animationFrameRef = useRef<number | null>(null);
   
   // Configuration for simulations
   const N = 24; // Lattice size
-  const config: SimulationConfig = {
-    N,
-    weights: { a: 1, b: 1, c: 1 },
-    algorithm: 'heat-bath',
-    seed: 12345,
-    batchSize: 100
-  };
 
-  // Initialize simulations
-  const initializeSimulations = () => {
-    // Clean up existing simulations
-    if (sim1Ref.current) sim1Ref.current.destroy();
-    if (sim2Ref.current) sim2Ref.current.destroy();
+  // Initialize states
+  const initializeStates = () => {
+    // Create DWBC High state
+    state1Ref.current = generateDWBCHigh(N);
     
-    // Create DWBC High simulation
-    const highState = generateDWBCHigh(N);
-    sim1Ref.current = new OptimizedSimulation(highState, config);
-    
-    // Create DWBC Low simulation
-    const lowState = generateDWBCLow(N);
-    sim2Ref.current = new OptimizedSimulation(lowState, config);
-    
-    // Reset stats
-    setStats({ sim1Steps: 0, sim2Steps: 0, sim1FlipRate: 0, sim2FlipRate: 0 });
+    // Create DWBC Low state
+    state2Ref.current = generateDWBCLow(N);
   };
   
-  // Render a simulation to a canvas
-  const renderSimulation = (
+  // Render a state to a canvas
+  const renderState = (
     canvas: HTMLCanvasElement, 
     renderer: PathRenderer, 
-    simulation: OptimizedSimulation,
+    state: LatticeState,
     label: string
   ) => {
     const ctx = canvas.getContext('2d');
@@ -91,7 +66,7 @@ const TestDualLayout: React.FC = () => {
     ctx.scale(scale, scale);
     
     // Render the lattice
-    renderer.render(simulation.getState());
+    renderer.render(state);
     
     // Restore context
     ctx.restore();
@@ -120,21 +95,32 @@ const TestDualLayout: React.FC = () => {
       canvas1Ref.current.height = height;
       
       // Create renderer for canvas 1
-      const ctx1 = canvas1Ref.current.getContext('2d');
-      if (ctx1) {
-        renderer1Ref.current = new PathRenderer(ctx1, {
-          cellSize: 20,
-          strokeWidth: 3,
-          strokeColor: '#4ECDC4',
-          showArrows: false,
-          arrowSize: 4,
-          arrowColor: '#666'
-        });
-        
-        // Render initial state if simulation exists
-        if (sim1Ref.current) {
-          renderSimulation(canvas1Ref.current, renderer1Ref.current, sim1Ref.current, 'DWBC High');
-        }
+      renderer1Ref.current = new PathRenderer(canvas1Ref.current, {
+        cellSize: 20,
+        lineWidth: 3,
+        colors: {
+          background: 'transparent',
+          grid: '#333',
+          pathSegment: '#4ECDC4',
+          arrow: '#666',
+          vertexTypes: {
+            'a1': '#ff4444',
+            'a2': '#44ff44',
+            'b1': '#4444ff',
+            'b2': '#ffff44',
+            'c1': '#ff44ff',
+            'c2': '#44ffff',
+          },
+        },
+        showGrid: false,
+        animateFlips: false,
+        animationDuration: 0,
+        mode: 'paths' as const,
+      });
+      
+      // Render initial state if it exists
+      if (state1Ref.current) {
+        renderState(canvas1Ref.current, renderer1Ref.current, state1Ref.current, 'DWBC High');
       }
     }
 
@@ -147,83 +133,45 @@ const TestDualLayout: React.FC = () => {
       canvas2Ref.current.height = height;
       
       // Create renderer for canvas 2
-      const ctx2 = canvas2Ref.current.getContext('2d');
-      if (ctx2) {
-        renderer2Ref.current = new PathRenderer(ctx2, {
-          cellSize: 20,
-          strokeWidth: 3,
-          strokeColor: '#F38181',
-          showArrows: false,
-          arrowSize: 4,
-          arrowColor: '#666'
-        });
-        
-        // Render initial state if simulation exists
-        if (sim2Ref.current) {
-          renderSimulation(canvas2Ref.current, renderer2Ref.current, sim2Ref.current, 'DWBC Low');
-        }
-      }
-    }
-  };
-  
-  // Animation loop
-  const animate = () => {
-    if (!isRunning) return;
-    
-    // Step both simulations
-    if (sim1Ref.current && renderer1Ref.current && canvas1Ref.current) {
-      sim1Ref.current.step();
-      renderSimulation(canvas1Ref.current, renderer1Ref.current, sim1Ref.current, 'DWBC High');
-    }
-    
-    if (sim2Ref.current && renderer2Ref.current && canvas2Ref.current) {
-      sim2Ref.current.step();
-      renderSimulation(canvas2Ref.current, renderer2Ref.current, sim2Ref.current, 'DWBC Low');
-    }
-    
-    // Update stats
-    if (sim1Ref.current && sim2Ref.current) {
-      const stats1 = sim1Ref.current.getStats();
-      const stats2 = sim2Ref.current.getStats();
-      setStats({
-        sim1Steps: stats1.totalSteps,
-        sim2Steps: stats2.totalSteps,
-        sim1FlipRate: stats1.successRate,
-        sim2FlipRate: stats2.successRate
+      renderer2Ref.current = new PathRenderer(canvas2Ref.current, {
+        cellSize: 20,
+        lineWidth: 3,
+        colors: {
+          background: 'transparent',
+          grid: '#333',
+          pathSegment: '#F38181',
+          arrow: '#666',
+          vertexTypes: {
+            'a1': '#ff4444',
+            'a2': '#44ff44',
+            'b1': '#4444ff',
+            'b2': '#ffff44',
+            'c1': '#ff44ff',
+            'c2': '#44ffff',
+          },
+        },
+        showGrid: false,
+        animateFlips: false,
+        animationDuration: 0,
+        mode: 'paths' as const,
       });
-    }
-    
-    animationFrameRef.current = requestAnimationFrame(animate);
-  };
-  
-  // Handle start/stop
-  const handleStartStop = () => {
-    if (isRunning) {
-      // Stop
-      setIsRunning(false);
-      if (animationFrameRef.current) {
-        cancelAnimationFrame(animationFrameRef.current);
+      
+      // Render initial state if it exists
+      if (state2Ref.current) {
+        renderState(canvas2Ref.current, renderer2Ref.current, state2Ref.current, 'DWBC Low');
       }
-    } else {
-      // Start
-      setIsRunning(true);
-      animate();
     }
   };
   
   // Handle reset
   const handleReset = () => {
-    setIsRunning(false);
-    if (animationFrameRef.current) {
-      cancelAnimationFrame(animationFrameRef.current);
-    }
-    initializeSimulations();
+    initializeStates();
     resizeCanvases();
   };
 
   // Initialize on mount
   useEffect(() => {
-    initializeSimulations();
+    initializeStates();
     resizeCanvases();
     
     // Handle window resize
@@ -240,25 +188,8 @@ const TestDualLayout: React.FC = () => {
     
     return () => {
       window.removeEventListener('resize', handleResize);
-      if (animationFrameRef.current) {
-        cancelAnimationFrame(animationFrameRef.current);
-      }
-      if (sim1Ref.current) sim1Ref.current.destroy();
-      if (sim2Ref.current) sim2Ref.current.destroy();
     };
   }, []);
-  
-  // Handle running state changes
-  useEffect(() => {
-    if (isRunning) {
-      animate();
-    }
-    return () => {
-      if (animationFrameRef.current) {
-        cancelAnimationFrame(animationFrameRef.current);
-      }
-    };
-  }, [isRunning]);
 
   // Inline styles for absolute clarity
   const containerStyle: React.CSSProperties = {
@@ -358,7 +289,7 @@ const TestDualLayout: React.FC = () => {
         
         <div style={sectionStyle}>
           <div style={labelStyle}>Simulation Status</div>
-          <div style={valueStyle}>{isRunning ? 'Running' : 'Paused'}</div>
+          <div style={valueStyle}>Static Display</div>
         </div>
         
         <div style={sectionStyle}>
@@ -380,23 +311,6 @@ const TestDualLayout: React.FC = () => {
 
         <div style={sectionStyle}>
           <button 
-            onClick={handleStartStop}
-            style={{
-              width: '100%',
-              padding: '10px',
-              backgroundColor: isRunning ? '#ff9800' : '#4CAF50',
-              color: 'white',
-              border: 'none',
-              borderRadius: '4px',
-              cursor: 'pointer',
-              fontSize: '14px'
-            }}>
-            {isRunning ? 'Pause Simulation' : 'Start Simulation'}
-          </button>
-        </div>
-
-        <div style={sectionStyle}>
-          <button 
             onClick={handleReset}
             style={{
               width: '100%',
@@ -409,7 +323,7 @@ const TestDualLayout: React.FC = () => {
               fontSize: '14px',
               marginTop: '10px'
             }}>
-            Reset
+            Reset Display
           </button>
         </div>
       </div>
@@ -435,32 +349,20 @@ const TestDualLayout: React.FC = () => {
 
       {/* Right Sidebar */}
       <div style={rightSidebarStyle}>
-        <h2 style={titleStyle}>Statistics</h2>
+        <h2 style={titleStyle}>Display Info</h2>
         
         <div style={sectionStyle}>
           <div style={labelStyle}>DWBC High (Top)</div>
-          <div style={valueStyle}>Steps: {stats.sim1Steps.toLocaleString()}</div>
-        </div>
-        
-        <div style={sectionStyle}>
-          <div style={labelStyle}>High Flip Rate</div>
-          <div style={valueStyle}>
-            {(stats.sim1FlipRate * 100).toFixed(1)}%
-          </div>
+          <div style={valueStyle}>c2 on anti-diagonal</div>
+          <div style={valueStyle}>b1 upper-left, b2 lower-right</div>
         </div>
 
         <hr style={{ borderColor: '#444', margin: '20px 0' }} />
         
         <div style={sectionStyle}>
           <div style={labelStyle}>DWBC Low (Bottom)</div>
-          <div style={valueStyle}>Steps: {stats.sim2Steps.toLocaleString()}</div>
-        </div>
-        
-        <div style={sectionStyle}>
-          <div style={labelStyle}>Low Flip Rate</div>
-          <div style={valueStyle}>
-            {(stats.sim2FlipRate * 100).toFixed(1)}%
-          </div>
+          <div style={valueStyle}>c2 on main diagonal</div>
+          <div style={valueStyle}>a1 upper-right, a2 lower-left</div>
         </div>
 
         <hr style={{ borderColor: '#444', margin: '20px 0' }} />
@@ -473,13 +375,14 @@ const TestDualLayout: React.FC = () => {
         </div>
 
         <div style={sectionStyle}>
-          <div style={labelStyle}>Algorithm</div>
-          <div style={valueStyle}>Heat Bath</div>
+          <div style={labelStyle}>Rendering Mode</div>
+          <div style={valueStyle}>Path Segments</div>
         </div>
 
         <div style={sectionStyle}>
-          <div style={labelStyle}>Batch Size</div>
-          <div style={valueStyle}>{config.batchSize} steps/frame</div>
+          <div style={labelStyle}>Color Scheme</div>
+          <div style={valueStyle}>High: Cyan (#4ECDC4)</div>
+          <div style={valueStyle}>Low: Pink (#F38181)</div>
         </div>
       </div>
     </div>
