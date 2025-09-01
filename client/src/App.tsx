@@ -13,6 +13,7 @@ import TestDualLayout from './components/TestDualLayout';
 import TestSimpleMatrix from './components/TestSimpleMatrix';
 import TestManualRender from './components/TestManualRender';
 import { TestCanvasPage } from './TestCanvasPage';
+import WorkingDualDisplay from './components/WorkingDualDisplay';
 
 function ModelTests() {
   return (
@@ -157,6 +158,7 @@ function App() {
             <Link to="/test-simple">Simple Test</Link>
             <Link to="/test-manual">Manual Test</Link>
             <Link to="/test-canvas">Canvas Test</Link>
+            <Link to="/working-dual">Working Dual</Link>
             <ThemeToggle />
           </nav>
         </div>
@@ -175,6 +177,7 @@ function App() {
           <Route path="/test-simple" element={<TestSimpleMatrix />} />
           <Route path="/test-manual" element={<TestManualRender />} />
           <Route path="/test-canvas" element={<TestCanvasPage />} />
+          <Route path="/working-dual" element={<WorkingDualDisplay />} />
         </Routes>
       </ErrorBoundary>
     </div>
