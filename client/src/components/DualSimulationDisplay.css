@@ -7,21 +7,24 @@
   padding: 0.5rem;
   background: var(--color-bg-primary);
   box-sizing: border-box;
-  min-height: 0;
-  overflow: hidden;
+  min-height: 0; /* Critical: Allow shrinking below content size */
+  overflow: hidden; /* Critical: No scrolling in the dual display container */
+  position: relative; /* Establish positioning context */
 }
 
-/* Individual simulation container */
+/* Individual simulation container - exactly 50% height each */
 .simulation-container {
-  flex: 1 1 50%; /* Each container takes exactly 50% of available height */
+  flex: 1 1 0; /* Equal distribution with flex-grow: 1, flex-shrink: 1, flex-basis: 0 */
   display: flex;
   flex-direction: column;
   background: var(--color-bg-secondary);
   border: 1px solid var(--color-border);
   border-radius: 0.5rem;
-  overflow: hidden;
-  min-height: 0; /* Allow flexbox to shrink properly */
+  overflow: hidden; /* Critical: Prevent container overflow */
+  min-height: 0; /* Critical: Allow flexbox to shrink below content size */
+  max-height: calc(50% - 0.25rem); /* Explicit max-height: 50% minus half the gap */
   box-sizing: border-box;
+  position: relative; /* Establish positioning context */
 }
 
 /* Simulation label */
@@ -39,22 +42,27 @@
 
 /* Content area containing the PanZoomCanvas */
 .simulation-content {
-  flex: 1 1 auto; /* Take remaining space */
+  flex: 1 1 0; /* Take remaining space after label */
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 0.5rem;
-  min-height: 0; /* Allow shrinking */
-  overflow: hidden;
+  min-height: 0; /* Critical: Allow shrinking below content size */
+  min-width: 0; /* Critical: Allow shrinking below content size */
+  overflow: hidden; /* Critical: Prevent content overflow */
   position: relative;
+  box-sizing: border-box;
 }
 
 /* Override PanZoomCanvas container styles when inside simulation-content */
 .simulation-content > .pan-zoom-container {
   width: 100%;
   height: 100%;
+  min-height: 0; /* Critical: Allow PanZoomCanvas to shrink */
+  overflow: hidden; /* Critical: Prevent PanZoomCanvas overflow */
   border: none !important; /* Remove any borders from PanZoomCanvas */
   background: transparent !important;
+  box-sizing: border-box;
 }
 
 /* Canvas styling */
