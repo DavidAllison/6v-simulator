@@ -65,7 +65,14 @@
       "Bash(./scripts/update-pr-preview-url.sh:*)",
       "WebFetch(domain:pr-33.dev.6v.allison.la)",
       "Bash(echo:*)",
-      "Bash(git reset:*)"
+      "Bash(git reset:*)",
+      "Read(/tmp/**)",
+      "Read(/tmp/**)",
+      "Read(/tmp/**)",
+      "Read(/tmp/**)",
+      "Read(/tmp/**)",
+      "Read(/tmp/**)",
+      "Read(/tmp/**)"
     ],
     "deny": [],
     "ask": [],

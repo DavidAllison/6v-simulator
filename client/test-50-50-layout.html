@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>50/50 Layout Verification</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+        }
+        
+        .container {
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            flex-direction: row;
+            background: #1a1a1a;
+        }
+        
+        .sidebar {
+            width: 250px;
+            height: 100vh;
+            background: #2a2a2a;
+            color: #e0e0e0;
+            padding: 20px;
+            box-sizing: border-box;
+            border-right: 1px solid #444;
+            flex-shrink: 0;
+        }
+        
+        .sidebar.right {
+            border-right: none;
+            border-left: 1px solid #444;
+        }
+        
+        .middle {
+            flex: 1;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            padding: 10px;
+            box-sizing: border-box;
+            gap: 10px;
+            min-width: 0;
+        }
+        
+        .canvas-container {
+            flex: 1 1 50%;
+            background: #2d2d2d;
+            border: 2px solid #444;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            min-height: 0;
+            padding: 20px;
+            box-sizing: border-box;
+            position: relative;
+        }
+        
+        .canvas-container:first-child {
+            background: linear-gradient(135deg, #2d2d2d 0%, #4ECDC4 100%);
+            opacity: 0.2;
+        }
+        
+        .canvas-container:last-child {
+            background: linear-gradient(135deg, #2d2d2d 0%, #F38181 100%);
+            opacity: 0.2;
+        }
+        
+        .label {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            color: white;
+            font-weight: bold;
+            font-size: 16px;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+        }
+        
+        .size-indicator {
+            position: absolute;
+            bottom: 10px;
+            right: 10px;
+            color: white;
+            font-size: 12px;
+            font-family: monospace;
+            background: rgba(0,0,0,0.7);
+            padding: 5px 10px;
+            border-radius: 4px;
+        }
+        
+        .verification {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0,0,0,0.9);
+            color: #4ECDC4;
+            padding: 20px;
+            border-radius: 8px;
+            border: 2px solid #4ECDC4;
+            z-index: 1000;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="sidebar">
+            <h2>Left Sidebar</h2>
+            <p>Width: 250px</p>
+            <p>Fixed size</p>
+        </div>
+        
+        <div class="middle">
+            <div class="canvas-container">
+                <div class="label">Top Canvas (50%)</div>
+                <div class="size-indicator" id="top-size"></div>
+            </div>
+            <div class="canvas-container">
+                <div class="label">Bottom Canvas (50%)</div>
+                <div class="size-indicator" id="bottom-size"></div>
+            </div>
+        </div>
+        
+        <div class="sidebar right">
+            <h2>Right Sidebar</h2>
+            <p>Width: 250px</p>
+            <p>Fixed size</p>
+        </div>
+    </div>
+    
+    <div class="verification" id="verification">
+        <h3>Layout Verification</h3>
+        <p id="verify-text">Checking 50/50 split...</p>
+    </div>
+    
+    <script>
+        function verifyLayout() {
+            const containers = document.querySelectorAll('.canvas-container');
+            const topContainer = containers[0];
+            const bottomContainer = containers[1];
+            
+            const topHeight = topContainer.offsetHeight;
+            const bottomHeight = bottomContainer.offsetHeight;
+            const totalHeight = topHeight + bottomHeight;
+            
+            const topPercent = (topHeight / totalHeight * 100).toFixed(1);
+            const bottomPercent = (bottomHeight / totalHeight * 100).toFixed(1);
+            
+            document.getElementById('top-size').textContent = 
+                `${topHeight}px (${topPercent}%)`;
+            document.getElementById('bottom-size').textContent = 
+                `${bottomHeight}px (${bottomPercent}%)`;
+            
+            const verification = document.getElementById('verification');
+            const verifyText = document.getElementById('verify-text');
+            
+            const difference = Math.abs(topHeight - bottomHeight);
+            const isEqual = difference <= 10; // Allow 10px tolerance for gap
+            
+            if (isEqual) {
+                verifyText.innerHTML = `
+                    ✓ 50/50 Split Verified!<br>
+                    Top: ${topHeight}px (${topPercent}%)<br>
+                    Bottom: ${bottomHeight}px (${bottomPercent}%)<br>
+                    Difference: ${difference}px
+                `;
+                verification.style.borderColor = '#4ECDC4';
+            } else {
+                verifyText.innerHTML = `
+                    ✗ Split not equal<br>
+                    Top: ${topHeight}px (${topPercent}%)<br>
+                    Bottom: ${bottomHeight}px (${bottomPercent}%)<br>
+                    Difference: ${difference}px
+                `;
+                verification.style.borderColor = '#F38181';
+            }
+            
+            setTimeout(() => {
+                verification.style.display = 'none';
+            }, 3000);
+        }
+        
+        // Verify on load and resize
+        window.addEventListener('load', verifyLayout);
+        window.addEventListener('resize', verifyLayout);
+    </script>
+</body>
+</html>

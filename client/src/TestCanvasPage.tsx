@@ -2,23 +2,24 @@ import React, { useState } from 'react';
 import { CanvasDebugTest } from './components/CanvasDebugTest';
 import { DirectCanvasTest } from './components/DirectCanvasTest';
 import { DualSimulationDisplay } from './components/DualSimulationDisplay';
-import { createSimulation } from './lib/six-vertex/dualSimulation';
-import { RenderMode, DWBCType } from './lib/six-vertex/types';
+import type { DWBCConfig } from './lib/six-vertex/types';
+import { generateDWBCState } from './lib/six-vertex/initialStates';
 
 export function TestCanvasPage() {
   const [showDebug, setShowDebug] = useState(true);
   const [simulations] = useState(() => {
-    const sim = createSimulation(8, DWBCType.High, 42);
+    const configHigh: DWBCConfig = { type: 'high' };
+    const configLow: DWBCConfig = { type: 'low' };
     return {
-      latticeA: sim.getState('A'),
-      latticeB: sim.getState('B'),
+      latticeA: generateDWBCState(8, 8, configHigh),
+      latticeB: generateDWBCState(8, 8, configLow),
     };
   });
 
   return (
     <div style={{ padding: '20px', height: '100vh', display: 'flex', flexDirection: 'column' }}>
       <h1>Canvas Test Page</h1>
-      
+
       <div style={{ marginBottom: '20px' }}>
         <button onClick={() => setShowDebug(!showDebug)}>
           {showDebug ? 'Hide' : 'Show'} Debug Canvas

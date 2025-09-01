@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Canvas Test</title>
+    <style>
+        body {
+            background: #1a1a1a;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+        }
+        canvas {
+            border: 2px solid #444;
+            background: #2a2a2a;
+        }
+        h1, h2 {
+            color: white;
+        }
+        .container {
+            display: flex;
+            gap: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Direct Canvas Test</h1>
+    <div class="container">
+        <div>
+            <h2>Test Canvas 1</h2>
+            <canvas id="canvas1" width="400" height="400"></canvas>
+        </div>
+        <div>
+            <h2>Test Canvas 2</h2>
+            <canvas id="canvas2" width="400" height="400"></canvas>
+        </div>
+    </div>
+
+    <script type="module">
+        // Simple test to verify canvases work
+        const canvas1 = document.getElementById('canvas1');
+        const ctx1 = canvas1.getContext('2d');
+        
+        // Draw something on canvas 1
+        ctx1.fillStyle = '#4ECDC4';
+        ctx1.fillRect(50, 50, 300, 300);
+        ctx1.strokeStyle = 'white';
+        ctx1.lineWidth = 2;
+        ctx1.strokeRect(50, 50, 300, 300);
+        ctx1.fillStyle = 'white';
+        ctx1.font = '20px Arial';
+        ctx1.fillText('Canvas 1 Working', 100, 200);
+        
+        const canvas2 = document.getElementById('canvas2');
+        const ctx2 = canvas2.getContext('2d');
+        
+        // Draw something on canvas 2
+        ctx2.fillStyle = '#F38181';
+        ctx2.fillRect(50, 50, 300, 300);
+        ctx2.strokeStyle = 'white';
+        ctx2.lineWidth = 2;
+        ctx2.strokeRect(50, 50, 300, 300);
+        ctx2.fillStyle = 'white';
+        ctx2.font = '20px Arial';
+        ctx2.fillText('Canvas 2 Working', 100, 200);
+        
+        console.log('Canvases initialized');
+    </script>
+</body>
+</html>

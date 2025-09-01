@@ -1,7 +1,8 @@
 import React, { useRef, useEffect } from 'react';
 import { PathRenderer } from '../lib/six-vertex/renderer/pathRenderer';
-import { createSimulation } from '../lib/six-vertex/dualSimulation';
-import { DWBCType, RenderMode } from '../lib/six-vertex/types';
+import { RenderMode } from '../lib/six-vertex/types';
+import type { DWBCConfig } from '../lib/six-vertex/types';
+import { generateDWBCState } from '../lib/six-vertex/initialStates';
 
 export function DirectCanvasTest() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -10,12 +11,12 @@ export function DirectCanvasTest() {
     const canvas = canvasRef.current;
     if (!canvas) return;
 
-    // Create a simple 8x8 lattice
-    const simulation = createSimulation(8, DWBCType.High, 42);
-    const lattice = simulation.getState('A');
+    // Create a simple 8x8 lattice with DWBC High configuration
+    const config: DWBCConfig = { type: 'high' };
+    const lattice = generateDWBCState(8, 8, config);
 
     if (!lattice) {
-      console.error('Failed to get lattice state');
+      console.error('Failed to generate lattice state');
       return;
     }
 
