@@ -15,6 +15,7 @@ import TestManualRender from './components/TestManualRender';
 import { TestCanvasPage } from './TestCanvasPage';
 import WorkingDualDisplay from './components/WorkingDualDisplay';
 import SimplestDualDisplay from './components/SimplestDualDisplay';
+import { SimpleTestComponent } from './SimpleTestComponent';
 
 function ModelTests() {
   return (
@@ -161,6 +162,7 @@ function App() {
             <Link to="/test-canvas">Canvas Test</Link>
             <Link to="/working-dual">Working Dual</Link>
             <Link to="/simplest-dual">Simplest Dual</Link>
+            <Link to="/simple-test">Simple Test</Link>
             <ThemeToggle />
           </nav>
         </div>
@@ -181,6 +183,7 @@ function App() {
           <Route path="/test-canvas" element={<TestCanvasPage />} />
           <Route path="/working-dual" element={<WorkingDualDisplay />} />
           <Route path="/simplest-dual" element={<SimplestDualDisplay />} />
+          <Route path="/simple-test" element={<SimpleTestComponent />} />
         </Routes>
       </ErrorBoundary>
     </div>

@@ -72,7 +72,8 @@
       "Read(/tmp/**)",
       "Read(/tmp/**)",
       "Read(/tmp/**)",
-      "Read(/tmp/**)"
+      "Read(/tmp/**)",
+      "Bash(npm run preview:*)"
     ],
     "deny": [],
     "ask": [],
