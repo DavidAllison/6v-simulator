@@ -338,12 +338,21 @@ export function PanZoomCanvas({
           style={{
             transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`,
             transformOrigin: '0 0',
+            width: `${width}px`,
+            height: `${height}px`,
           }}
           data-debug={`pan: ${pan.x.toFixed(1)}, ${pan.y.toFixed(1)} | zoom: ${zoom.toFixed(2)}`}
         >
           {React.cloneElement(children, {
             width,
             height,
+            style: {
+              ...children.props.style,
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              display: 'block',
+            },
           })}
         </div>
       </div>
