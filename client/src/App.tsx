@@ -168,24 +168,26 @@ function App() {
         </div>
       </header>
 
-      <ErrorBoundary>
-        <Routes>
-          <Route path="/" element={<MainSimulator />} />
-          <Route path="/dwbc-verify" element={<DwbcVerify />} />
-          <Route path="/dwbc-debug" element={<DWBCDebug />} />
-          <Route path="/flip-debug" element={<FlipDebug />} />
-          <Route path="/height-demo" element={<HeightDemo />} />
-          <Route path="/performance" element={<PerformanceDemo />} />
-          <Route path="/model-tests" element={<ModelTests />} />
-          <Route path="/test-dual-layout" element={<TestDualLayout />} />
-          <Route path="/test-simple" element={<TestSimpleMatrix />} />
-          <Route path="/test-manual" element={<TestManualRender />} />
-          <Route path="/test-canvas" element={<TestCanvasPage />} />
-          <Route path="/working-dual" element={<WorkingDualDisplay />} />
-          <Route path="/simplest-dual" element={<SimplestDualDisplay />} />
-          <Route path="/simple-test" element={<SimpleTestComponent />} />
-        </Routes>
-      </ErrorBoundary>
+      <main>
+        <ErrorBoundary>
+          <Routes>
+            <Route path="/" element={<MainSimulator />} />
+            <Route path="/dwbc-verify" element={<DwbcVerify />} />
+            <Route path="/dwbc-debug" element={<DWBCDebug />} />
+            <Route path="/flip-debug" element={<FlipDebug />} />
+            <Route path="/height-demo" element={<HeightDemo />} />
+            <Route path="/performance" element={<PerformanceDemo />} />
+            <Route path="/model-tests" element={<ModelTests />} />
+            <Route path="/test-dual-layout" element={<TestDualLayout />} />
+            <Route path="/test-simple" element={<TestSimpleMatrix />} />
+            <Route path="/test-manual" element={<TestManualRender />} />
+            <Route path="/test-canvas" element={<TestCanvasPage />} />
+            <Route path="/working-dual" element={<WorkingDualDisplay />} />
+            <Route path="/simplest-dual" element={<SimplestDualDisplay />} />
+            <Route path="/simple-test" element={<SimpleTestComponent />} />
+          </Routes>
+        </ErrorBoundary>
+      </main>
     </div>
   );
 }
