@@ -180,17 +180,16 @@ export function PanZoomCanvas({
     scale = Math.min(Math.max(scale, minZoom), maxZoom);
 
     // Calculate pan to center the canvas
-    const scaledWidth = width * scale;
-    const scaledHeight = height * scale;
-    const panX = (containerWidth - scaledWidth) / 2;
-    const panY = (containerHeight - scaledHeight) / 2;
+    // With transform-origin at center, we need to adjust the pan calculation
+    const panX = (containerWidth - width) / 2;
+    const panY = (containerHeight - height) / 2;
 
     console.log('FitToScreen calculations:', {
       containerDimensions: { width: containerWidth, height: containerHeight },
       canvasDimensions: { width, height },
       scales: { scaleX, scaleY, finalScale: scale },
       pan: { x: panX, y: panY },
-      scaledDimensions: { width: scaledWidth, height: scaledHeight },
+      transformOrigin: 'center center',
     });
 
     setZoom(scale);
@@ -337,7 +336,7 @@ export function PanZoomCanvas({
           className={`pan-zoom-content ${isDragging ? 'dragging' : ''} ${isInitialized ? 'initialized' : ''}`}
           style={{
             transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`,
-            transformOrigin: '0 0',
+            transformOrigin: 'center center',
             width: `${width}px`,
             height: `${height}px`,
           }}

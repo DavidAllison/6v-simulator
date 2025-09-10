@@ -17,6 +17,9 @@ import WorkingDualDisplay from './components/WorkingDualDisplay';
 import SimplestDualDisplay from './components/SimplestDualDisplay';
 import { SimpleTestComponent } from './SimpleTestComponent';
 import { CanvasPositionTest } from './components/CanvasPositionTest';
+import CenteredDualDisplay from './components/CenteredDualDisplay';
+import TransformCenteredDual from './components/TransformCenteredDual';
+import GridCenteredDual from './components/GridCenteredDual';
 
 function ModelTests() {
   return (
@@ -165,6 +168,9 @@ function App() {
             <Link to="/simplest-dual">Simplest Dual</Link>
             <Link to="/simple-test">Simple Test</Link>
             <Link to="/canvas-position-test">Canvas Position</Link>
+            <Link to="/centered-dual">Centered Dual</Link>
+            <Link to="/transform-centered">Transform Centered</Link>
+            <Link to="/grid-centered">Grid Centered</Link>
             <ThemeToggle />
           </nav>
         </div>
@@ -188,6 +194,9 @@ function App() {
             <Route path="/simplest-dual" element={<SimplestDualDisplay />} />
             <Route path="/simple-test" element={<SimpleTestComponent />} />
             <Route path="/canvas-position-test" element={<CanvasPositionTest />} />
+            <Route path="/centered-dual" element={<CenteredDualDisplay />} />
+            <Route path="/transform-centered" element={<TransformCenteredDual />} />
+            <Route path="/grid-centered" element={<GridCenteredDual />} />
           </Routes>
         </ErrorBoundary>
       </main>
