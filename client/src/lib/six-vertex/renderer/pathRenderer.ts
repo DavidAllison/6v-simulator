@@ -77,38 +77,20 @@ export class PathRenderer {
     // Clear canvas
     this.clear();
 
-    // Set canvas size based on lattice
-    const width = (state.width + 1) * this.config.cellSize;
-    const height = (state.height + 1) * this.config.cellSize;
-
-    if (this.canvas.width !== width || this.canvas.height !== height) {
-      console.log(
-        'Resizing canvas from',
-        this.canvas.width,
-        'x',
-        this.canvas.height,
-        'to',
-        width,
-        'x',
-        height,
-      );
-      this.canvas.width = width;
-      this.canvas.height = height;
-    }
-
-    // Draw background
+    // Draw background first (before any transforms)
     this.drawBackground();
     
-    // DEBUG: Draw a big red X to verify canvas is working
-    this.ctx.strokeStyle = '#ff0000';
-    this.ctx.lineWidth = 5;
-    this.ctx.beginPath();
-    this.ctx.moveTo(0, 0);
-    this.ctx.lineTo(this.canvas.width, this.canvas.height);
-    this.ctx.moveTo(this.canvas.width, 0);
-    this.ctx.lineTo(0, this.canvas.height);
-    this.ctx.stroke();
-    console.log('Drew red X across entire canvas');
+    // Calculate the expected size for the lattice
+    const latticeWidth = (state.width + 1) * this.config.cellSize;
+    const latticeHeight = (state.height + 1) * this.config.cellSize;
+
+    // Calculate centering offset if canvas is larger than lattice
+    const offsetX = Math.max(0, (this.canvas.width - latticeWidth) / 2);
+    const offsetY = Math.max(0, (this.canvas.height - latticeHeight) / 2);
+    
+    // Apply centering transform for the lattice content
+    this.ctx.save();
+    this.ctx.translate(offsetX, offsetY);
 
     // Draw grid if enabled
     if (this.config.showGrid) {
@@ -134,6 +116,9 @@ export class PathRenderer {
         this.drawVertices(state);
         break;
     }
+    
+    // Restore the context (remove centering transform)
+    this.ctx.restore();
   }
 
   /**
@@ -208,19 +193,6 @@ export class PathRenderer {
     this.ctx.save();
     
     // Set the path color from config
-    this.ctx.strokeStyle = this.config.colors.pathSegment;
-    this.ctx.lineWidth = this.config.lineWidth;
-    
-    // Draw a test line to verify canvas is working
-    this.ctx.strokeStyle = '#00ff00'; // Bright green test line
-    this.ctx.lineWidth = 5;
-    this.ctx.beginPath();
-    this.ctx.moveTo(10, 10);
-    this.ctx.lineTo(100, 100);
-    this.ctx.stroke();
-    console.log('Drew green test line from (10,10) to (100,100)');
-    
-    // Reset to config colors
     this.ctx.strokeStyle = this.config.colors.pathSegment;
     this.ctx.lineWidth = this.config.lineWidth;
     

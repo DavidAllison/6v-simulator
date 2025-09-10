@@ -26,31 +26,29 @@ export function SimplestDualDisplay() {
       high: latticeHigh ? 'success' : 'failed',
       low: latticeLow ? 'success' : 'failed',
     });
+    
+    // Calculate proper canvas size for 8x8 lattice with cellSize 30
+    const cellSize = 30;
+    const canvasSize = (8 + 1) * cellSize; // 9 * 30 = 270
 
     // Render High
     const canvasHigh = canvasHighRef.current;
     if (canvasHigh && latticeHigh) {
+      // Set canvas size to match the lattice
+      canvasHigh.width = canvasSize;
+      canvasHigh.height = canvasSize;
+      
       const ctx = canvasHigh.getContext('2d');
       if (ctx) {
         // Clear and fill background
         ctx.fillStyle = '#ffffff';
         ctx.fillRect(0, 0, canvasHigh.width, canvasHigh.height);
-
-        // Draw a simple test pattern first
-        ctx.strokeStyle = '#00ff00';
-        ctx.lineWidth = 2;
-        ctx.strokeRect(5, 5, canvasHigh.width - 10, canvasHigh.height - 10);
-
-        // Draw title
-        ctx.fillStyle = '#000000';
-        ctx.font = '14px Arial';
-        ctx.fillText('DWBC High', 10, 20);
       }
 
       // Use PathRenderer
       try {
         const renderer = new PathRenderer(canvasHigh, {
-          cellSize: 30,
+          cellSize: cellSize,
           mode: RenderMode.Paths,
           lineWidth: 3,
           colors: {
@@ -80,27 +78,21 @@ export function SimplestDualDisplay() {
     // Render Low
     const canvasLow = canvasLowRef.current;
     if (canvasLow && latticeLow) {
+      // Set canvas size to match the lattice
+      canvasLow.width = canvasSize;
+      canvasLow.height = canvasSize;
+      
       const ctx = canvasLow.getContext('2d');
       if (ctx) {
         // Clear and fill background
         ctx.fillStyle = '#ffffff';
         ctx.fillRect(0, 0, canvasLow.width, canvasLow.height);
-
-        // Draw a simple test pattern first
-        ctx.strokeStyle = '#ff0000';
-        ctx.lineWidth = 2;
-        ctx.strokeRect(5, 5, canvasLow.width - 10, canvasLow.height - 10);
-
-        // Draw title
-        ctx.fillStyle = '#000000';
-        ctx.font = '14px Arial';
-        ctx.fillText('DWBC Low', 10, 20);
       }
 
       // Use PathRenderer
       try {
         const renderer = new PathRenderer(canvasLow, {
-          cellSize: 30,
+          cellSize: cellSize,
           mode: RenderMode.Paths,
           lineWidth: 3,
           colors: {
@@ -150,8 +142,8 @@ export function SimplestDualDisplay() {
         <h3 style={{ margin: '0 0 10px 0', fontSize: '16px' }}>DWBC High Configuration</h3>
         <canvas
           ref={canvasHighRef}
-          width={300}
-          height={300}
+          width={270}
+          height={270}
           style={{
             display: 'block',
             border: '1px solid #ccc',
@@ -169,8 +161,8 @@ export function SimplestDualDisplay() {
         <h3 style={{ margin: '0 0 10px 0', fontSize: '16px' }}>DWBC Low Configuration</h3>
         <canvas
           ref={canvasLowRef}
-          width={300}
-          height={300}
+          width={270}
+          height={270}
           style={{
             display: 'block',
             border: '1px solid #ccc',
