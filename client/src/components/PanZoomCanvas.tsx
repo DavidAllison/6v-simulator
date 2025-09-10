@@ -348,9 +348,6 @@ export function PanZoomCanvas({
             height,
             style: {
               ...children.props.style,
-              position: 'absolute',
-              top: 0,
-              left: 0,
               display: 'block',
             },
           })}
