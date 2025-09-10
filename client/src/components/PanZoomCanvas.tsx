@@ -343,14 +343,44 @@ export function PanZoomCanvas({
           }}
           data-debug={`pan: ${pan.x.toFixed(1)}, ${pan.y.toFixed(1)} | zoom: ${zoom.toFixed(2)}`}
         >
-          {React.cloneElement(children, {
-            width,
-            height,
-            style: {
-              ...children.props.style,
+          {/* Canvas wrapper div to ensure proper positioning */}
+          <div 
+            className="canvas-container"
+            style={{
+              position: 'relative',
+              width: `${width}px`,
+              height: `${height}px`,
               display: 'block',
-            },
-          })}
+            }}
+          >
+            {React.isValidElement(children) && children.type === 'canvas' ? (
+              // For canvas elements, ensure proper positioning
+              React.cloneElement(children as React.ReactElement<HTMLCanvasElement>, {
+                width,
+                height,
+                style: {
+                  ...children.props.style,
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  display: 'block',
+                  // Ensure canvas fills its container
+                  width: `${width}px`,
+                  height: `${height}px`,
+                },
+              })
+            ) : (
+              // For other elements, just pass through with width/height
+              React.cloneElement(children, {
+                width,
+                height,
+                style: {
+                  ...children.props.style,
+                  display: 'block',
+                },
+              })
+            )}
+          </div>
         </div>
       </div>
 

@@ -16,6 +16,7 @@ import { TestCanvasPage } from './TestCanvasPage';
 import WorkingDualDisplay from './components/WorkingDualDisplay';
 import SimplestDualDisplay from './components/SimplestDualDisplay';
 import { SimpleTestComponent } from './SimpleTestComponent';
+import { CanvasPositionTest } from './components/CanvasPositionTest';
 
 function ModelTests() {
   return (
@@ -163,6 +164,7 @@ function App() {
             <Link to="/working-dual">Working Dual</Link>
             <Link to="/simplest-dual">Simplest Dual</Link>
             <Link to="/simple-test">Simple Test</Link>
+            <Link to="/canvas-position-test">Canvas Position</Link>
             <ThemeToggle />
           </nav>
         </div>
@@ -185,6 +187,7 @@ function App() {
             <Route path="/working-dual" element={<WorkingDualDisplay />} />
             <Route path="/simplest-dual" element={<SimplestDualDisplay />} />
             <Route path="/simple-test" element={<SimpleTestComponent />} />
+            <Route path="/canvas-position-test" element={<CanvasPositionTest />} />
           </Routes>
         </ErrorBoundary>
       </main>

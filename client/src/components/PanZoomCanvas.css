@@ -35,6 +35,8 @@
   will-change: transform;
   opacity: 1;
   visibility: visible;
+  /* Ensure content is properly contained */
+  pointer-events: auto;
 }
 
 .pan-zoom-content.initialized {
@@ -45,6 +47,20 @@
 .pan-zoom-content.dragging {
   transition: none;
   opacity: 1;
+}
+
+/* Canvas container to ensure proper positioning */
+.canvas-container {
+  position: relative;
+  display: block;
+}
+
+/* Ensure canvas elements inside are properly positioned */
+.canvas-container canvas {
+  position: absolute !important;
+  top: 0 !important;
+  left: 0 !important;
+  display: block !important;
 }
 
 .pan-zoom-controls {
