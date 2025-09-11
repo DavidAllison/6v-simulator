@@ -53,10 +53,14 @@ export function PanZoomCanvas({
       const delta = e.deltaY > 0 ? 0.9 : 1.1;
       const newZoom = Math.min(Math.max(zoom * delta, minZoom), maxZoom);
 
-      // Adjust pan to zoom towards mouse position
+      // With transform-origin at 0 0, adjust pan to zoom towards mouse position
       const zoomRatio = newZoom / zoom;
-      const newPanX = mouseX - (mouseX - pan.x) * zoomRatio;
-      const newPanY = mouseY - (mouseY - pan.y) * zoomRatio;
+      // Calculate the point in canvas space
+      const canvasX = (mouseX - pan.x) / zoom;
+      const canvasY = (mouseY - pan.y) / zoom;
+      // Calculate new pan to keep the same point under the mouse
+      const newPanX = mouseX - canvasX * newZoom;
+      const newPanY = mouseY - canvasY * newZoom;
 
       setZoom(newZoom);
       setPan({ x: newPanX, y: newPanY });
@@ -106,12 +110,46 @@ export function PanZoomCanvas({
 
   // Control functions
   const zoomIn = useCallback(() => {
-    setZoom((z) => Math.min(z * 1.2, maxZoom));
-  }, [maxZoom]);
+    setZoom((z) => {
+      const newZoom = Math.min(z * 1.2, maxZoom);
+      // Recenter when zooming with controls
+      if (containerRef.current) {
+        const viewport = containerRef.current.querySelector('.pan-zoom-viewport') as HTMLElement;
+        if (viewport) {
+          const viewportWidth = viewport.offsetWidth || viewport.clientWidth;
+          const viewportHeight = viewport.offsetHeight || viewport.clientHeight;
+          const scaledWidth = width * newZoom;
+          const scaledHeight = height * newZoom;
+          setPan({
+            x: (viewportWidth - scaledWidth) / 2,
+            y: (viewportHeight - scaledHeight) / 2,
+          });
+        }
+      }
+      return newZoom;
+    });
+  }, [maxZoom, width, height]);
 
   const zoomOut = useCallback(() => {
-    setZoom((z) => Math.max(z / 1.2, minZoom));
-  }, [minZoom]);
+    setZoom((z) => {
+      const newZoom = Math.max(z / 1.2, minZoom);
+      // Recenter when zooming with controls
+      if (containerRef.current) {
+        const viewport = containerRef.current.querySelector('.pan-zoom-viewport') as HTMLElement;
+        if (viewport) {
+          const viewportWidth = viewport.offsetWidth || viewport.clientWidth;
+          const viewportHeight = viewport.offsetHeight || viewport.clientHeight;
+          const scaledWidth = width * newZoom;
+          const scaledHeight = height * newZoom;
+          setPan({
+            x: (viewportWidth - scaledWidth) / 2,
+            y: (viewportHeight - scaledHeight) / 2,
+          });
+        }
+      }
+      return newZoom;
+    });
+  }, [minZoom, width, height]);
 
   const fitToScreen = useCallback(() => {
     if (!containerRef.current) {
@@ -126,28 +164,71 @@ export function PanZoomCanvas({
 
     const viewportElement = viewport as HTMLElement;
 
-    // Get dimension measurements
-    const viewportRect = viewport.getBoundingClientRect();
+    // Force layout recalculation in VM environments
+    // This helps with virtual display drivers that report incorrect dimensions
+    viewportElement.style.display = 'none';
+    viewportElement.offsetHeight; // Force reflow
+    viewportElement.style.display = '';
 
-    // Get the correct dimensions - prioritize offsetWidth/Height as most reliable
-    let containerWidth = viewportElement.offsetWidth;
-    let containerHeight = viewportElement.offsetHeight;
+    // Multiple strategies for getting dimensions, optimized for VM environments
+    let containerWidth = 0;
+    let containerHeight = 0;
 
-    // Fallback to getBoundingClientRect if offset dimensions are zero
-    if (containerWidth <= 0 || containerHeight <= 0) {
-      containerWidth = viewportRect.width;
-      containerHeight = viewportRect.height;
+    // Strategy 1: Computed styles (most reliable in VMs)
+    const computedStyle = window.getComputedStyle(viewportElement);
+    const computedWidth = parseFloat(computedStyle.width);
+    const computedHeight = parseFloat(computedStyle.height);
+    
+    if (computedWidth > 0 && computedHeight > 0) {
+      containerWidth = computedWidth;
+      containerHeight = computedHeight;
     }
 
-    // Final fallback to client dimensions
+    // Strategy 2: getBoundingClientRect (fallback)
     if (containerWidth <= 0 || containerHeight <= 0) {
-      containerWidth = viewportElement.clientWidth;
-      containerHeight = viewportElement.clientHeight;
+      const viewportRect = viewportElement.getBoundingClientRect();
+      if (viewportRect.width > 0 && viewportRect.height > 0) {
+        containerWidth = viewportRect.width;
+        containerHeight = viewportRect.height;
+      }
     }
 
-    // Early return if dimensions are invalid
+    // Strategy 3: Offset dimensions
     if (containerWidth <= 0 || containerHeight <= 0) {
-      console.log('FitToScreen: Invalid container dimensions', { containerWidth, containerHeight });
+      if (viewportElement.offsetWidth > 0 && viewportElement.offsetHeight > 0) {
+        containerWidth = viewportElement.offsetWidth;
+        containerHeight = viewportElement.offsetHeight;
+      }
+    }
+
+    // Strategy 4: Client dimensions
+    if (containerWidth <= 0 || containerHeight <= 0) {
+      if (viewportElement.clientWidth > 0 && viewportElement.clientHeight > 0) {
+        containerWidth = viewportElement.clientWidth;
+        containerHeight = viewportElement.clientHeight;
+      }
+    }
+
+    // Strategy 5: Parent container as last resort
+    if (containerWidth <= 0 || containerHeight <= 0) {
+      const parentRect = container.getBoundingClientRect();
+      if (parentRect.width > 0 && parentRect.height > 0) {
+        // Account for potential padding/borders
+        containerWidth = parentRect.width - 20;
+        containerHeight = parentRect.height - 60; // Account for controls/label
+      }
+    }
+
+    // Early return if dimensions are still invalid
+    if (containerWidth <= 0 || containerHeight <= 0) {
+      console.warn('FitToScreen: Unable to determine container dimensions', { 
+        containerWidth, 
+        containerHeight,
+        viewport: viewportElement,
+        computed: { computedWidth, computedHeight }
+      });
+      // Schedule a retry in VM environments
+      setTimeout(() => fitToScreen(), 500);
       return;
     }
 
@@ -180,16 +261,20 @@ export function PanZoomCanvas({
     scale = Math.min(Math.max(scale, minZoom), maxZoom);
 
     // Calculate pan to center the canvas
-    // With transform-origin at center, we need to adjust the pan calculation
-    const panX = (containerWidth - width) / 2;
-    const panY = (containerHeight - height) / 2;
+    // Since transform-origin is at top-left (0 0), we need to center manually
+    const scaledWidth = width * scale;
+    const scaledHeight = height * scale;
+    const panX = (containerWidth - scaledWidth) / 2;
+    const panY = (containerHeight - scaledHeight) / 2;
 
     console.log('FitToScreen calculations:', {
       containerDimensions: { width: containerWidth, height: containerHeight },
       canvasDimensions: { width, height },
+      scaledDimensions: { width: scaledWidth, height: scaledHeight },
       scales: { scaleX, scaleY, finalScale: scale },
       pan: { x: panX, y: panY },
-      transformOrigin: 'center center',
+      transformOrigin: '0 0',
+      computedStyle: { width: computedWidth, height: computedHeight },
     });
 
     setZoom(scale);
@@ -226,45 +311,83 @@ export function PanZoomCanvas({
     };
   }, []);
 
+  // Keyboard shortcuts for VM environment support
+  useEffect(() => {
+    const handleKeyPress = (e: KeyboardEvent) => {
+      // Press 'f' to fit to screen (useful in VMs with display issues)
+      if (e.key === 'f' && !e.ctrlKey && !e.metaKey && !e.altKey) {
+        const target = e.target as HTMLElement;
+        // Don't trigger if typing in an input field
+        if (target.tagName !== 'INPUT' && target.tagName !== 'TEXTAREA') {
+          e.preventDefault();
+          fitToScreen();
+        }
+      }
+      // Press 'r' to reset view
+      if (e.key === 'r' && !e.ctrlKey && !e.metaKey && !e.altKey) {
+        const target = e.target as HTMLElement;
+        if (target.tagName !== 'INPUT' && target.tagName !== 'TEXTAREA') {
+          e.preventDefault();
+          resetView();
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyPress);
+    return () => {
+      window.removeEventListener('keydown', handleKeyPress);
+    };
+  }, [fitToScreen, resetView]);
+
   // Initial fit to screen and when dimensions change
   useEffect(() => {
     let isMounted = true;
-    let hasAttempted = false;
+    let attemptCount = 0;
+    const maxAttempts = 5; // More attempts for VM environments
     let fitTimeout: NodeJS.Timeout;
 
-    // Simple single attempt with minimal retries
+    // Enhanced retry mechanism for VM environments
     const attemptFit = () => {
-      if (!isMounted || hasAttempted) return;
+      if (!isMounted || attemptCount >= maxAttempts) return;
+      attemptCount++;
 
       // Only attempt if container exists
       if (containerRef.current) {
         const viewport = containerRef.current.querySelector('.pan-zoom-viewport') as HTMLElement;
         if (viewport) {
+          // Force style recalculation in VM
+          const computedStyle = window.getComputedStyle(viewport);
+          const computedWidth = parseFloat(computedStyle.width);
+          const computedHeight = parseFloat(computedStyle.height);
+
+          // Try multiple dimension sources
           const offsetWidth = viewport.offsetWidth;
           const offsetHeight = viewport.offsetHeight;
+          const hasValidDimensions = 
+            (offsetWidth > 100 && offsetHeight > 100) ||
+            (computedWidth > 100 && computedHeight > 100);
 
-          // Only fit if we have valid dimensions
-          if (offsetWidth > 100 && offsetHeight > 100) {
-            hasAttempted = true;
+          if (hasValidDimensions) {
             requestAnimationFrame(() => {
               if (isMounted) {
                 fitToScreen();
               }
             });
-          } else {
-            // Single retry after a delay if dimensions aren't ready
+          } else if (attemptCount < maxAttempts) {
+            // Exponential backoff for retries in VM environments
+            const delay = Math.min(100 * Math.pow(1.5, attemptCount), 2000);
             fitTimeout = setTimeout(() => {
-              if (isMounted && !hasAttempted) {
+              if (isMounted) {
                 attemptFit();
               }
-            }, 100);
+            }, delay);
           }
         }
       }
     };
 
-    // Attempt once after a small delay to ensure DOM is ready
-    fitTimeout = setTimeout(() => attemptFit(), 10);
+    // Start with a small delay to ensure DOM is ready
+    fitTimeout = setTimeout(() => attemptFit(), 50);
 
     return () => {
       isMounted = false;
@@ -336,7 +459,7 @@ export function PanZoomCanvas({
           className={`pan-zoom-content ${isDragging ? 'dragging' : ''} ${isInitialized ? 'initialized' : ''}`}
           style={{
             transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`,
-            transformOrigin: 'center center',
+            transformOrigin: '0 0', // Use top-left origin for more predictable centering
             width: `${width}px`,
             height: `${height}px`,
           }}
@@ -399,13 +522,13 @@ export function PanZoomCanvas({
               <path d="m21 21-4.35-4.35M8 11h6" />
             </svg>
           </button>
-          <button onClick={resetView} title="Reset View" className="control-btn">
+          <button onClick={resetView} title="Reset View (R key)" className="control-btn">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor">
               <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
               <path d="M3 3v5h5" />
             </svg>
           </button>
-          <button onClick={fitToScreen} title="Fit to Screen" className="control-btn">
+          <button onClick={fitToScreen} title="Fit to Screen (F key)" className="control-btn">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor">
               <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3" />
             </svg>

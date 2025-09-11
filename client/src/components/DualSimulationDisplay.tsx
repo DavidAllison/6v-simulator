@@ -160,7 +160,7 @@ export function DualSimulationDisplay({
             minZoom={0.3}
             maxZoom={5}
             fitMode="fill"
-            showControls={false}
+            showControls={true}
           >
             <canvas
               ref={canvasARef}
@@ -185,7 +185,7 @@ export function DualSimulationDisplay({
             minZoom={0.3}
             maxZoom={5}
             fitMode="fill"
-            showControls={false}
+            showControls={true}
           >
             <canvas
               ref={canvasBRef}

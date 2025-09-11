@@ -20,6 +20,7 @@ import { CanvasPositionTest } from './components/CanvasPositionTest';
 import CenteredDualDisplay from './components/CenteredDualDisplay';
 import TransformCenteredDual from './components/TransformCenteredDual';
 import GridCenteredDual from './components/GridCenteredDual';
+import TestCentering from './routes/test-centering';
 
 function ModelTests() {
   return (
@@ -197,6 +198,7 @@ function App() {
             <Route path="/centered-dual" element={<CenteredDualDisplay />} />
             <Route path="/transform-centered" element={<TransformCenteredDual />} />
             <Route path="/grid-centered" element={<GridCenteredDual />} />
+            <Route path="/test-centering" element={<TestCentering />} />
           </Routes>
         </ErrorBoundary>
       </main>
