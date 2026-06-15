@@ -1,7 +1,7 @@
 import { useRef, useEffect, useState } from 'react';
 import './dwbcVerify.css';
 import type { LatticeState, DWBCConfig } from '../lib/six-vertex/types';
-import { RenderMode, VertexType } from '../lib/six-vertex/types';
+import { RenderMode } from '../lib/six-vertex/types';
 import {
   generateDWBCState,
   generateDWBCHigh,

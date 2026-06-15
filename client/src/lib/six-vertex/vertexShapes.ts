@@ -44,11 +44,8 @@ export function getPathSegments(vertexType: VertexType): PathSegment[] {
       ];
 
     case VertexType.a2:
-      // Straight paths both horizontal and vertical (reversed)
-      return [
-        { from: EdgeDirection.Right, to: EdgeDirection.Left },
-        { from: EdgeDirection.Bottom, to: EdgeDirection.Top },
-      ];
+      // All four edges are thin in main.c draw_vertex (case 1) — no bold path segments
+      return [];
 
     case VertexType.b1:
       // Vertical straight path only
@@ -137,7 +134,6 @@ export function getVertexPathData(
 
   for (const segment of segments) {
     let pathData = '';
-    const arrowData: { from: [number, number]; to: [number, number] } | null = null;
 
     // Create smooth curves for each path segment
     const start = getEdgePoint(segment.from, half);

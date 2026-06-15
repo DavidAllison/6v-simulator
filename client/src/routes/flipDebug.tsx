@@ -10,12 +10,7 @@ import {
   OptimizedPhysicsSimulation,
   generateDWBCHighOptimized,
 } from '../lib/six-vertex/optimizedSimulation';
-import {
-  VertexEdgeVisualization,
-  VertexLegend,
-  PlaquetteVisualization,
-} from '../components/VertexEdgeVisualization';
-import { validateLatticeIntegrity } from '../lib/six-vertex/correctedFlipLogic';
+import { VertexLegend, PlaquetteVisualization } from '../components/VertexEdgeVisualization';
 import styles from './flipDebug.module.css';
 
 // Map numeric vertex types to enum
@@ -46,16 +41,6 @@ const VERTEX_ARROWS: Record<VertexType, string> = {
   [VertexType.b2]: '←→', // In: top, bottom   | Out: left, right
   [VertexType.c1]: '→↑', // In: left, bottom  | Out: right, top
   [VertexType.c2]: '←↓', // In: right, top    | Out: left, bottom
-};
-
-// More detailed arrow patterns using box drawing
-const VERTEX_PATTERNS: Record<VertexType, string> = {
-  [VertexType.a1]: '┌→\n↓┘', // Flow from left/top to right/bottom
-  [VertexType.a2]: '↑┐\n└←', // Flow from right/bottom to left/top
-  [VertexType.b1]: '─┼─\n │ ', // Horizontal in, vertical out
-  [VertexType.b2]: ' │ \n─┼─', // Vertical in, horizontal out
-  [VertexType.c1]: '└→\n↑┘', // Flow from left/bottom to right/top
-  [VertexType.c2]: '↓┐\n└←', // Flow from right/top to left/bottom
 };
 
 interface FlipHistoryEntry {
@@ -197,7 +182,7 @@ export function FlipDebug() {
     const beforeState = new Uint8Array(simulation.getRawState());
 
     // Step the simulation (this will attempt one flip)
-    const stats = simulation.step();
+    simulation.step();
 
     // Get the state after flip
     const afterState = new Uint8Array(simulation.getRawState());
@@ -382,7 +367,6 @@ export function FlipDebug() {
     if (!currentState) return null;
 
     const cellSize = Math.min(60, 400 / size);
-    const edgeWidth = 4; // Width of the edge shading
 
     return (
       <svg width={size * cellSize} height={size * cellSize}>

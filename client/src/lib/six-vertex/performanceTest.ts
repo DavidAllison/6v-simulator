@@ -4,7 +4,7 @@
 
 import { PhysicsSimulation } from './physicsSimulation';
 import { OptimizedPhysicsSimulation, benchmarkSimulation } from './optimizedSimulation';
-import { createWorkerSimulation, WorkerSimulation } from './worker/workerInterface';
+import { createWorkerSimulation } from './worker/workerInterface';
 
 export interface PerformanceResult {
   size: number;
@@ -343,6 +343,8 @@ export function testMemoryUsage(size: number): void {
       c2: 1.0,
     },
   });
+  // Keep a reference so the allocation is included in the heap measurement
+  void original;
   const afterOriginal = memory.usedJSHeapSize;
   console.log(`  Original: ${((afterOriginal - beforeOriginal) / 1024 / 1024).toFixed(2)} MB`);
 
@@ -359,6 +361,8 @@ export function testMemoryUsage(size: number): void {
       c2: 1.0,
     },
   });
+  // Keep a reference so the allocation is included in the heap measurement
+  void optimized;
   const afterOptimized = memory.usedJSHeapSize;
   console.log(`  Optimized: ${((afterOptimized - beforeOptimized) / 1024 / 1024).toFixed(2)} MB`);
 

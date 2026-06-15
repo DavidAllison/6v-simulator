@@ -16,12 +16,7 @@ import type {
 } from './types';
 import { VertexType, BoundaryCondition } from './types';
 import { SeededRNG } from './rng';
-import {
-  findValidFlips,
-  executeFlip,
-  calculateFlipEnergyChange,
-  getAllPossibleFlips,
-} from './flips';
+import { findValidFlips, executeFlip, calculateFlipEnergyChange } from './flips';
 import { generateDWBCState, generateRandomIceState } from './initialStates';
 import { OptimizedPhysicsSimulation } from './optimizedSimulation';
 import {
@@ -49,7 +44,8 @@ export class MonteCarloSimulation implements SimulationController {
   private stats: SimulationStats;
   private isRunningFlag = false;
   private isPaused = false;
-  private eventHandlers: Map<keyof SimulationEvents, Set<Function>> = new Map();
+  private eventHandlers: Map<keyof SimulationEvents, Set<(...args: unknown[]) => unknown>> =
+    new Map();
   private animationFrame: number | null = null;
 
   // Optimization support
@@ -511,14 +507,14 @@ export class MonteCarloSimulation implements SimulationController {
   on<K extends keyof SimulationEvents>(event: K, handler: SimulationEvents[K]): void {
     const handlers = this.eventHandlers.get(event);
     if (handlers) {
-      handlers.add(handler as Function);
+      handlers.add(handler as (...args: unknown[]) => unknown);
     }
   }
 
   off<K extends keyof SimulationEvents>(event: K, handler: SimulationEvents[K]): void {
     const handlers = this.eventHandlers.get(event);
     if (handlers) {
-      handlers.delete(handler as Function);
+      handlers.delete(handler as (...args: unknown[]) => unknown);
     }
   }
 
@@ -530,7 +526,7 @@ export class MonteCarloSimulation implements SimulationController {
     if (handlers) {
       handlers.forEach((handler) => {
         try {
-          (handler as Function)(...args);
+          (handler as (...args: unknown[]) => unknown)(...args);
         } catch (error) {
           console.error(`Error in event handler for ${event}:`, error);
           if (event !== 'onError') {
@@ -549,9 +545,9 @@ export class MonteCarloSimulation implements SimulationController {
    * Perform parallel tempering with multiple replicas
    */
   async parallelTempering(
-    temperatures: number[],
-    stepsPerSwap: number,
-    totalSwaps: number,
+    _temperatures: number[],
+    _stepsPerSwap: number,
+    _totalSwaps: number,
   ): Promise<void> {
     // Implementation for parallel tempering
     // This is a placeholder for advanced sampling

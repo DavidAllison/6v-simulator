@@ -3,7 +3,7 @@
  * Implements local moves that preserve the ice rule
  */
 
-import type { LatticeState, Position, FlipOperation, VertexConfiguration } from './types';
+import type { LatticeState, Position, FlipOperation } from './types';
 import { EdgeState, VertexType, getVertexType } from './types';
 
 /**
@@ -72,7 +72,6 @@ function check2VertexFlip(
   if (direction === 'horizontal') {
     // Check if we can flip the top and bottom edges between the vertices
     const topEdgeState = state.horizontalEdges[pos1.row][pos1.col + 1];
-    const bottomEdgeState = state.horizontalEdges[pos1.row][pos1.col + 1];
 
     // The edges must be anti-parallel for a flip to change the configuration
     if (vertex1.type === vertex2.type) {
@@ -164,9 +163,6 @@ function check4VertexFlip(state: LatticeState, topLeft: Position): FlipOperation
     { row: row + 1, col: col + 1 }, // Bottom-right
     { row: row + 1, col }, // Bottom-left
   ];
-
-  // Get all four vertices
-  const vertices = positions.map((pos) => state.vertices[pos.row][pos.col]);
 
   // Check if this forms a flippable loop
   // For a 4-vertex loop, we need alternating edge directions around the plaquette

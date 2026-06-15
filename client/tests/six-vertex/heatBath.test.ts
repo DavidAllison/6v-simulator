@@ -11,7 +11,7 @@ import {
   getAllFlippablePositions,
 } from '../../src/lib/six-vertex/physicsFlips';
 import { generateDWBCLow, generateRandomIceState } from '../../src/lib/six-vertex/initialStates';
-import { VertexType, LatticeState } from '../../src/lib/six-vertex/types';
+import { VertexType } from '../../src/lib/six-vertex/types';
 import { SeededRNG } from '../../src/lib/six-vertex/rng';
 
 describe('Heat-Bath Probability Tests', () => {
@@ -233,7 +233,12 @@ describe('Heat-Bath Probability Tests', () => {
         [VertexType.c2]: 1,
       };
 
-      let state = generateRandomIceState(3, 3, 54321);
+      // NOTE: the initial-state seed must yield a configuration with at least
+      // one flippable plaquette, otherwise the Markov chain is frozen and only
+      // a single vertex type is ever observed. Seed 54321 produces an all-a1
+      // uniform state on a 3x3 lattice (zero flippable positions); seed 1 gives
+      // a genuinely flippable starting configuration so the chain actually mixes.
+      let state = generateRandomIceState(3, 3, 1);
       const vertexCounts = new Map<VertexType, number>();
 
       // Run simulation for many steps
@@ -289,7 +294,12 @@ describe('Heat-Bath Probability Tests', () => {
       // (though not exactly equal due to ice rule constraints)
       const totalCounts = Array.from(vertexCounts.values()).reduce((a, b) => a + b, 0);
 
-      for (const [type, count] of vertexCounts) {
+      // Guard: the chain must actually mix. A frozen initial state would only
+      // ever show one vertex type, which would make the frequency bounds below
+      // vacuously (or never) satisfiable. Require genuine diversity.
+      expect(vertexCounts.size).toBeGreaterThan(1);
+
+      for (const count of vertexCounts.values()) {
         const frequency = count / totalCounts;
         // Should be roughly 1/6 ≈ 0.167, but with significant variance
         expect(frequency).toBeGreaterThan(0.05);
@@ -422,7 +432,7 @@ describe('Heat-Bath Probability Tests', () => {
       const forwardRatio = getWeightRatio(state, 1, 1, FlipDirection.Up, weights);
 
       // Execute flip
-      const flippedState = executeFlip(state, 1, 1, FlipDirection.Up);
+      executeFlip(state, 1, 1, FlipDirection.Up);
 
       // The flipped configuration should now be:
       // c1 at (1,1), c2 at (1,2), c1 at (0,2), c2 at (0,1)

@@ -3,14 +3,13 @@
  * Implements the heat-bath algorithm from the paper
  */
 
-import type { LatticeState, SimulationParams, SimulationStats } from './types';
+import type { LatticeState, SimulationStats } from './types';
 import { VertexType } from './types';
 import { SeededRNG } from './rng';
 import {
   isFlippable,
   executeFlip,
   getWeightRatio,
-  getAllFlippablePositions,
   calculateHeight,
   FlipDirection,
 } from './physicsFlips';
@@ -254,6 +253,10 @@ export class PhysicsSimulation {
     this.step = 0;
     this.successfulFlips = 0;
     this.attemptedFlips = 0;
+
+    // Re-seed the RNG so that a reset restores fully deterministic,
+    // reproducible behavior from the configured seed.
+    this.rng = new SeededRNG(this.config.seed);
 
     if (this.config.initialState === 'dwbc-low') {
       this.state = generateDWBCLow(this.config.size);

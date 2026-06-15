@@ -3,22 +3,8 @@
  * Creates flowing paths through the lattice based on vertex connections
  */
 
-import type { LatticeState, VertexType } from '../types';
-import { EdgeState } from '../types';
-import { EdgeDirection } from '../types';
-import { getPathSegments } from '../vertexShapes';
+import type { LatticeState } from '../types';
 import { renderPaperStyle } from './paperStyleRenderer';
-
-interface Point {
-  x: number;
-  y: number;
-}
-
-interface Edge {
-  row: number;
-  col: number;
-  type: 'horizontal' | 'vertical';
-}
 
 /**
  * Render continuous paths through the lattice (paper style)
@@ -30,75 +16,6 @@ export function renderContinuousPaths(
 ): void {
   // Use the new paper-style renderer
   renderPaperStyle(ctx, state, cellSize);
-}
-
-/**
- * Draw a path segment in paper style - continuous across cell boundaries
- */
-function drawPathSegmentPaperStyle(
-  ctx: CanvasRenderingContext2D,
-  cx: number,
-  cy: number,
-  from: EdgeDirection,
-  to: EdgeDirection,
-  cellSize: number,
-): void {
-  const offset = cellSize / 2;
-
-  // Get edge points that extend to cell boundaries
-  const fromPoint = getEdgePointExtended(cx, cy, from, offset);
-  const toPoint = getEdgePointExtended(cx, cy, to, offset);
-
-  ctx.beginPath();
-
-  // Check if it's a straight path or curved
-  if (isOppositeEdges(from, to)) {
-    // Straight line through vertex
-    ctx.moveTo(fromPoint.x, fromPoint.y);
-    ctx.lineTo(toPoint.x, toPoint.y);
-  } else {
-    // Curved path that turns at vertex
-    ctx.moveTo(fromPoint.x, fromPoint.y);
-    // Use quadratic curve through vertex center for smooth turn
-    ctx.quadraticCurveTo(cx, cy, toPoint.x, toPoint.y);
-  }
-
-  ctx.stroke();
-}
-
-/**
- * Get edge point that extends to cell boundary (for continuous paths)
- */
-function getEdgePointExtended(
-  cx: number,
-  cy: number,
-  direction: EdgeDirection,
-  offset: number,
-): Point {
-  switch (direction) {
-    case EdgeDirection.Left:
-      return { x: cx - offset, y: cy };
-    case EdgeDirection.Right:
-      return { x: cx + offset, y: cy };
-    case EdgeDirection.Top:
-      return { x: cx, y: cy - offset };
-    case EdgeDirection.Bottom:
-      return { x: cx, y: cy + offset };
-    default:
-      return { x: cx, y: cy };
-  }
-}
-
-/**
- * Check if two edges are opposite (form a straight line)
- */
-function isOppositeEdges(edge1: EdgeDirection, edge2: EdgeDirection): boolean {
-  return (
-    (edge1 === EdgeDirection.Left && edge2 === EdgeDirection.Right) ||
-    (edge1 === EdgeDirection.Right && edge2 === EdgeDirection.Left) ||
-    (edge1 === EdgeDirection.Top && edge2 === EdgeDirection.Bottom) ||
-    (edge1 === EdgeDirection.Bottom && edge2 === EdgeDirection.Top)
-  );
 }
 
 /**

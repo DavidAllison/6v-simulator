@@ -132,13 +132,6 @@ export function generateDWBCHighCorrectIce(size: number): LatticeState {
     vertices[row] = [];
     for (let col = 0; col < size; col++) {
       const type = vertexTypes[row][col];
-      const idealConfig = getCorrectConfiguration(type);
-
-      // Get the actual edges around this vertex
-      const leftEdge = horizontalEdges[row][col];
-      const rightEdge = horizontalEdges[row][col + 1];
-      const topEdge = verticalEdges[row][col];
-      const bottomEdge = verticalEdges[row + 1][col];
 
       // For internal edges that haven't been set, use the ideal configuration
       if (col < size - 1 && row > 0 && row < size - 1) {
@@ -163,14 +156,10 @@ export function generateDWBCHighCorrectIce(size: number): LatticeState {
         }
       }
 
-      // Build the configuration from the perspective of the vertex
-      // Edge directions are reversed from lattice perspective to vertex perspective
-      const configuration: VertexConfiguration = {
-        left: leftEdge === 'out' ? ('in' as EdgeState) : ('out' as EdgeState),
-        right: rightEdge === 'in' ? ('in' as EdgeState) : ('out' as EdgeState),
-        top: topEdge === 'in' ? ('in' as EdgeState) : ('out' as EdgeState),
-        bottom: bottomEdge === 'out' ? ('out' as EdgeState) : ('in' as EdgeState),
-      };
+      // The canonical 2-in/2-out configuration for this vertex type (Fig. 1),
+      // which guarantees the ice rule. The boundary/internal edge arrays above
+      // are retained for the arrow-overlay renderer.
+      const configuration = getCorrectConfiguration(type);
 
       vertices[row][col] = {
         position: { row, col },
@@ -267,19 +256,8 @@ export function generateDWBCLowCorrectIce(size: number): LatticeState {
         }
       }
 
-      // Get edges
-      const leftEdge = horizontalEdges[row][col];
-      const rightEdge = horizontalEdges[row][col + 1];
-      const topEdge = verticalEdges[row][col];
-      const bottomEdge = verticalEdges[row + 1][col];
-
-      // Convert to vertex perspective
-      const configuration: VertexConfiguration = {
-        left: leftEdge === 'in' ? ('out' as EdgeState) : ('in' as EdgeState),
-        right: rightEdge === 'out' ? ('out' as EdgeState) : ('in' as EdgeState),
-        top: topEdge === 'out' ? ('out' as EdgeState) : ('in' as EdgeState),
-        bottom: bottomEdge === 'in' ? ('in' as EdgeState) : ('out' as EdgeState),
-      };
+      // Canonical 2-in/2-out configuration (Fig. 1), guaranteeing the ice rule.
+      const configuration = getCorrectConfiguration(type);
 
       vertices[row][col] = {
         position: { row, col },

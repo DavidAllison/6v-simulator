@@ -27,15 +27,6 @@ import {
 // Vertex type constants are now imported from fixedFlipLogic
 
 // Map between enum and numeric values
-const VERTEX_TYPE_TO_NUM: Record<VertexType, number> = {
-  [VertexType.a1]: VERTEX_A1,
-  [VertexType.a2]: VERTEX_A2,
-  [VertexType.b1]: VERTEX_B1,
-  [VertexType.b2]: VERTEX_B2,
-  [VertexType.c1]: VERTEX_C1,
-  [VertexType.c2]: VERTEX_C2,
-};
-
 const NUM_TO_VERTEX_TYPE = [
   VertexType.a1,
   VertexType.a2,
@@ -283,13 +274,11 @@ export class OptimizedPhysicsSimulation {
     this.flippableUpList = [];
     this.flippableDownList = [];
 
-    let flippableCount = 0;
     for (let row = 0; row < this.size; row++) {
       for (let col = 0; col < this.size; col++) {
         const capability = this.checkFlippable(row, col);
 
         if (capability.canFlipUp || capability.canFlipDown) {
-          flippableCount++;
           const pos: FlippablePosition = {
             row,
             col,
@@ -334,7 +323,11 @@ export class OptimizedPhysicsSimulation {
    * For simplicity and correctness, we just rebuild the entire list
    * This ensures we don't miss any new flippable positions
    */
-  private updateFlippableListAfterFlip(row: number, col: number, direction: FlipDirection): void {
+  private updateFlippableListAfterFlip(
+    _row: number,
+    _col: number,
+    _direction: FlipDirection,
+  ): void {
     // Simply rebuild the entire list to ensure correctness
     // This is more robust than trying to do incremental updates
     this.buildFlippableList();

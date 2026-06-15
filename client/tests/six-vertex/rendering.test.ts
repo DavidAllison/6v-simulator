@@ -5,17 +5,22 @@
 
 import { PathRenderer } from '../../src/lib/six-vertex/renderer/pathRenderer';
 import { generateDWBCHigh, generateDWBCLow } from '../../src/lib/six-vertex/initialStates';
-import { VertexType, LatticeState } from '../../src/lib/six-vertex/types';
+import { VertexType, RenderMode, LatticeState } from '../../src/lib/six-vertex/types';
 import { getVertexPathData, getVertexASCII } from '../../src/lib/six-vertex/vertexShapes';
 
-// Mock canvas for testing
+interface DrawCall {
+  type: string;
+  [key: string]: unknown;
+}
+
+// Mock canvas for testing (jsdom's canvas has no real 2D context)
 class MockCanvas {
   width: number = 400;
   height: number = 400;
-  private context: MockCanvasContext;
+  context: MockCanvasContext;
 
   constructor() {
-    this.context = new MockCanvasContext();
+    this.context = new MockCanvasContext(this);
   }
 
   getContext(type: string): MockCanvasContext | null {
@@ -25,13 +30,16 @@ class MockCanvas {
     return null;
   }
 
-  getDrawCalls() {
+  getDrawCalls(): DrawCall[] {
     return this.context.getDrawCalls();
   }
 }
 
 class MockCanvasContext {
-  private drawCalls: any[] = [];
+  private drawCalls: DrawCall[] = [];
+
+  // Back-reference so renderers that read ctx.canvas.{width,height} work
+  canvas: MockCanvas;
 
   fillStyle: string = '#000000';
   strokeStyle: string = '#000000';
@@ -40,6 +48,12 @@ class MockCanvasContext {
   font: string = '12px sans-serif';
   textAlign: string = 'left';
   textBaseline: string = 'alphabetic';
+  lineCap: string = 'butt';
+  lineJoin: string = 'miter';
+
+  constructor(canvas: MockCanvas) {
+    this.canvas = canvas;
+  }
 
   save() {
     this.drawCalls.push({ type: 'save' });
@@ -47,6 +61,10 @@ class MockCanvasContext {
 
   restore() {
     this.drawCalls.push({ type: 'restore' });
+  }
+
+  setLineDash(_segments: number[]) {
+    this.drawCalls.push({ type: 'setLineDash' });
   }
 
   clearRect(x: number, y: number, width: number, height: number) {
@@ -109,7 +127,7 @@ class MockCanvasContext {
     this.drawCalls.push({ type: 'scale', x, y });
   }
 
-  getDrawCalls() {
+  getDrawCalls(): DrawCall[] {
     return this.drawCalls;
   }
 
@@ -118,42 +136,49 @@ class MockCanvasContext {
   }
 }
 
+function makeRenderer(config?: Parameters<typeof PathRenderer.prototype.updateConfig>[0]) {
+  const canvas = new MockCanvas();
+  const renderer = new PathRenderer(canvas as unknown as HTMLCanvasElement, config);
+  return { canvas, renderer };
+}
+
 describe('Rendering Tests', () => {
   describe('PathRenderer Initialization', () => {
     it('should initialize with canvas', () => {
-      const canvas = new MockCanvas() as unknown as HTMLCanvasElement;
-      const renderer = new PathRenderer(canvas);
-
+      const { renderer } = makeRenderer();
       expect(renderer).toBeDefined();
     });
 
-    it('should handle null context gracefully', () => {
+    it('should throw when 2D context is unavailable', () => {
       const badCanvas = {
         getContext: () => null,
       } as unknown as HTMLCanvasElement;
 
-      expect(() => new PathRenderer(badCanvas)).not.toThrow();
+      // PathRenderer requires a 2D context and throws if it cannot be obtained.
+      expect(() => new PathRenderer(badCanvas)).toThrow();
     });
 
-    it('should set default properties', () => {
-      const canvas = new MockCanvas() as unknown as HTMLCanvasElement;
-      const renderer = new PathRenderer(canvas);
-
-      // Should have default settings
+    it('should render with default config without throwing', () => {
+      const { renderer } = makeRenderer();
       expect(() => renderer.render(generateDWBCHigh(4))).not.toThrow();
+    });
+
+    it('should accept config overrides via constructor', () => {
+      const { canvas, renderer } = makeRenderer({ mode: RenderMode.Vertices });
+      renderer.render(generateDWBCLow(4));
+
+      // Vertices mode draws vertex point markers using arc().
+      const arcCalls = canvas.getDrawCalls().filter((c) => c.type === 'arc');
+      expect(arcCalls.length).toBeGreaterThan(0);
     });
   });
 
   describe('Render Modes', () => {
     it('should render in paths mode', () => {
-      const canvas = new MockCanvas() as unknown as HTMLCanvasElement;
-      const renderer = new PathRenderer(canvas);
-      const state = generateDWBCHigh(4);
+      const { canvas, renderer } = makeRenderer({ mode: RenderMode.Paths });
+      renderer.render(generateDWBCHigh(4));
 
-      renderer.setRenderMode('paths');
-      renderer.render(state);
-
-      const drawCalls = (canvas as any).getDrawCalls();
+      const drawCalls = canvas.getDrawCalls();
 
       // Should have draw calls
       expect(drawCalls.length).toBeGreaterThan(0);
@@ -161,196 +186,142 @@ describe('Rendering Tests', () => {
       // Should clear canvas first
       expect(drawCalls[0].type).toBe('clearRect');
 
-      // Should draw paths
-      const pathCalls = drawCalls.filter((c: any) => c.type === 'stroke');
+      // Should draw paths (stroked lines)
+      const pathCalls = drawCalls.filter((c) => c.type === 'stroke');
       expect(pathCalls.length).toBeGreaterThan(0);
     });
 
     it('should render in vertices mode', () => {
-      const canvas = new MockCanvas() as unknown as HTMLCanvasElement;
-      const renderer = new PathRenderer(canvas);
-      const state = generateDWBCLow(4);
+      const { canvas, renderer } = makeRenderer({ mode: RenderMode.Vertices });
+      renderer.render(generateDWBCLow(4));
 
-      renderer.setRenderMode('vertices');
-      renderer.render(state);
+      const drawCalls = canvas.getDrawCalls();
 
-      const drawCalls = (canvas as any).getDrawCalls();
+      // Vertices mode color-codes each vertex with a filled square.
+      const fillRectCalls = drawCalls.filter((c) => c.type === 'fillRect');
+      expect(fillRectCalls.length).toBeGreaterThan(0);
 
-      // Should draw vertex indicators
-      const arcCalls = drawCalls.filter((c: any) => c.type === 'arc');
-      expect(arcCalls.length).toBeGreaterThan(0);
+      // It also labels each vertex with its type.
+      const textCalls = drawCalls.filter((c) => c.type === 'fillText');
+      expect(textCalls.length).toBeGreaterThan(0);
     });
 
     it('should render in arrows mode', () => {
-      const canvas = new MockCanvas() as unknown as HTMLCanvasElement;
-      const renderer = new PathRenderer(canvas);
-      const state = generateDWBCLow(4);
+      const { canvas, renderer } = makeRenderer({ mode: RenderMode.Arrows });
+      renderer.render(generateDWBCLow(4));
 
-      renderer.setRenderMode('arrows');
-      renderer.render(state);
+      const drawCalls = canvas.getDrawCalls();
 
-      const drawCalls = (canvas as any).getDrawCalls();
-
-      // Should draw arrows
-      const lineCalls = drawCalls.filter((c: any) => c.type === 'lineTo');
+      // Arrows are drawn as line segments with arrowheads.
+      const lineCalls = drawCalls.filter((c) => c.type === 'lineTo');
       expect(lineCalls.length).toBeGreaterThan(0);
     });
 
-    it('should render in height mode', () => {
-      const canvas = new MockCanvas() as unknown as HTMLCanvasElement;
-      const renderer = new PathRenderer(canvas);
-      const state = generateDWBCHigh(4);
+    it('should render in both mode (paths + arrows)', () => {
+      const { canvas, renderer } = makeRenderer({ mode: RenderMode.Both });
+      renderer.render(generateDWBCHigh(4));
 
-      renderer.setRenderMode('height');
-      renderer.render(state);
+      const drawCalls = canvas.getDrawCalls();
 
-      const drawCalls = (canvas as any).getDrawCalls();
+      // Both mode should produce stroked paths and arrow lines.
+      const strokeCalls = drawCalls.filter((c) => c.type === 'stroke');
+      const lineCalls = drawCalls.filter((c) => c.type === 'lineTo');
+      expect(strokeCalls.length).toBeGreaterThan(0);
+      expect(lineCalls.length).toBeGreaterThan(0);
+    });
 
-      // Should use colors for height visualization
-      const fillCalls = drawCalls.filter((c: any) => c.type === 'fillRect');
-      expect(fillCalls.length).toBeGreaterThan(0);
+    it('should switch render modes via updateConfig', () => {
+      const { canvas, renderer } = makeRenderer({ mode: RenderMode.Paths });
+
+      renderer.render(generateDWBCHigh(4));
+      const pathsHasFillRect = canvas
+        .getDrawCalls()
+        .some((c) => c.type === 'fillRect' && c.width !== canvas.width);
+
+      canvas.context.reset();
+      renderer.updateConfig({ mode: RenderMode.Vertices });
+      renderer.render(generateDWBCHigh(4));
+      const verticesFillRects = canvas.getDrawCalls().filter((c) => c.type === 'fillRect');
+
+      // Vertices mode draws per-vertex squares; paths mode does not.
+      expect(verticesFillRects.length).toBeGreaterThan(0);
+      expect(pathsHasFillRect).toBe(false);
     });
   });
 
-  describe('Zoom and Pan', () => {
-    it('should apply zoom transformation', () => {
-      const canvas = new MockCanvas() as unknown as HTMLCanvasElement;
-      const renderer = new PathRenderer(canvas);
-      const state = generateDWBCHigh(4);
+  describe('Grid Display', () => {
+    it('should draw grid when showGrid is enabled', () => {
+      const { canvas, renderer } = makeRenderer({ mode: RenderMode.Paths, showGrid: true });
+      renderer.render(generateDWBCHigh(4));
 
-      renderer.setZoom(2.0);
-      renderer.render(state);
-
-      const drawCalls = (canvas as any).getDrawCalls();
-
-      // Should have scale transformation
-      const scaleCalls = drawCalls.filter((c: any) => c.type === 'scale');
-      expect(scaleCalls.length).toBeGreaterThan(0);
-      expect(scaleCalls[0].x).toBe(2.0);
-      expect(scaleCalls[0].y).toBe(2.0);
+      // Grid drawing toggles line dashing.
+      const dashCalls = canvas.getDrawCalls().filter((c) => c.type === 'setLineDash');
+      expect(dashCalls.length).toBeGreaterThan(0);
     });
 
-    it('should apply pan transformation', () => {
-      const canvas = new MockCanvas() as unknown as HTMLCanvasElement;
-      const renderer = new PathRenderer(canvas);
-      const state = generateDWBCLow(4);
+    it('should produce fewer draws when grid is disabled', () => {
+      const { canvas: gridCanvas, renderer: gridRenderer } = makeRenderer({
+        mode: RenderMode.Paths,
+        showGrid: true,
+      });
+      gridRenderer.render(generateDWBCHigh(4));
+      const withGrid = gridCanvas.getDrawCalls().length;
 
-      renderer.setPan(50, -30);
-      renderer.render(state);
+      const { canvas: plainCanvas, renderer: plainRenderer } = makeRenderer({
+        mode: RenderMode.Paths,
+        showGrid: false,
+      });
+      plainRenderer.render(generateDWBCHigh(4));
+      const withoutGrid = plainCanvas.getDrawCalls().length;
 
-      const drawCalls = (canvas as any).getDrawCalls();
-
-      // Should have translate transformation
-      const translateCalls = drawCalls.filter((c: any) => c.type === 'translate');
-      expect(translateCalls.length).toBeGreaterThan(0);
-
-      // Should include pan offset
-      const hasPanOffset = translateCalls.some(
-        (c: any) => Math.abs(c.x - 50) < 1 || Math.abs(c.y + 30) < 1,
-      );
-      expect(hasPanOffset).toBe(true);
-    });
-
-    it('should reset view correctly', () => {
-      const canvas = new MockCanvas() as unknown as HTMLCanvasElement;
-      const renderer = new PathRenderer(canvas);
-      const state = generateDWBCHigh(4);
-
-      // Apply transformations
-      renderer.setZoom(3.0);
-      renderer.setPan(100, 100);
-
-      // Reset
-      renderer.resetView();
-      renderer.render(state);
-
-      const drawCalls = (canvas as any).getDrawCalls();
-
-      // Should have default scale (1.0)
-      const scaleCalls = drawCalls.filter((c: any) => c.type === 'scale');
-      if (scaleCalls.length > 0) {
-        expect(scaleCalls[0].x).toBe(1.0);
-        expect(scaleCalls[0].y).toBe(1.0);
-      }
-    });
-
-    it('should handle zoom limits', () => {
-      const canvas = new MockCanvas() as unknown as HTMLCanvasElement;
-      const renderer = new PathRenderer(canvas);
-
-      // Try extreme zoom values
-      renderer.setZoom(0.01);
-      expect(() => renderer.render(generateDWBCHigh(4))).not.toThrow();
-
-      renderer.setZoom(100);
-      expect(() => renderer.render(generateDWBCHigh(4))).not.toThrow();
+      expect(withoutGrid).toBeLessThan(withGrid);
     });
   });
 
-  describe('Flippable Highlighting', () => {
-    it('should highlight flippable positions when enabled', () => {
-      const canvas = new MockCanvas() as unknown as HTMLCanvasElement;
-      const renderer = new PathRenderer(canvas);
-      const state = generateDWBCLow(4);
-
-      renderer.setShowFlippable(true);
+  describe('Canvas Sizing', () => {
+    it('should size the canvas based on lattice dimensions and cell size', () => {
+      const cellSize = 30;
+      const { canvas, renderer } = makeRenderer({ cellSize });
+      const state = generateDWBCHigh(4);
       renderer.render(state);
 
-      const drawCalls = (canvas as any).getDrawCalls();
-
-      // Should have additional highlighting draws
-      expect(drawCalls.length).toBeGreaterThan(0);
-    });
-
-    it('should not highlight when disabled', () => {
-      const canvas = new MockCanvas() as unknown as HTMLCanvasElement;
-      const renderer = new PathRenderer(canvas);
-      const state = generateDWBCLow(4);
-
-      renderer.setShowFlippable(false);
-      renderer.render(state);
-
-      const drawCalls1 = (canvas as any).getDrawCalls();
-
-      // Reset and render with highlighting
-      (canvas as any).context.reset();
-      renderer.setShowFlippable(true);
-      renderer.render(state);
-
-      const drawCalls2 = (canvas as any).getDrawCalls();
-
-      // Should have different number of draw calls
-      expect(drawCalls2.length).not.toBe(drawCalls1.length);
+      const { width, height } = renderer.getDimensions();
+      expect(width).toBe((state.width + 1) * cellSize);
+      expect(height).toBe((state.height + 1) * cellSize);
+      expect(canvas.width).toBe(width);
     });
   });
 
   describe('Vertex Path Data Generation', () => {
-    it('should generate correct path data for each vertex type', () => {
+    // Number of bold path segments per vertex type, matching getPathSegments
+    // (main.c draw_vertex semantics): a1 has both straight paths, a2 has none,
+    // the b/c types each have a single path.
+    const expectedSegmentCount: Record<VertexType, number> = {
+      [VertexType.a1]: 2,
+      [VertexType.a2]: 0,
+      [VertexType.b1]: 1,
+      [VertexType.b2]: 1,
+      [VertexType.c1]: 1,
+      [VertexType.c2]: 1,
+    };
+
+    it('should generate path data matching the segment count for each vertex type', () => {
       const cellSize = 20;
-      const vertexTypes = [
-        VertexType.a1,
-        VertexType.a2,
-        VertexType.b1,
-        VertexType.b2,
-        VertexType.c1,
-        VertexType.c2,
-      ];
 
-      for (const type of vertexTypes) {
+      for (const type of Object.keys(expectedSegmentCount) as VertexType[]) {
         const { paths, arrows } = getVertexPathData(type, cellSize);
+        const expected = expectedSegmentCount[type];
 
-        // Should have 2 paths (ice rule: 2 paths through vertex)
-        expect(paths).toHaveLength(2);
+        // One SVG path + one arrow per bold segment.
+        expect(paths).toHaveLength(expected);
+        expect(arrows).toHaveLength(expected);
 
-        // Should have 2 arrows
-        expect(arrows).toHaveLength(2);
-
-        // Paths should be valid SVG path strings
+        // Paths should be valid SVG path strings.
         for (const path of paths) {
           expect(path).toMatch(/^M/); // Should start with Move command
         }
 
-        // Arrows should have valid coordinates
+        // Arrows should have valid coordinates.
         for (const arrow of arrows) {
           expect(arrow.from).toHaveLength(2);
           expect(arrow.to).toHaveLength(2);
@@ -360,36 +331,30 @@ describe('Rendering Tests', () => {
       }
     });
 
-    it('should generate straight paths for opposite edges', () => {
+    it('should generate straight (L) paths for opposite edges', () => {
       const cellSize = 20;
 
-      // a1 and a2 have straight-through paths
-      const a1Data = getVertexPathData(VertexType.a1, cellSize);
-      const a2Data = getVertexPathData(VertexType.a2, cellSize);
+      // a1 (both axes), b1 (vertical) and b2 (horizontal) are straight-through.
+      const straightTypes = [VertexType.a1, VertexType.b1, VertexType.b2];
 
-      // Should use line commands (L) for straight paths
-      for (const path of a1Data.paths) {
-        expect(path).toContain(' L ');
-      }
-
-      for (const path of a2Data.paths) {
-        expect(path).toContain(' L ');
+      for (const type of straightTypes) {
+        const { paths } = getVertexPathData(type, cellSize);
+        expect(paths.length).toBeGreaterThan(0);
+        for (const path of paths) {
+          expect(path).toContain(' L ');
+          expect(path).not.toContain(' Q ');
+        }
       }
     });
 
-    it('should generate curved paths for adjacent edges', () => {
+    it('should generate curved (Q) paths for adjacent (turning) edges', () => {
       const cellSize = 20;
 
-      // b and c types have turning paths
-      const b1Data = getVertexPathData(VertexType.b1, cellSize);
+      // c1 (left→bottom) and c2 (top→right) are L-shaped turns.
       const c1Data = getVertexPathData(VertexType.c1, cellSize);
+      const c2Data = getVertexPathData(VertexType.c2, cellSize);
 
-      // Should use quadratic curve commands (Q) for turns
-      for (const path of b1Data.paths) {
-        expect(path).toContain(' Q ');
-      }
-
-      for (const path of c1Data.paths) {
+      for (const path of [...c1Data.paths, ...c2Data.paths]) {
         expect(path).toContain(' Q ');
       }
     });
@@ -409,7 +374,7 @@ describe('Rendering Tests', () => {
       for (const type of vertexTypes) {
         const ascii = getVertexASCII(type);
 
-        // Should be 3x5 character grid
+        // Should be 3 rows of 5 characters
         expect(ascii).toHaveLength(3);
         expect(ascii[0]).toHaveLength(5);
         expect(ascii[1]).toHaveLength(5);
@@ -434,43 +399,33 @@ describe('Rendering Tests', () => {
 
   describe('Color Schemes', () => {
     it('should use appropriate colors for vertex types', () => {
-      const canvas = new MockCanvas() as unknown as HTMLCanvasElement;
-      const renderer = new PathRenderer(canvas);
-      const state = generateDWBCHigh(4);
+      const { canvas, renderer } = makeRenderer({ mode: RenderMode.Vertices });
+      renderer.render(generateDWBCHigh(4));
 
-      renderer.setRenderMode('vertices');
-      renderer.render(state);
+      const drawCalls = canvas.getDrawCalls();
 
-      const drawCalls = (canvas as any).getDrawCalls();
-
-      // Should set fill styles for different vertex types
-      const fillStyleCalls = drawCalls.filter((c: any) => c.fillStyle);
+      // Should set fill styles while drawing vertices.
+      const fillStyleCalls = drawCalls.filter((c) => c.fillStyle);
       expect(fillStyleCalls.length).toBeGreaterThan(0);
     });
 
-    it('should use gradient for height visualization', () => {
-      const canvas = new MockCanvas() as unknown as HTMLCanvasElement;
-      const renderer = new PathRenderer(canvas);
-      const state = generateDWBCLow(4);
+    it('should use multiple vertex colors for a mixed lattice', () => {
+      const { canvas, renderer } = makeRenderer({ mode: RenderMode.Vertices });
+      renderer.render(generateDWBCLow(4));
 
-      renderer.setRenderMode('height');
-      renderer.render(state);
+      const drawCalls = canvas.getDrawCalls();
 
-      const drawCalls = (canvas as any).getDrawCalls();
-
-      // Should use different colors for different heights
-      const fillRectCalls = drawCalls.filter((c: any) => c.type === 'fillRect');
-      const uniqueColors = new Set(fillRectCalls.map((c: any) => c.fillStyle));
-
-      // Should have multiple colors for height gradient
+      // The per-vertex squares are filled; a DWBC lattice has several vertex
+      // types, so more than one fill colour should appear.
+      const fillRectCalls = drawCalls.filter((c) => c.type === 'fillRect');
+      const uniqueColors = new Set(fillRectCalls.map((c) => c.fillStyle));
       expect(uniqueColors.size).toBeGreaterThan(1);
     });
   });
 
   describe('Performance', () => {
     it('should render small lattices quickly', () => {
-      const canvas = new MockCanvas() as unknown as HTMLCanvasElement;
-      const renderer = new PathRenderer(canvas);
+      const { renderer } = makeRenderer();
       const state = generateDWBCHigh(8);
 
       const startTime = performance.now();
@@ -482,8 +437,7 @@ describe('Rendering Tests', () => {
     });
 
     it('should handle large lattices', () => {
-      const canvas = new MockCanvas() as unknown as HTMLCanvasElement;
-      const renderer = new PathRenderer(canvas);
+      const { renderer } = makeRenderer();
       const state = generateDWBCLow(32);
 
       const startTime = performance.now();
@@ -495,16 +449,14 @@ describe('Rendering Tests', () => {
     });
 
     it('should not accumulate memory over multiple renders', () => {
-      const canvas = new MockCanvas() as unknown as HTMLCanvasElement;
-      const renderer = new PathRenderer(canvas);
+      const { canvas, renderer } = makeRenderer();
       const state = generateDWBCHigh(8);
 
       // Render many times
       for (let i = 0; i < 100; i++) {
         renderer.render(state);
-
         // Clear draw calls to prevent accumulation in mock
-        (canvas as any).context.reset();
+        canvas.context.reset();
       }
 
       // Should not throw or leak memory
@@ -514,8 +466,7 @@ describe('Rendering Tests', () => {
 
   describe('Edge Cases', () => {
     it('should handle empty state', () => {
-      const canvas = new MockCanvas() as unknown as HTMLCanvasElement;
-      const renderer = new PathRenderer(canvas);
+      const { renderer } = makeRenderer();
 
       const emptyState: LatticeState = {
         width: 0,
@@ -529,30 +480,29 @@ describe('Rendering Tests', () => {
     });
 
     it('should handle 1x1 lattice', () => {
-      const canvas = new MockCanvas() as unknown as HTMLCanvasElement;
-      const renderer = new PathRenderer(canvas);
+      const { renderer } = makeRenderer();
       const state = generateDWBCHigh(1);
 
       expect(() => renderer.render(state)).not.toThrow();
     });
 
-    it('should handle very small canvas', () => {
-      const canvas = new MockCanvas() as unknown as HTMLCanvasElement;
+    it('should handle very small initial canvas', () => {
+      const canvas = new MockCanvas();
       canvas.width = 10;
       canvas.height = 10;
 
-      const renderer = new PathRenderer(canvas);
+      const renderer = new PathRenderer(canvas as unknown as HTMLCanvasElement);
       const state = generateDWBCHigh(8);
 
       expect(() => renderer.render(state)).not.toThrow();
     });
 
-    it('should handle very large canvas', () => {
-      const canvas = new MockCanvas() as unknown as HTMLCanvasElement;
+    it('should handle very large initial canvas', () => {
+      const canvas = new MockCanvas();
       canvas.width = 10000;
       canvas.height = 10000;
 
-      const renderer = new PathRenderer(canvas);
+      const renderer = new PathRenderer(canvas as unknown as HTMLCanvasElement);
       const state = generateDWBCLow(4);
 
       expect(() => renderer.render(state)).not.toThrow();

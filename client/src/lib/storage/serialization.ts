@@ -2,14 +2,7 @@
  * Serialization utilities for converting simulation state to/from storable format
  */
 
-import type {
-  LatticeState,
-  SimulationParams,
-  SimulationStats,
-  Vertex,
-  VertexType,
-  EdgeState,
-} from '../six-vertex/types';
+import type { LatticeState, Vertex, VertexType, EdgeState } from '../six-vertex/types';
 import type { SimulationData } from './types';
 import { compress, decompress, shouldCompress } from './compression';
 
@@ -17,15 +10,6 @@ import { compress, decompress, shouldCompress } from './compression';
  * Version of the serialization format
  */
 export const SERIALIZATION_VERSION = '1.0.0';
-
-/**
- * Compact representation of a vertex for storage
- */
-interface CompactVertex {
-  t: VertexType; // type
-  // Position is implicit from array index
-  // Configuration can be reconstructed from edges
-}
 
 /**
  * Compact representation of lattice state

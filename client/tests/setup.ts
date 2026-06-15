@@ -5,6 +5,24 @@ beforeEach(() => {
   // Reset any mocks or state before each test
 });
 
+// Mock matchMedia (not implemented in jsdom) so components relying on
+// media queries (e.g. ThemeProvider's prefers-color-scheme check) can render.
+if (!window.matchMedia) {
+  Object.defineProperty(window, 'matchMedia', {
+    writable: true,
+    value: (query: string) => ({
+      matches: false,
+      media: query,
+      onchange: null,
+      addListener: jest.fn(), // deprecated
+      removeListener: jest.fn(), // deprecated
+      addEventListener: jest.fn(),
+      removeEventListener: jest.fn(),
+      dispatchEvent: jest.fn(),
+    }),
+  });
+}
+
 // Mock canvas for tests that use canvas rendering
 HTMLCanvasElement.prototype.getContext = jest.fn(() => ({
   fillRect: jest.fn(),

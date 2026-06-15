@@ -5,7 +5,7 @@
  */
 
 import type { LatticeState, Position } from './types';
-import { VertexType, EdgeState, getVertexType, getVertexConfiguration } from './types';
+import { VertexType, getVertexConfiguration } from './types';
 
 /**
  * Flip direction types from main.c
@@ -177,30 +177,30 @@ function executeDownFlip(state: LatticeState, row: number, col: number): void {
     base.type = VertexType.c2;
   }
 
-  // Left: b1 -> c1, c2 -> b2
+  // Left (inverse of up-flip "up" cell): c2 -> b1, b2 -> c1
   if (left && col > 0) {
-    if (left.type === VertexType.b1) {
+    if (left.type === VertexType.c2) {
+      left.type = VertexType.b1;
+    } else if (left.type === VertexType.b2) {
       left.type = VertexType.c1;
-    } else if (left.type === VertexType.c2) {
-      left.type = VertexType.b2;
     }
   }
 
-  // Down-Left: c2 -> a1, a2 -> c1
+  // Down-Left (inverse of up-flip "base" cell): c1 -> a1, a2 -> c2
   if (downLeft && row + 1 < state.height && col > 0) {
-    if (downLeft.type === VertexType.c2) {
+    if (downLeft.type === VertexType.c1) {
       downLeft.type = VertexType.a1;
     } else if (downLeft.type === VertexType.a2) {
-      downLeft.type = VertexType.c1;
+      downLeft.type = VertexType.c2;
     }
   }
 
-  // Down: c1 -> b1, b2 -> c2
+  // Down (inverse of up-flip "right" cell): c2 -> b2, b1 -> c1
   if (down && row + 1 < state.height) {
-    if (down.type === VertexType.c1) {
-      down.type = VertexType.b1;
-    } else if (down.type === VertexType.b2) {
-      down.type = VertexType.c2;
+    if (down.type === VertexType.c2) {
+      down.type = VertexType.b2;
+    } else if (down.type === VertexType.b1) {
+      down.type = VertexType.c1;
     }
   }
 
@@ -216,30 +216,20 @@ function executeDownFlip(state: LatticeState, row: number, col: number): void {
  */
 function updateVertexConfiguration(state: LatticeState, row: number, col: number): void {
   const vertex = state.vertices[row][col];
+  // The vertex type fully determines its 2-in/2-out configuration (Fig. 1). A valid
+  // 2x2 flip only changes the plaquette's internal edges, so the new types' canonical
+  // configurations stay consistent with the unchanged outer neighbours. We must NOT
+  // re-derive left/top from neighbours here — doing so can break the ice rule.
   const newConfig = getVertexConfiguration(vertex.type);
   vertex.configuration = newConfig;
 
-  // Update edges to match the new configuration
-  // Right edge
+  // Keep the lattice edge arrays in sync with the new configuration (used by the
+  // arrow-overlay renderer).
   if (col < state.width - 1) {
     state.horizontalEdges[row][col + 1] = newConfig.right;
   }
-
-  // Bottom edge
   if (row < state.height - 1) {
     state.verticalEdges[row + 1][col] = newConfig.bottom;
-  }
-
-  // Left edge (derived from left neighbor's right edge)
-  if (col > 0) {
-    const leftConfig = state.vertices[row][col - 1].configuration;
-    vertex.configuration.left = leftConfig.right === EdgeState.In ? EdgeState.Out : EdgeState.In;
-  }
-
-  // Top edge (derived from top neighbor's bottom edge)
-  if (row > 0) {
-    const topConfig = state.vertices[row - 1][col].configuration;
-    vertex.configuration.top = topConfig.bottom === EdgeState.In ? EdgeState.Out : EdgeState.In;
   }
 }
 
@@ -285,11 +275,12 @@ export function getWeightRatio(
     new3 = v3 === VertexType.a2 ? VertexType.c1 : v3 === VertexType.c2 ? VertexType.a1 : v3;
     new4 = v4 === VertexType.b1 ? VertexType.c2 : v4 === VertexType.c1 ? VertexType.b2 : v4;
   } else {
-    // Apply down flip transformations
-    new1 = v1 === VertexType.c2 ? VertexType.a1 : v1 === VertexType.a2 ? VertexType.c1 : v1;
-    new2 = v2 === VertexType.c1 ? VertexType.b1 : v2 === VertexType.b2 ? VertexType.c2 : v2;
+    // Apply down flip transformations (exact inverse of the up flip)
+    // v1=down-left, v2=down, v3=base, v4=left
+    new1 = v1 === VertexType.c1 ? VertexType.a1 : v1 === VertexType.a2 ? VertexType.c2 : v1;
+    new2 = v2 === VertexType.c2 ? VertexType.b2 : v2 === VertexType.b1 ? VertexType.c1 : v2;
     new3 = v3 === VertexType.c1 ? VertexType.a2 : v3 === VertexType.a1 ? VertexType.c2 : v3;
-    new4 = v4 === VertexType.b1 ? VertexType.c1 : v4 === VertexType.c2 ? VertexType.b2 : v4;
+    new4 = v4 === VertexType.c2 ? VertexType.b1 : v4 === VertexType.b2 ? VertexType.c1 : v4;
   }
 
   // Calculate weight after flip

@@ -5,14 +5,7 @@
  */
 
 import { generateDWBCHighCorrectIce, generateDWBCLowCorrectIce } from './dwbcCorrectIce';
-import type {
-  LatticeState,
-  Position,
-  Vertex,
-  DWBCConfig,
-  VertexConfiguration,
-  BoundaryCondition,
-} from './types';
+import type { LatticeState, Vertex, DWBCConfig, VertexConfiguration } from './types';
 import { VertexType, EdgeState, getVertexType, getVertexConfiguration } from './types';
 
 /**
@@ -34,93 +27,6 @@ export function generateDWBCHigh(size: number): LatticeState {
   return generateDWBCHighCorrectIce(size);
 }
 
-// Old implementation kept for reference
-function generateDWBCHighOld(size: number): LatticeState {
-  const vertices: Vertex[][] = [];
-  const horizontalEdges: EdgeState[][] = [];
-  const verticalEdges: EdgeState[][] = [];
-
-  // Initialize edge arrays
-  for (let row = 0; row <= size; row++) {
-    horizontalEdges[row] = new Array(size + 1);
-    verticalEdges[row] = new Array(size + 1);
-  }
-
-  // DWBC High boundary conditions:
-  // Top boundary: all arrows point down (into lattice)
-  for (let col = 0; col < size; col++) {
-    verticalEdges[0][col] = EdgeState.In;
-  }
-
-  // Bottom boundary: all arrows point down (out of lattice)
-  for (let col = 0; col < size; col++) {
-    verticalEdges[size][col] = EdgeState.Out;
-  }
-
-  // Left boundary: all arrows point right (out of boundary, into lattice)
-  for (let row = 0; row < size; row++) {
-    horizontalEdges[row][0] = EdgeState.Out;
-  }
-
-  // Right boundary: all arrows point right (into boundary, out of lattice)
-  for (let row = 0; row < size; row++) {
-    horizontalEdges[row][size] = EdgeState.In;
-  }
-
-  // Create vertices according to Figure 2 pattern
-  for (let row = 0; row < size; row++) {
-    vertices[row] = [];
-    for (let col = 0; col < size; col++) {
-      let type: VertexType;
-
-      // Anti-diagonal has c2 vertices
-      if (row + col === size - 1) {
-        type = VertexType.c2;
-      }
-      // Upper-left triangle has b1 vertices
-      else if (row + col < size - 1) {
-        type = VertexType.b1;
-      }
-      // Lower-right triangle has b2 vertices
-      else {
-        type = VertexType.b2;
-      }
-
-      // Determine configuration based on actual edge states
-      // For DWBC, edges are already set by boundary conditions
-      // We need to derive the configuration from the edges, not vice versa
-      const configuration: VertexConfiguration = {
-        left: col === 0 ? EdgeState.Out : horizontalEdges[row][col],
-        right: col === size - 1 ? EdgeState.In : horizontalEdges[row][col + 1],
-        top: row === 0 ? EdgeState.In : verticalEdges[row][col],
-        bottom: row === size - 1 ? EdgeState.Out : verticalEdges[row + 1][col],
-      };
-
-      // For interior vertices, set edges to match the expected vertex type
-      // But only if they haven't been set by boundary conditions
-      if (row > 0 && row < size - 1 && col > 0 && col < size - 1) {
-        const expectedConfig = getVertexConfiguration(type);
-        horizontalEdges[row][col + 1] = expectedConfig.right;
-        verticalEdges[row + 1][col] = expectedConfig.bottom;
-      }
-
-      vertices[row][col] = {
-        position: { row, col },
-        type,
-        configuration,
-      };
-    }
-  }
-
-  return {
-    width: size,
-    height: size,
-    vertices,
-    horizontalEdges,
-    verticalEdges,
-  };
-}
-
 /**
  * Generate DWBC Low state (Figure 3 from the paper)
  * Pattern: c2 vertices on main diagonal, a1 in upper-right, a2 in lower-left
@@ -138,89 +44,6 @@ function generateDWBCHighOld(size: number): LatticeState {
 export function generateDWBCLow(size: number): LatticeState {
   // Use the correct ice version that ensures ice rule compliance
   return generateDWBCLowCorrectIce(size);
-}
-
-// Old implementation kept for reference
-function generateDWBCLowOld(size: number): LatticeState {
-  const vertices: Vertex[][] = [];
-  const horizontalEdges: EdgeState[][] = [];
-  const verticalEdges: EdgeState[][] = [];
-
-  // Initialize edge arrays
-  for (let row = 0; row <= size; row++) {
-    horizontalEdges[row] = new Array(size + 1);
-    verticalEdges[row] = new Array(size + 1);
-  }
-
-  // DWBC Low boundary conditions (opposite of High):
-  // Top boundary: all arrows point up (out of lattice)
-  for (let col = 0; col < size; col++) {
-    verticalEdges[0][col] = EdgeState.Out;
-  }
-
-  // Bottom boundary: all arrows point up (into lattice)
-  for (let col = 0; col < size; col++) {
-    verticalEdges[size][col] = EdgeState.In;
-  }
-
-  // Left boundary: all arrows point left (into boundary)
-  for (let row = 0; row < size; row++) {
-    horizontalEdges[row][0] = EdgeState.In;
-  }
-
-  // Right boundary: all arrows point left (out of boundary)
-  for (let row = 0; row < size; row++) {
-    horizontalEdges[row][size] = EdgeState.Out;
-  }
-
-  // Create vertices according to Figure 3 pattern
-  for (let row = 0; row < size; row++) {
-    vertices[row] = [];
-    for (let col = 0; col < size; col++) {
-      let type: VertexType;
-
-      // Main diagonal has c2 vertices
-      if (row === col) {
-        type = VertexType.c2;
-      }
-      // Upper-right triangle has a1 vertices
-      else if (col > row) {
-        type = VertexType.a1;
-      }
-      // Lower-left triangle has a2 vertices
-      else {
-        type = VertexType.a2;
-      }
-
-      // Get the configuration for this vertex type
-      const configuration = getVertexConfiguration(type);
-
-      // Set interior edges based on vertex configuration
-      // Right edge (if not at boundary)
-      if (col < size - 1) {
-        horizontalEdges[row][col + 1] = configuration.right;
-      }
-
-      // Bottom edge (if not at boundary)
-      if (row < size - 1) {
-        verticalEdges[row + 1][col] = configuration.bottom;
-      }
-
-      vertices[row][col] = {
-        position: { row, col },
-        type,
-        configuration,
-      };
-    }
-  }
-
-  return {
-    width: size,
-    height: size,
-    vertices,
-    horizontalEdges,
-    verticalEdges,
-  };
 }
 
 /**
@@ -266,7 +89,6 @@ export function generateRandomIceState(width: number, height: number, seed?: num
       // Count existing ins and outs
       let ins = 0;
       let outs = 0;
-      const edges: Array<{ type: 'h' | 'v'; row: number; col: number }> = [];
 
       // Check left edge
       if (col === 0) {
@@ -377,16 +199,14 @@ export function generateUniformState(
         verticalEdges[row + 1][col] = EdgeState.In;
       }
 
-      const configuration: VertexConfiguration = {
-        left: horizontalEdges[row][col] === EdgeState.Out ? EdgeState.In : EdgeState.Out,
-        right: horizontalEdges[row][col + 1],
-        top: verticalEdges[row][col] === EdgeState.In ? EdgeState.Out : EdgeState.In,
-        bottom: verticalEdges[row + 1][col],
-      };
+      // Use the canonical 2-in/2-out configuration for the requested type so the
+      // ice rule holds at every vertex. (A single vertex type cannot always tile
+      // the whole lattice, but each vertex's configuration is always valid.)
+      const configuration = getVertexConfiguration(vertexType);
 
       vertices[row][col] = {
         position: { row, col },
-        type: getVertexType(configuration) || vertexType,
+        type: vertexType,
         configuration,
       };
     }
