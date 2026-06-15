@@ -42,102 +42,64 @@ class ErrorBoundary extends Component<Props, State> {
         return this.props.fallback;
       }
 
+      const preStyle: React.CSSProperties = {
+        backgroundColor: 'var(--color-bg-primary)',
+        color: 'var(--color-text-primary)',
+        padding: 'var(--spacing-sm)',
+        borderRadius: 'var(--border-radius-sm)',
+        border: '1px solid var(--color-border)',
+        overflow: 'auto',
+        maxHeight: '200px',
+        fontSize: 'var(--font-size-xs)',
+      };
+
       return (
         <div
+          className="alert alert--danger"
+          role="alert"
           style={{
-            padding: '20px',
-            margin: '20px',
-            border: '2px solid #ff6b6b',
-            borderRadius: '8px',
-            backgroundColor: '#ffe0e0',
-            color: '#333',
-            fontFamily: 'monospace',
+            margin: 'var(--spacing-lg)',
+            fontFamily: 'var(--font-family-mono, monospace)',
+            // Keep readable in dark mode: .alert--danger hard-codes a dark-red
+            // text color that fails contrast on the dark-mode danger background.
+            color: 'var(--color-text-primary)',
           }}
         >
-          <h2 style={{ color: '#d32f2f' }}>⚠️ Something went wrong</h2>
-          <details style={{ marginTop: '10px' }}>
-            <summary style={{ cursor: 'pointer', fontWeight: 'bold' }}>
+          <h2 style={{ marginTop: 0 }}>⚠️ Something went wrong</h2>
+          <details style={{ marginTop: 'var(--spacing-sm)' }}>
+            <summary style={{ cursor: 'pointer', fontWeight: 'var(--font-weight-bold)' }}>
               Error Details (click to expand)
             </summary>
-            <div style={{ marginTop: '10px' }}>
+            <div style={{ marginTop: 'var(--spacing-sm)' }}>
               <h3>Error:</h3>
-              <pre
-                style={{
-                  backgroundColor: '#fff',
-                  padding: '10px',
-                  borderRadius: '4px',
-                  overflow: 'auto',
-                  maxHeight: '200px',
-                }}
-              >
-                {this.state.error && this.state.error.toString()}
-              </pre>
+              <pre style={preStyle}>{this.state.error && this.state.error.toString()}</pre>
 
               {this.state.errorInfo && (
                 <>
                   <h3>Component Stack:</h3>
-                  <pre
-                    style={{
-                      backgroundColor: '#fff',
-                      padding: '10px',
-                      borderRadius: '4px',
-                      overflow: 'auto',
-                      maxHeight: '200px',
-                      fontSize: '12px',
-                    }}
-                  >
-                    {this.state.errorInfo.componentStack}
-                  </pre>
+                  <pre style={preStyle}>{this.state.errorInfo.componentStack}</pre>
                 </>
               )}
 
               {this.state.error?.stack && (
                 <>
                   <h3>Stack Trace:</h3>
-                  <pre
-                    style={{
-                      backgroundColor: '#fff',
-                      padding: '10px',
-                      borderRadius: '4px',
-                      overflow: 'auto',
-                      maxHeight: '200px',
-                      fontSize: '12px',
-                    }}
-                  >
-                    {this.state.error.stack}
-                  </pre>
+                  <pre style={preStyle}>{this.state.error.stack}</pre>
                 </>
               )}
             </div>
           </details>
 
-          <div style={{ marginTop: '20px' }}>
-            <button
-              onClick={this.handleReset}
-              style={{
-                padding: '10px 20px',
-                fontSize: '14px',
-                backgroundColor: '#4CAF50',
-                color: 'white',
-                border: 'none',
-                borderRadius: '4px',
-                cursor: 'pointer',
-                marginRight: '10px',
-              }}
-            >
+          <div
+            style={{ marginTop: 'var(--spacing-lg)', display: 'flex', gap: 'var(--spacing-sm)' }}
+          >
+            <button type="button" className="btn btn--success" onClick={this.handleReset}>
               Try Again
             </button>
             <button
+              type="button"
+              className="btn btn--primary"
               onClick={() => window.location.reload()}
-              style={{
-                padding: '10px 20px',
-                fontSize: '14px',
-                backgroundColor: '#2196F3',
-                color: 'white',
-                border: 'none',
-                borderRadius: '4px',
-                cursor: 'pointer',
-              }}
             >
               Reload Page
             </button>

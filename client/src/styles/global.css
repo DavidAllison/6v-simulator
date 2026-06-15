@@ -87,6 +87,20 @@
   /* Scrollbar */
   --color-scrollbar-thumb: #888;
   --color-scrollbar-thumb-hover: #555;
+
+  /* Surfaces (aliases used by route panels) */
+  --panel-bg: var(--color-bg-secondary);
+  --color-bg-quaternary: #dde1e6;
+  --color-border-dark: #ced4da;
+
+  /* Vertex-type palette (Okabe–Ito, CVD-safe). Single source of truth shared
+     with the Canvas via src/lib/six-vertex/themeColors.ts — keep in sync. */
+  --vertex-a1: #d55e00;
+  --vertex-a2: #e69f00;
+  --vertex-b1: #0072b2;
+  --vertex-b2: #56b4e9;
+  --vertex-c1: #009e73;
+  --vertex-c2: #cc79a7;
 }
 
 /* Dark Theme */
@@ -132,6 +146,19 @@
   /* Scrollbar */
   --color-scrollbar-thumb: #606060;
   --color-scrollbar-thumb-hover: #808080;
+
+  /* Surfaces */
+  --panel-bg: var(--color-bg-secondary);
+  --color-bg-quaternary: #505050;
+  --color-border-dark: #2a2a2a;
+
+  /* Vertex-type palette (brightened for the dark background) */
+  --vertex-a1: #ff7d3b;
+  --vertex-a2: #ffbf47;
+  --vertex-b1: #4da3ff;
+  --vertex-b2: #8fd0f5;
+  --vertex-c1: #3ad4a8;
+  --vertex-c2: #e89cc4;
 }
 
 /* ===========================

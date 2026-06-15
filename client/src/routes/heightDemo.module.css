@@ -1,0 +1,88 @@
+/* Height-function demo route. Token-based chrome so light/dark themes work.
+ * The heatmap cell *fill* colors are a numeric gradient computed in JS and set
+ * via a single CSS custom property (--cell-bg); everything else uses tokens. */
+
+.page {
+  padding: var(--spacing-xl);
+}
+
+.controls {
+  margin-bottom: var(--spacing-xl);
+}
+
+.controlRow {
+  margin-bottom: var(--spacing-sm);
+}
+
+.rangeInput {
+  margin-left: var(--spacing-sm);
+  margin-right: var(--spacing-sm);
+}
+
+.radioLabel {
+  margin-right: var(--spacing-xl);
+}
+
+.selectLabel {
+  margin-right: var(--spacing-xl);
+}
+
+.select {
+  margin-left: var(--spacing-sm);
+}
+
+.stats {
+  margin-bottom: var(--spacing-xl);
+}
+
+.heightGrid {
+  display: inline-block;
+}
+
+.heatmap {
+  display: grid;
+  gap: 1px;
+  background-color: var(--color-border);
+  padding: 1px;
+  border: 2px solid var(--color-border-dark);
+}
+
+.cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: var(--font-weight-bold);
+  border: 1px solid var(--color-border-light);
+  background-color: var(--cell-bg);
+  color: var(--color-text-inverse);
+}
+
+.cell--hideValues {
+  color: transparent;
+}
+
+.legend {
+  margin-top: var(--spacing-xl);
+}
+
+.legendBar {
+  width: 300px;
+  height: 30px;
+  border: 1px solid var(--color-border-dark);
+  background: var(--legend-gradient);
+}
+
+.legendScale {
+  display: flex;
+  justify-content: space-between;
+  width: 300px;
+}
+
+.about {
+  margin-top: var(--spacing-2xl);
+}
+
+.prose {
+  max-width: 600px;
+  line-height: 1.6;
+}

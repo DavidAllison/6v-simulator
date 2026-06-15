@@ -133,6 +133,17 @@ const VisualizationCanvas: React.FC<VisualizationCanvasProps> = ({
     }
   }, [handleWheel]);
 
+  // Auto-fit the lattice on initial mount and whenever the lattice size (N) changes,
+  // so it never sits tiny in a large canvas. The manual "Fit to Screen" button remains.
+  const latticeSize = latticeState ? `${latticeState.width}x${latticeState.height}` : null;
+  useEffect(() => {
+    if (!latticeSize) return;
+    // Defer to the next frame so the container has its measured size and the
+    // renderer has drawn the current lattice before we compute the fit scale.
+    const id = requestAnimationFrame(() => handleFitToScreen());
+    return () => cancelAnimationFrame(id);
+  }, [latticeSize, handleFitToScreen]);
+
   return (
     <div className="visualization-container" ref={containerRef}>
       <div className="canvas-wrapper">

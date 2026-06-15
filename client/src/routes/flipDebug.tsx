@@ -11,7 +11,9 @@ import {
   generateDWBCHighOptimized,
 } from '../lib/six-vertex/optimizedSimulation';
 import { VertexLegend, PlaquetteVisualization } from '../components/VertexEdgeVisualization';
+import { getCurrentVertexColors } from '../lib/six-vertex/themeColors';
 import styles from './flipDebug.module.css';
+import swatches from './flipDebugSwatches.module.css';
 
 // Map numeric vertex types to enum
 const NUM_TO_VERTEX_TYPE = [
@@ -23,14 +25,14 @@ const NUM_TO_VERTEX_TYPE = [
   VertexType.c2,
 ];
 
-// Vertex colors for visualization
-const VERTEX_COLORS: Record<VertexType, string> = {
-  [VertexType.a1]: '#ff6b6b', // Red
-  [VertexType.a2]: '#4ecdc4', // Teal
-  [VertexType.b1]: '#45b7d1', // Blue
-  [VertexType.b2]: '#96ceb4', // Green
-  [VertexType.c1]: '#ffd93d', // Yellow
-  [VertexType.c2]: '#c9a0ff', // Purple
+// Token-based background class for a vertex type (reacts to theme automatically).
+const VERTEX_CELL_CLASS: Record<VertexType, string> = {
+  [VertexType.a1]: swatches.cellA1,
+  [VertexType.a2]: swatches.cellA2,
+  [VertexType.b1]: swatches.cellB1,
+  [VertexType.b2]: swatches.cellB2,
+  [VertexType.c1]: swatches.cellC1,
+  [VertexType.c2]: swatches.cellC2,
 };
 
 // Visual arrow representations for each vertex type
@@ -367,6 +369,7 @@ export function FlipDebug() {
     if (!currentState) return null;
 
     const cellSize = Math.min(60, 400 / size);
+    const vertexColors = getCurrentVertexColors();
 
     return (
       <svg width={size * cellSize} height={size * cellSize}>
@@ -406,7 +409,7 @@ export function FlipDebug() {
                   y={row * cellSize + 2}
                   width={cellSize - 4}
                   height={cellSize - 4}
-                  fill={VERTEX_COLORS[vertexType]}
+                  fill={vertexColors[vertexType]}
                   className={`${styles.vertexRect} ${isHighlighted ? styles.highlighted : ''} ${hasViolation ? styles.violation : ''}`}
                 />
 
@@ -416,7 +419,7 @@ export function FlipDebug() {
                   cx={col * cellSize + cellSize / 2}
                   cy={row * cellSize + cellSize / 2}
                   r={3}
-                  fill="#333"
+                  className={swatches.centerDot}
                 />
 
                 {/* Draw bold lines for paths */}
@@ -426,9 +429,7 @@ export function FlipDebug() {
                     y1={row * cellSize + cellSize / 2}
                     x2={col * cellSize + cellSize / 2 - 3}
                     y2={row * cellSize + cellSize / 2}
-                    stroke="#333"
-                    strokeWidth={5}
-                    strokeLinecap="round"
+                    className={swatches.pathBold}
                   />
                 )}
                 {edges.right && (
@@ -437,9 +438,7 @@ export function FlipDebug() {
                     y1={row * cellSize + cellSize / 2}
                     x2={col * cellSize + cellSize - 3}
                     y2={row * cellSize + cellSize / 2}
-                    stroke="#333"
-                    strokeWidth={5}
-                    strokeLinecap="round"
+                    className={swatches.pathBold}
                   />
                 )}
                 {edges.top && (
@@ -448,9 +447,7 @@ export function FlipDebug() {
                     y1={row * cellSize + 3}
                     x2={col * cellSize + cellSize / 2}
                     y2={row * cellSize + cellSize / 2 - 3}
-                    stroke="#333"
-                    strokeWidth={5}
-                    strokeLinecap="round"
+                    className={swatches.pathBold}
                   />
                 )}
                 {edges.bottom && (
@@ -459,9 +456,7 @@ export function FlipDebug() {
                     y1={row * cellSize + cellSize / 2 + 3}
                     x2={col * cellSize + cellSize / 2}
                     y2={row * cellSize + cellSize - 3}
-                    stroke="#333"
-                    strokeWidth={5}
-                    strokeLinecap="round"
+                    className={swatches.pathBold}
                   />
                 )}
 
@@ -472,9 +467,7 @@ export function FlipDebug() {
                     y1={row * cellSize + cellSize / 2}
                     x2={col * cellSize + cellSize / 2 - 3}
                     y2={row * cellSize + cellSize / 2}
-                    stroke="#999"
-                    strokeWidth={1}
-                    strokeLinecap="round"
+                    className={swatches.pathThin}
                   />
                 )}
                 {!edges.right && (
@@ -483,9 +476,7 @@ export function FlipDebug() {
                     y1={row * cellSize + cellSize / 2}
                     x2={col * cellSize + cellSize - 3}
                     y2={row * cellSize + cellSize / 2}
-                    stroke="#999"
-                    strokeWidth={1}
-                    strokeLinecap="round"
+                    className={swatches.pathThin}
                   />
                 )}
                 {!edges.top && (
@@ -494,9 +485,7 @@ export function FlipDebug() {
                     y1={row * cellSize + 3}
                     x2={col * cellSize + cellSize / 2}
                     y2={row * cellSize + cellSize / 2 - 3}
-                    stroke="#999"
-                    strokeWidth={1}
-                    strokeLinecap="round"
+                    className={swatches.pathThin}
                   />
                 )}
                 {!edges.bottom && (
@@ -505,9 +494,7 @@ export function FlipDebug() {
                     y1={row * cellSize + cellSize / 2 + 3}
                     x2={col * cellSize + cellSize / 2}
                     y2={row * cellSize + cellSize - 3}
-                    stroke="#999"
-                    strokeWidth={1}
-                    strokeLinecap="round"
+                    className={swatches.pathThin}
                   />
                 )}
 
@@ -674,10 +661,10 @@ export function FlipDebug() {
                 <tbody>
                   <tr>
                     <td>Base</td>
-                    <td style={{ backgroundColor: VERTEX_COLORS[selectedFlip.before.base] }}>
+                    <td className={VERTEX_CELL_CLASS[selectedFlip.before.base]}>
                       {selectedFlip.before.base} {VERTEX_ARROWS[selectedFlip.before.base]}
                     </td>
-                    <td style={{ backgroundColor: VERTEX_COLORS[selectedFlip.after.base] }}>
+                    <td className={VERTEX_CELL_CLASS[selectedFlip.after.base]}>
                       {selectedFlip.after.base} {VERTEX_ARROWS[selectedFlip.after.base]}
                     </td>
                   </tr>
@@ -686,10 +673,10 @@ export function FlipDebug() {
                       {selectedFlip.before.right && (
                         <tr>
                           <td>Right</td>
-                          <td style={{ backgroundColor: VERTEX_COLORS[selectedFlip.before.right] }}>
+                          <td className={VERTEX_CELL_CLASS[selectedFlip.before.right]}>
                             {selectedFlip.before.right} {VERTEX_ARROWS[selectedFlip.before.right]}
                           </td>
-                          <td style={{ backgroundColor: VERTEX_COLORS[selectedFlip.after.right!] }}>
+                          <td className={VERTEX_CELL_CLASS[selectedFlip.after.right!]}>
                             {selectedFlip.after.right} {VERTEX_ARROWS[selectedFlip.after.right!]}
                           </td>
                         </tr>
@@ -697,10 +684,10 @@ export function FlipDebug() {
                       {selectedFlip.before.up && (
                         <tr>
                           <td>Up</td>
-                          <td style={{ backgroundColor: VERTEX_COLORS[selectedFlip.before.up] }}>
+                          <td className={VERTEX_CELL_CLASS[selectedFlip.before.up]}>
                             {selectedFlip.before.up} {VERTEX_ARROWS[selectedFlip.before.up]}
                           </td>
-                          <td style={{ backgroundColor: VERTEX_COLORS[selectedFlip.after.up!] }}>
+                          <td className={VERTEX_CELL_CLASS[selectedFlip.after.up!]}>
                             {selectedFlip.after.up} {VERTEX_ARROWS[selectedFlip.after.up!]}
                           </td>
                         </tr>
@@ -708,15 +695,11 @@ export function FlipDebug() {
                       {selectedFlip.before.upRight && (
                         <tr>
                           <td>Up-Right</td>
-                          <td
-                            style={{ backgroundColor: VERTEX_COLORS[selectedFlip.before.upRight] }}
-                          >
+                          <td className={VERTEX_CELL_CLASS[selectedFlip.before.upRight]}>
                             {selectedFlip.before.upRight}{' '}
                             {VERTEX_ARROWS[selectedFlip.before.upRight]}
                           </td>
-                          <td
-                            style={{ backgroundColor: VERTEX_COLORS[selectedFlip.after.upRight!] }}
-                          >
+                          <td className={VERTEX_CELL_CLASS[selectedFlip.after.upRight!]}>
                             {selectedFlip.after.upRight}{' '}
                             {VERTEX_ARROWS[selectedFlip.after.upRight!]}
                           </td>
@@ -728,10 +711,10 @@ export function FlipDebug() {
                       {selectedFlip.before.left && (
                         <tr>
                           <td>Left</td>
-                          <td style={{ backgroundColor: VERTEX_COLORS[selectedFlip.before.left] }}>
+                          <td className={VERTEX_CELL_CLASS[selectedFlip.before.left]}>
                             {selectedFlip.before.left} {VERTEX_ARROWS[selectedFlip.before.left]}
                           </td>
-                          <td style={{ backgroundColor: VERTEX_COLORS[selectedFlip.after.left!] }}>
+                          <td className={VERTEX_CELL_CLASS[selectedFlip.after.left!]}>
                             {selectedFlip.after.left} {VERTEX_ARROWS[selectedFlip.after.left!]}
                           </td>
                         </tr>
@@ -739,10 +722,10 @@ export function FlipDebug() {
                       {selectedFlip.before.down && (
                         <tr>
                           <td>Down</td>
-                          <td style={{ backgroundColor: VERTEX_COLORS[selectedFlip.before.down] }}>
+                          <td className={VERTEX_CELL_CLASS[selectedFlip.before.down]}>
                             {selectedFlip.before.down} {VERTEX_ARROWS[selectedFlip.before.down]}
                           </td>
-                          <td style={{ backgroundColor: VERTEX_COLORS[selectedFlip.after.down!] }}>
+                          <td className={VERTEX_CELL_CLASS[selectedFlip.after.down!]}>
                             {selectedFlip.after.down} {VERTEX_ARROWS[selectedFlip.after.down!]}
                           </td>
                         </tr>
@@ -750,15 +733,11 @@ export function FlipDebug() {
                       {selectedFlip.before.downLeft && (
                         <tr>
                           <td>Down-Left</td>
-                          <td
-                            style={{ backgroundColor: VERTEX_COLORS[selectedFlip.before.downLeft] }}
-                          >
+                          <td className={VERTEX_CELL_CLASS[selectedFlip.before.downLeft]}>
                             {selectedFlip.before.downLeft}{' '}
                             {VERTEX_ARROWS[selectedFlip.before.downLeft]}
                           </td>
-                          <td
-                            style={{ backgroundColor: VERTEX_COLORS[selectedFlip.after.downLeft!] }}
-                          >
+                          <td className={VERTEX_CELL_CLASS[selectedFlip.after.downLeft!]}>
                             {selectedFlip.after.downLeft}{' '}
                             {VERTEX_ARROWS[selectedFlip.after.downLeft!]}
                           </td>

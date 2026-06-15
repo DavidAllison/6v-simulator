@@ -1,6 +1,8 @@
 import React, { useEffect, useRef, useMemo } from 'react';
 import type { SimulationStats } from '../lib/six-vertex/types';
 import { VertexType } from '../lib/six-vertex/types';
+import { getCurrentVertexColors } from '../lib/six-vertex/themeColors';
+import { useTheme } from '../hooks/useTheme';
 import './StatisticsPanel.css';
 
 interface StatisticsPanelProps {
@@ -10,18 +12,15 @@ interface StatisticsPanelProps {
 
 const StatisticsPanel: React.FC<StatisticsPanelProps> = ({ stats, fps }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const { theme } = useTheme();
 
-  const vertexColors = useMemo(
-    () => ({
-      [VertexType.a1]: '#3B82F6',
-      [VertexType.a2]: '#60A5FA',
-      [VertexType.b1]: '#10B981',
-      [VertexType.b2]: '#34D399',
-      [VertexType.c1]: '#F59E0B',
-      [VertexType.c2]: '#FCD34D',
-    }),
-    [],
-  );
+  // Single source of truth: the canonical theme-aware vertex palette shared
+  // with the Canvas renderer. Recomputed when the active theme changes so the
+  // legend swatches and chart bars always match the canvas exactly.
+  // `theme` is the intentional recompute trigger (getCurrentVertexColors reads
+  // the active data-theme from the DOM, which `theme` keeps in sync).
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const vertexColors = useMemo(() => getCurrentVertexColors(), [theme]);
 
   // Draw vertex distribution chart
   useEffect(() => {
@@ -31,6 +30,15 @@ const StatisticsPanel: React.FC<StatisticsPanelProps> = ({ stats, fps }) => {
       const canvas = canvasRef.current;
       const ctx = canvas.getContext('2d');
       if (!ctx) return;
+
+      // Resolve themed colors from the design tokens so the chart text/axes
+      // adapt to light/dark mode (canvas cannot consume CSS vars directly).
+      const rootStyle = getComputedStyle(document.documentElement);
+      const token = (name: string, fallback: string) =>
+        rootStyle.getPropertyValue(name).trim() || fallback;
+      const labelColor = token('--color-text-primary', '#374151');
+      const mutedColor = token('--color-text-secondary', '#6b7280');
+      const axisColor = token('--color-border', '#e5e7eb');
 
       // Set canvas size
       const rect = canvas.getBoundingClientRect();
@@ -72,23 +80,23 @@ const StatisticsPanel: React.FC<StatisticsPanelProps> = ({ stats, fps }) => {
         const y = rect.height - 20 - barHeight;
 
         // Draw bar
-        ctx.fillStyle = vertexColors[type as VertexType] || '#999999';
+        ctx.fillStyle = vertexColors[type as VertexType] || mutedColor;
         ctx.fillRect(x + barWidth * 0.1, y, barWidth * 0.8, barHeight);
 
         // Draw label
-        ctx.fillStyle = '#374151';
+        ctx.fillStyle = labelColor;
         ctx.font = '11px system-ui';
         ctx.textAlign = 'center';
         ctx.fillText(type, x + barWidth / 2, rect.height - 5);
 
         // Draw percentage
-        ctx.fillStyle = '#6b7280';
+        ctx.fillStyle = mutedColor;
         ctx.font = '10px system-ui';
         ctx.fillText(`${(percentage * 100).toFixed(1)}%`, x + barWidth / 2, y - 5);
       });
 
       // Draw axes
-      ctx.strokeStyle = '#e5e7eb';
+      ctx.strokeStyle = axisColor;
       ctx.lineWidth = 1;
       ctx.beginPath();
       ctx.moveTo(25, 10);
@@ -188,7 +196,10 @@ const StatisticsPanel: React.FC<StatisticsPanelProps> = ({ stats, fps }) => {
                 <div key={type} className="legend-item">
                   <span
                     className="legend-color"
-                    style={{ backgroundColor: vertexColors[type as VertexType] || '#999999' }}
+                    style={{
+                      backgroundColor:
+                        vertexColors[type as VertexType] || 'var(--color-text-muted)',
+                    }}
                   />
                   <span className="legend-label">{type}</span>
                   <span className="legend-value">{count || 0}</span>

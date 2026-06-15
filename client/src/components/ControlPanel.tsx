@@ -1,5 +1,8 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { BoundaryCondition, RenderMode } from '../lib/six-vertex/types';
+import type { VertexType } from '../lib/six-vertex/types';
+import { getCurrentVertexColors } from '../lib/six-vertex/themeColors';
+import { useTheme } from '../hooks/useTheme';
 import { VertexLegend } from './VertexEdgeVisualization';
 import './ControlPanel.css';
 
@@ -77,15 +80,15 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
   onExportImage,
 }) => {
   const [showLegend, setShowLegend] = useState(false);
+  const { theme } = useTheme();
 
-  const vertexColors = {
-    a1: '#3B82F6', // blue
-    a2: '#60A5FA', // light blue
-    b1: '#10B981', // green
-    b2: '#34D399', // light green
-    c1: '#F59E0B', // orange
-    c2: '#FCD34D', // light orange
-  };
+  // Single source of truth: the canonical theme-aware vertex palette shared
+  // with the Canvas renderer and the StatisticsPanel legend. Recomputed when
+  // the active theme changes so the weight swatches match the canvas exactly.
+  // `theme` is the intentional recompute trigger (getCurrentVertexColors reads
+  // the active data-theme from the DOM, which `theme` keeps in sync).
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const vertexColors = useMemo(() => getCurrentVertexColors(), [theme]);
 
   return (
     <div className="control-panel">
@@ -170,8 +173,12 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
                 max={3}
                 step={0.1}
                 className="slider"
+                aria-label="Speed (steps per frame)"
+                aria-valuetext={`${Math.round(stepsPerFrame)} steps per frame`}
               />
-              <span className="value-display">{Math.round(stepsPerFrame)}</span>
+              <output className="value-display" aria-live="polite">
+                {Math.round(stepsPerFrame)}
+              </output>
             </div>
           </label>
         </div>
@@ -203,8 +210,12 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
                 max={100}
                 step={1}
                 className="slider"
+                aria-label="Lattice size (N by N)"
+                aria-valuetext={`${latticeSize} by ${latticeSize}`}
               />
-              <span className="value-display">{latticeSize}</span>
+              <output className="value-display" aria-live="polite">
+                {latticeSize}
+              </output>
             </div>
           </label>
         </div>
@@ -291,74 +302,63 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
                 max={10}
                 step={0.1}
                 className="slider"
+                aria-label="Temperature (T)"
+                aria-valuetext={temperature.toFixed(1)}
               />
-              <span className="value-display">{temperature.toFixed(1)}</span>
+              <output className="value-display" aria-live="polite">
+                {temperature.toFixed(1)}
+              </output>
             </div>
           </label>
         </div>
 
         <div className="weights-grid">
           <h4>Vertex Weights</h4>
-          {Object.entries(weights).map(([type, weight]) => (
-            <div key={type} className="weight-control">
-              <div className="weight-header">
-                <span
-                  className="weight-label"
-                  style={{ color: vertexColors[type as keyof typeof vertexColors] }}
-                >
-                  {type}
-                </span>
-                <span className="weight-value">{weight.toFixed(2)}</span>
+          {Object.entries(weights).map(([type, weight]) => {
+            const color = vertexColors[type as VertexType] ?? 'var(--color-text-muted)';
+            const fillPercent = ((weight - 0.1) / 4.9) * 100;
+            return (
+              <div key={type} className="weight-control">
+                <div className="weight-header">
+                  <span className="weight-label" style={{ color }}>
+                    {type}
+                  </span>
+                  <span className="weight-value">{weight.toFixed(2)}</span>
+                </div>
+                <input
+                  type="range"
+                  value={weight}
+                  onChange={(e) => onWeightChange(type, parseFloat(e.target.value))}
+                  min={0.1}
+                  max={5}
+                  step={0.1}
+                  className="slider small"
+                  aria-label={`Weight ${type}`}
+                  aria-valuetext={weight.toFixed(2)}
+                  style={{
+                    background: `linear-gradient(to right, color-mix(in srgb, ${color} 25%, transparent) 0%, ${color} ${fillPercent}%, var(--color-bg-tertiary) ${fillPercent}%, var(--color-bg-tertiary) 100%)`,
+                  }}
+                />
               </div>
-              <input
-                type="range"
-                value={weight}
-                onChange={(e) => onWeightChange(type, parseFloat(e.target.value))}
-                min={0.1}
-                max={5}
-                step={0.1}
-                className="slider small"
-                style={{
-                  background: `linear-gradient(to right, ${vertexColors[type as keyof typeof vertexColors]}40 0%, ${vertexColors[type as keyof typeof vertexColors]} ${((weight - 0.1) / 4.9) * 100}%, #e5e7eb ${((weight - 0.1) / 4.9) * 100}%, #e5e7eb 100%)`,
-                }}
-              />
-            </div>
-          ))}
+            );
+          })}
         </div>
 
         {/* Vertex Edge Pattern Legend */}
         <div className="control-item">
           <button
+            type="button"
             className="legend-toggle"
             onClick={() => setShowLegend(!showLegend)}
-            style={{
-              width: '100%',
-              padding: '8px',
-              background: '#f3f4f6',
-              border: '1px solid #e5e7eb',
-              borderRadius: '4px',
-              cursor: 'pointer',
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-            }}
+            aria-expanded={showLegend}
           >
             <span>Vertex Edge Patterns</span>
-            <span>{showLegend ? '▼' : '▶'}</span>
+            <span aria-hidden="true">{showLegend ? '▼' : '▶'}</span>
           </button>
           {showLegend && (
-            <div style={{ marginTop: '10px' }}>
+            <div className="legend-content">
               <VertexLegend showArrows={false} />
-              <div
-                style={{
-                  marginTop: '8px',
-                  fontSize: '0.85rem',
-                  color: '#6b7280',
-                  fontStyle: 'italic',
-                }}
-              >
-                Bold edges show the connected path segments
-              </div>
+              <div className="legend-caption">Bold edges show the connected path segments</div>
             </div>
           )}
         </div>

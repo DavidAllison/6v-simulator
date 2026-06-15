@@ -95,31 +95,31 @@
   background-color: var(--color-bg-primary);
 }
 
-/* Vertex type color coding */
+/* Vertex type color coding (theme-aware tints from the vertex palette) */
 .dwbc-debug__cell--c2 {
   font-weight: var(--font-weight-bold);
-  background-color: #dbeafe; /* Blue tint */
-  color: #1e40af;
+  background-color: color-mix(in srgb, var(--vertex-c2) 22%, var(--color-bg-primary));
+  color: var(--color-text-primary);
 }
 
 .dwbc-debug__cell--a1 {
-  background-color: #dcfce7; /* Green tint */
-  color: #166534;
+  background-color: color-mix(in srgb, var(--vertex-a1) 22%, var(--color-bg-primary));
+  color: var(--color-text-primary);
 }
 
 .dwbc-debug__cell--a2 {
-  background-color: #fef3c7; /* Yellow tint */
-  color: #92400e;
+  background-color: color-mix(in srgb, var(--vertex-a2) 22%, var(--color-bg-primary));
+  color: var(--color-text-primary);
 }
 
 .dwbc-debug__cell--b1 {
-  background-color: #ede9fe; /* Purple tint */
-  color: #5b21b6;
+  background-color: color-mix(in srgb, var(--vertex-b1) 22%, var(--color-bg-primary));
+  color: var(--color-text-primary);
 }
 
 .dwbc-debug__cell--b2 {
-  background-color: #fce7f3; /* Pink tint */
-  color: #9f1239;
+  background-color: color-mix(in srgb, var(--vertex-b2) 22%, var(--color-bg-primary));
+  color: var(--color-text-primary);
 }
 
 .dwbc-debug__cell--mismatch {

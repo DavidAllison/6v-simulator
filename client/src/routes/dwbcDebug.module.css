@@ -1,0 +1,23 @@
+/* Legend swatch background colors for the DWBC debug page.
+ * Uses the canonical vertex palette tokens so light/dark themes stay consistent.
+ * Sizing/border come from the companion .dwbc-debug__legend-color class. */
+
+.swatchA1 {
+  background-color: var(--vertex-a1);
+}
+
+.swatchA2 {
+  background-color: var(--vertex-a2);
+}
+
+.swatchB1 {
+  background-color: var(--vertex-b1);
+}
+
+.swatchB2 {
+  background-color: var(--vertex-b2);
+}
+
+.swatchC2 {
+  background-color: var(--vertex-c2);
+}

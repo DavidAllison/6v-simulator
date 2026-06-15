@@ -101,7 +101,7 @@
 }
 
 .performance-controls__button--stop:hover {
-  background-color: #b02a37;
+  background-color: color-mix(in srgb, var(--color-danger) 85%, black);
 }
 
 /* Stats Display */
@@ -182,18 +182,22 @@
 }
 
 .performance-tests__button--comprehensive:hover {
-  background-color: #218838;
+  background-color: color-mix(in srgb, var(--color-success) 85%, black);
 }
 
 .performance-tests__button--fps {
-  background-color: #6f42c1;
+  background-color: var(--color-info);
 }
 
 .performance-tests__button--fps:hover {
-  background-color: #5a32a3;
+  background-color: color-mix(in srgb, var(--color-info) 85%, black);
 }
 
 /* Console Output */
+/*
+ * Console is an intentional always-dark terminal surface (VS Code style),
+ * deliberately theme-independent so log output reads the same in both modes.
+ */
 .performance-console {
   background-color: #1e1e1e;
   color: #4ec9b0;
@@ -219,13 +223,13 @@
   padding: var(--spacing-lg);
   background-color: var(--color-info-light);
   border-radius: var(--border-radius-md);
-  border: 1px solid #b8daff;
+  border: 1px solid var(--color-info);
 }
 
 .performance-info__title {
   font-weight: var(--font-weight-semibold);
   margin-bottom: var(--spacing-sm);
-  color: #004085;
+  color: var(--color-info);
 }
 
 .performance-info__list {
@@ -238,7 +242,7 @@
   padding: var(--spacing-xs) 0;
   display: flex;
   justify-content: space-between;
-  color: #004085;
+  color: var(--color-text-primary);
   font-size: var(--font-size-sm);
 }
 
@@ -255,15 +259,15 @@
 .performance-optimizations {
   margin-top: var(--spacing-lg);
   padding: var(--spacing-lg);
-  background-color: #fff3cd;
+  background-color: var(--color-warning-light);
   border-radius: var(--border-radius-md);
-  border: 1px solid #ffeeba;
+  border: 1px solid var(--color-warning);
 }
 
 .performance-optimizations__title {
   font-weight: var(--font-weight-semibold);
   margin-bottom: var(--spacing-sm);
-  color: #856404;
+  color: var(--color-warning);
 }
 
 .performance-optimizations__list {
@@ -274,7 +278,7 @@
 
 .performance-optimizations__item {
   padding: var(--spacing-xs) 0;
-  color: #856404;
+  color: var(--color-text-primary);
   font-size: var(--font-size-sm);
 }
 

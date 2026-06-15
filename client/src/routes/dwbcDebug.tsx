@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { generateDWBCHigh, generateDWBCLow } from '../lib/six-vertex/initialStates';
 import type { LatticeState } from '../lib/six-vertex/types';
 import './dwbcDebug.css';
+import styles from './dwbcDebug.module.css';
 
 /**
  * Debug component to display vertex type matrices and compare with paper
@@ -173,38 +174,23 @@ export function DWBCDebug() {
         <h3 className="dwbc-debug__legend-title">Legend:</h3>
         <div className="dwbc-debug__legend-items">
           <div className="dwbc-debug__legend-item">
-            <span
-              className="dwbc-debug__legend-color"
-              style={{ backgroundColor: '#dcfce7' }}
-            ></span>
+            <span className={`dwbc-debug__legend-color ${styles.swatchA1}`}></span>
             <span className="dwbc-debug__legend-label">a1: In(left,top) Out(right,bottom)</span>
           </div>
           <div className="dwbc-debug__legend-item">
-            <span
-              className="dwbc-debug__legend-color"
-              style={{ backgroundColor: '#fef3c7' }}
-            ></span>
+            <span className={`dwbc-debug__legend-color ${styles.swatchA2}`}></span>
             <span className="dwbc-debug__legend-label">a2: In(right,bottom) Out(left,top)</span>
           </div>
           <div className="dwbc-debug__legend-item">
-            <span
-              className="dwbc-debug__legend-color"
-              style={{ backgroundColor: '#ede9fe' }}
-            ></span>
+            <span className={`dwbc-debug__legend-color ${styles.swatchB1}`}></span>
             <span className="dwbc-debug__legend-label">b1: In(left,right) Out(top,bottom)</span>
           </div>
           <div className="dwbc-debug__legend-item">
-            <span
-              className="dwbc-debug__legend-color"
-              style={{ backgroundColor: '#fce7f3' }}
-            ></span>
+            <span className={`dwbc-debug__legend-color ${styles.swatchB2}`}></span>
             <span className="dwbc-debug__legend-label">b2: In(top,bottom) Out(left,right)</span>
           </div>
           <div className="dwbc-debug__legend-item">
-            <span
-              className="dwbc-debug__legend-color"
-              style={{ backgroundColor: '#dbeafe', fontWeight: 'bold' }}
-            ></span>
+            <span className={`dwbc-debug__legend-color ${styles.swatchC2}`}></span>
             <span className="dwbc-debug__legend-label">c2: In(right,top) Out(left,bottom)</span>
           </div>
         </div>
