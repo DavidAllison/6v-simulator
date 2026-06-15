@@ -163,13 +163,19 @@ const StatisticsPanel: React.FC<StatisticsPanelProps> = ({ stats, fps }) => {
             <span className="stat-label">Steps</span>
             <span className="stat-value">{formatNumber(stats.step)}</span>
           </div>
-          <div className="stat-item">
+          <div
+            className="stat-item"
+            title="Fraction of attempted flips that were accepted; falls toward 0 as the system freezes."
+          >
             <span className="stat-label">Accept Rate</span>
             <span className="stat-value">
               {stats.acceptanceRate ? (stats.acceptanceRate * 100).toFixed(1) : '0.0'}%
             </span>
           </div>
-          <div className="stat-item">
+          <div
+            className="stat-item"
+            title="Total 'cost' of the current arrangement from the vertex weights (lower = more favored); flat when all weights are equal."
+          >
             <span className="stat-label">Energy</span>
             <span className="stat-value">{stats.energy ? stats.energy.toFixed(2) : '0.00'}</span>
           </div>
@@ -224,19 +230,25 @@ const StatisticsPanel: React.FC<StatisticsPanelProps> = ({ stats, fps }) => {
             Physical Properties
           </h3>
           <div className="stats-grid">
-            <div className="stat-item">
+            <div
+              className="stat-item"
+              title="A 3-D terrain reading of the configuration; frozen corners are flat facets, the Arctic circle is the curved slope."
+            >
               <span className="stat-label">Height</span>
               <span className="stat-value">{stats.height?.toFixed(2) || 'N/A'}</span>
             </div>
-            <div className="stat-item">
+            <div className="stat-item" title="Sum of all heights — volume under that terrain.">
               <span className="stat-label">Volume</span>
               <span className="stat-value">{stats.volume?.toFixed(2) || 'N/A'}</span>
             </div>
-            <div className="stat-item">
+            <div className="stat-item" title="Anisotropy parameter that selects the model's phase.">
               <span className="stat-label">Delta (Δ)</span>
               <span className="stat-value">{stats.delta?.toFixed(4) || 'N/A'}</span>
             </div>
-            <div className="stat-item">
+            <div
+              className="stat-item"
+              title="Roughly, how many microscopic arrangements look like this one — high in the disordered center, ~0 in frozen corners."
+            >
               <span className="stat-label">Entropy</span>
               <span className="stat-value">{stats.entropy?.toFixed(3) || 'N/A'}</span>
             </div>
@@ -260,11 +272,11 @@ const StatisticsPanel: React.FC<StatisticsPanelProps> = ({ stats, fps }) => {
         <div className="info-list">
           <div className="info-item">
             <span className="info-label">Algorithm</span>
-            <span className="info-value">Metropolis-Hastings</span>
+            <span className="info-value">Heat-bath Monte Carlo</span>
           </div>
           <div className="info-item">
             <span className="info-label">Flip Type</span>
-            <span className="info-value">Star-Triangle</span>
+            <span className="info-value">Plaquette flip (2×2)</span>
           </div>
           <div className="info-item">
             <span className="info-label">Temperature</span>

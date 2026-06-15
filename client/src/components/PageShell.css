@@ -1,0 +1,22 @@
+.page-shell {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: var(--spacing-xl);
+}
+
+.page-header {
+  margin-bottom: var(--spacing-xl);
+}
+
+.page-header__title {
+  font-size: var(--font-size-3xl);
+  font-weight: var(--font-weight-bold);
+  line-height: var(--line-height-tight);
+  margin: 0;
+}
+
+.page-header__subtitle {
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-lg);
+  margin: var(--spacing-xs) 0 0;
+}
