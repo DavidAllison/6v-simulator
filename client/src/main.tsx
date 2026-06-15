@@ -5,7 +5,8 @@ import { ThemeProvider } from './contexts/ThemeContext';
 import './index.css';
 import App from './App.tsx';
 
-// Set basename for GitHub Pages deployment
+// Router basename follows Vite's configured base (currently '/' for the
+// CloudFront root-domain deploy).
 const basename = import.meta.env.BASE_URL;
 
 createRoot(document.getElementById('root')!).render(

@@ -1,121 +1,69 @@
 # Deployment Guide
 
-## GitHub Pages Deployment
+The 6-vertex simulator is a static SPA hosted on **AWS S3 + CloudFront**.
+Deploys are fully automated through GitHub Actions; there is nothing to run by
+hand for a normal release.
 
-The 6-vertex model simulator is configured to deploy automatically to GitHub Pages when changes are pushed to the main branch.
+> **Canonical target: S3 + CloudFront.** An earlier GitHub Pages workflow was
+> removed — it deployed the same `main` branch in parallel, which split prod
+> across two hosts. CloudFront (`6v.allison.la`) is the single source of truth.
+> The infrastructure-as-code lives in [`infrastructure/aws/`](../infrastructure/aws/).
 
-### Initial Setup (One-time)
+## Environments
 
-⚠️ **Important**: GitHub Pages must be enabled manually in the repository settings before the first deployment.
+| Environment | Trigger | URL |
+|---|---|---|
+| Production | push to `main` (paths under `client/**`) | https://6v.allison.la |
+| PR preview | open / update a PR | https://pr-&lt;N&gt;.dev.6v.allison.la |
 
-1. **Enable GitHub Pages**:
-   - Go to your repository on GitHub
-   - Navigate to **Settings** → **Pages**
-   - Under **Source**, select **GitHub Actions**
-   - Click **Save**
+## How it works
 
-2. **Verify Deployment**:
-   - Push any change to the main branch (or trigger manually)
-   - The deployment workflow will run automatically
-   - Check the Actions tab for deployment status
-   - Once deployed, your app will be available at:
-     ```
-     https://[your-username].github.io/6v-simulator/
-     ```
+### Production — `.github/workflows/deploy-production.yml`
+1. Builds `client/` (`npm ci && npm run build`).
+2. `aws s3 sync client/dist s3://6v-simulator-production --delete`.
+3. Invalidates CloudFront distribution `E1537G5KX38T5H` (`/*`).
 
-### How It Works
+### PR previews — `.github/workflows/pr-preview.yml`
+1. Builds the PR's `client/`.
+2. `aws s3 sync client/dist s3://6v-simulator-pr-previews/pr-<N>/ --delete`.
+3. Invalidates distribution `E1DZ4HUUOSPRK5` (`/pr-<N>/*`).
+4. Comments the preview URL on the PR.
 
-1. **Automatic Deployment**: Every push to `main` triggers the deployment workflow
-2. **Build Process**: The app is built with production optimizations
-3. **GitHub Pages**: The built files are deployed to GitHub Pages
-4. **SPA Support**: Client-side routing is handled with a 404.html redirect
+A CloudFront function (`infrastructure/aws/pr-preview-router.js`) maps each
+`pr-<N>.dev.6v.allison.la` host to its `pr-<N>/` S3 prefix.
+`.github/workflows/pr-preview-cleanup.yml` deletes the prefix when the PR closes.
 
-### Manual Deployment
+## Required GitHub Actions secrets
 
-You can trigger a deployment manually:
+| Secret | Used for |
+|---|---|
+| `AWS_ACCESS_KEY_ID` | Deploy identity (see below) |
+| `AWS_SECRET_ACCESS_KEY` | Deploy identity |
 
-1. Go to the **Actions** tab in your repository
-2. Select **Deploy to GitHub Pages** workflow
-3. Click **Run workflow**
-4. Select the `main` branch
-5. Click **Run workflow** button
+The deploy identity is an IAM user carrying **only** the least-privilege policy
+in [`infrastructure/aws/iam-deploy-policy.json`](../infrastructure/aws/iam-deploy-policy.json)
+(S3 sync to the two buckets + CloudFront invalidation + `sts:GetCallerIdentity`).
 
-### Configuration Details
-
-- **Base URL**: The app is configured to use `/6v-simulator/` as the base path
-- **Vite Config**: Automatically detects GitHub Actions environment
-- **React Router**: Configured with the correct basename
-- **404 Handling**: SPA routes are preserved through 404.html redirect
-
-### Troubleshooting
-
-#### Deployment Fails with "Not Found" Error
-
-**Problem**: GitHub Pages is not enabled for the repository.
-
-**Solution**: Follow the Initial Setup steps above to enable GitHub Pages.
-
-#### Routes Return 404
-
-**Problem**: GitHub Pages doesn't handle client-side routing by default.
-
-**Solution**: The 404.html redirect is already configured. If issues persist:
-- Clear browser cache
-- Check that the base URL is correct in vite.config.ts
-
-#### Build Fails
-
-**Problem**: Build errors in the workflow.
-
-**Solution**:
-1. Test the build locally: `GITHUB_ACTIONS=true npm run build`
-2. Check Node version (should be 20+)
-3. Review the error logs in GitHub Actions
-
-### Local Testing
-
-To test the production build locally with GitHub Pages configuration:
+## Local build / preview
 
 ```bash
 cd client
-GITHUB_ACTIONS=true npm run build
-npm run preview
+npm ci
+npm run build      # output in client/dist/
+npm run preview    # serve the production build locally
 ```
 
-Note: The preview will run on a different port and won't have the exact same routing as GitHub Pages.
+## Provisioning / changing infrastructure
 
-### Monitoring Deployments
+One-time bucket, distribution, OAC, and IAM setup is documented in
+[`infrastructure/aws/README.md`](../infrastructure/aws/README.md). Replace the
+`<ACCOUNT_ID>` placeholders in the policy JSONs before applying.
 
-Check deployment status:
-```bash
-# View recent deployments
-gh run list --workflow deploy.yml
+## Troubleshooting
 
-# Watch a specific deployment
-gh run watch [RUN_ID]
-
-# View deployment logs
-gh run view [RUN_ID] --log
-```
-
-### Custom Domain (Optional)
-
-To use a custom domain:
-
-1. Add a `CNAME` file in `client/public/` with your domain
-2. Configure DNS settings with your domain provider
-3. Update repository Pages settings with the custom domain
-
-### Performance Optimization
-
-The deployment includes:
-- Minified JavaScript and CSS
-- Optimized assets
-- Gzip compression (handled by GitHub Pages)
-- Browser caching (handled by GitHub Pages)
-
-### Security
-
-- The deployment workflow has minimal permissions
-- Pages are served over HTTPS
-- No secrets or sensitive data in the build
+- **Preview shows a stale build** — the deploy ran but CloudFront cache hasn't
+  expired; the workflow issues an invalidation, so re-run it if needed.
+- **`aws s3 ls` fails in CI** — the deploy key's policy or the bucket name drifted
+  from `infrastructure/aws/iam-deploy-policy.json`; reconcile them.
+- **404 on a deep link** — the SPA-rewrite CloudFront function isn't attached to
+  the distribution as a Viewer Request function.
