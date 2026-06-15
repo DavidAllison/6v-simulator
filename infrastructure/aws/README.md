@@ -29,6 +29,7 @@ CloudFront via OAC. There is no public bucket ACL and no S3 website endpoint.
 | `s3-bucket-policy-preview.json` | Same, for the preview bucket + preview distribution. | `aws s3api put-bucket-policy --bucket 6v-simulator-pr-previews` |
 | `cloudfront-spa-rewrite.js` | Viewer-request function: directory-index + SPA fallback to `/index.html`. | Production distribution. |
 | `pr-preview-router.js` | Viewer-request function: maps `pr-<N>.dev.6v.allison.la` → the `pr-<N>/` S3 prefix, with SPA fallback. | Preview distribution. |
+| `cloudfront-response-headers-policy.json` | Security headers — CSP (incl. `frame-ancestors`), HSTS, `X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`. | `aws cloudfront create-response-headers-policy --response-headers-policy-config file://cloudfront-response-headers-policy.json`, then attach the policy to both distributions' default cache behavior. |
 
 ## How a deploy works (driven by CI)
 
@@ -52,5 +53,12 @@ CloudFront via OAC. There is no public bucket ACL and no S3 website endpoint.
 - **No secrets in the repo.** The deploy identity's access key lives only in the
   GitHub Actions secrets (and should be mirrored to the team secret store). No
   credential values, and no account ID, are committed here.
+- **Security headers / CSP.** The app ships an active Content-Security-Policy as
+  a build-injected `<meta>` tag (see `client/vite.config.ts`). The stronger,
+  header-delivered version — adding `frame-ancestors`, HSTS, and MIME/framing
+  headers that a `<meta>` CSP cannot set — is in
+  `cloudfront-response-headers-policy.json`; apply it to both distributions to
+  supersede the meta tag.
 - **Hardening backlog.** Migrating CI auth from a long-lived IAM user key to
-  GitHub OIDC + an assumed IAM role would remove the static secret entirely.
+  GitHub OIDC + an assumed IAM role would remove the static secret entirely
+  (tracked in issue #42).
