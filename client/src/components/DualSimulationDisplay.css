@@ -1,0 +1,125 @@
+.dual-simulation-display {
+  width: 100%;
+  /* Concrete height so the two lattice canvases have room to render. The route
+     places this in normal page flow, so height:100% would collapse to ~0. */
+  height: min(78vh, 820px);
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.5rem;
+  background: transparent;
+  box-sizing: border-box;
+  min-height: 480px;
+  overflow: hidden;
+  position: relative;
+}
+
+/* Individual simulation container - exactly 50% height each */
+.simulation-container {
+  flex: 1 1 0; /* Each container takes equal space */
+  display: flex;
+  flex-direction: column;
+  background: var(--color-bg-secondary);
+  border: 1px solid var(--color-border);
+  border-radius: 0.5rem;
+  overflow: hidden;
+  min-height: 0;
+  box-sizing: border-box;
+  position: relative;
+}
+
+/* Simulation label */
+.simulation-label {
+  flex: 0 0 auto;
+  padding: 0.5rem 1rem;
+  background: var(--color-bg-tertiary);
+  border-bottom: 1px solid var(--color-border);
+  font-weight: 600;
+  font-size: 0.875rem;
+  color: var(--color-text-primary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* Content area containing the PanZoomCanvas */
+.simulation-content {
+  flex: 1 1 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.5rem;
+  min-height: 0;
+  min-width: 0;
+  overflow: hidden;
+  position: relative;
+  box-sizing: border-box;
+}
+
+/* Override PanZoomCanvas container styles when inside simulation-content */
+.simulation-content > .pan-zoom-container {
+  width: 100%;
+  height: 100%;
+  min-height: 0; /* Critical: Allow PanZoomCanvas to shrink */
+  overflow: hidden; /* Critical: Prevent PanZoomCanvas overflow */
+  border: none !important; /* Remove any borders from PanZoomCanvas */
+  background: transparent !important;
+  box-sizing: border-box;
+}
+
+/* Canvas styling */
+.simulation-canvas {
+  display: block;
+  image-rendering: auto;
+  image-rendering: -webkit-optimize-contrast;
+}
+
+/* Loading state */
+.loading-message {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  font-size: 1.125rem;
+  color: var(--color-text-secondary);
+}
+
+/* Dark mode adjustments */
+[data-theme='dark'] .simulation-container {
+  background: var(--color-bg-tertiary);
+  border-color: var(--color-border-dark);
+}
+
+[data-theme='dark'] .simulation-label {
+  background: var(--color-bg-quaternary);
+  border-color: var(--color-border-dark);
+}
+
+/* Mobile responsive */
+@media (max-width: 768px) {
+  .dual-simulation-display {
+    gap: 0.25rem;
+    padding: 0.25rem;
+  }
+
+  .simulation-label {
+    padding: 0.375rem 0.75rem;
+    font-size: 0.75rem;
+  }
+
+  .simulation-content {
+    padding: 0.25rem;
+  }
+}
+
+/* High resolution displays */
+@media (min-width: 1920px) {
+  .dual-simulation-display {
+    gap: 0.75rem;
+    padding: 0.75rem;
+  }
+
+  .simulation-label {
+    padding: 0.625rem 1.25rem;
+    font-size: 1rem;
+  }
+}
