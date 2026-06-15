@@ -29,6 +29,8 @@ CloudFront via OAC. There is no public bucket ACL and no S3 website endpoint.
 | `s3-bucket-policy-preview.json` | Same, for the preview bucket + preview distribution. | `aws s3api put-bucket-policy --bucket 6v-simulator-pr-previews` |
 | `cloudfront-spa-rewrite.js` | Viewer-request function: directory-index + SPA fallback to `/index.html`. | Production distribution. |
 | `pr-preview-router.js` | Viewer-request function: maps `pr-<N>.dev.6v.allison.la` → the `pr-<N>/` S3 prefix, with SPA fallback. | Preview distribution. |
+| `github-oidc-trust-policy.json` | Trust policy for the GitHub OIDC deploy role (scoped to this repo). | Consumed by `setup-github-oidc.sh`. |
+| `setup-github-oidc.sh` | One-time, idempotent setup of the OIDC provider + deploy role so CI can drop the long-lived access key (issue #42). | Run by an AWS admin; see [`docs/CI_OIDC_MIGRATION.md`](../../docs/CI_OIDC_MIGRATION.md). |
 
 ## How a deploy works (driven by CI)
 
@@ -52,5 +54,9 @@ CloudFront via OAC. There is no public bucket ACL and no S3 website endpoint.
 - **No secrets in the repo.** The deploy identity's access key lives only in the
   GitHub Actions secrets (and should be mirrored to the team secret store). No
   credential values, and no account ID, are committed here.
-- **Hardening backlog.** Migrating CI auth from a long-lived IAM user key to
-  GitHub OIDC + an assumed IAM role would remove the static secret entirely.
+- **CI auth via OIDC (issue #42).** A ready-to-apply package to replace the
+  long-lived IAM user key with GitHub OIDC + an assumed role lives here
+  (`github-oidc-trust-policy.json`, `setup-github-oidc.sh`) with a runbook at
+  [`docs/CI_OIDC_MIGRATION.md`](../../docs/CI_OIDC_MIGRATION.md). The cutover
+  requires an AWS admin and is gated (the role must exist before the workflows
+  switch), so it is not applied automatically.
