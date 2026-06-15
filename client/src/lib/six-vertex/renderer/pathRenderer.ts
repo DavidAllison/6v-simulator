@@ -297,6 +297,79 @@ export class PathRenderer {
   }
 
   /**
+   * Return the opposite edge state (In <-> Out)
+   */
+  private oppositeOf(edge: EdgeState): EdgeState {
+    return edge === EdgeState.In ? EdgeState.Out : EdgeState.In;
+  }
+
+  /**
+   * Return populated horizontal/vertical edge arrays for the given state.
+   *
+   * The optimized simulation engine returns a LatticeState whose
+   * `horizontalEdges` / `verticalEdges` are empty (`[]`), with the full
+   * configuration carried only on `vertices[r][c].configuration`. When that is
+   * the case we reconstruct the edge arrays from the vertex configurations using
+   * the EXACT same convention the lattice builders use (see initialStates.ts):
+   *
+   *   vertex.left   = oppositeOf(horizontalEdges[r][c])
+   *   vertex.right  = horizontalEdges[r][c + 1]
+   *   vertex.top    = oppositeOf(verticalEdges[r][c])
+   *   vertex.bottom = verticalEdges[r + 1][c]
+   *
+   * Inverting those relations gives the edges below. Dimensions match the
+   * builders: horizontalEdges has `height` rows of `width + 1` entries,
+   * verticalEdges has `height + 1` rows of `width` entries.
+   */
+  private ensureEdges(state: LatticeState): {
+    horizontalEdges: EdgeState[][];
+    verticalEdges: EdgeState[][];
+  } {
+    const hasHorizontal =
+      state.horizontalEdges.length > 0 && state.horizontalEdges[0] !== undefined;
+    const hasVertical = state.verticalEdges.length > 0 && state.verticalEdges[0] !== undefined;
+
+    if (hasHorizontal && hasVertical) {
+      return {
+        horizontalEdges: state.horizontalEdges,
+        verticalEdges: state.verticalEdges,
+      };
+    }
+
+    const { width, height } = state;
+
+    const horizontalEdges: EdgeState[][] = Array.from(
+      { length: height },
+      () => new Array<EdgeState>(width + 1),
+    );
+    const verticalEdges: EdgeState[][] = Array.from(
+      { length: height + 1 },
+      () => new Array<EdgeState>(width),
+    );
+
+    for (let row = 0; row < height; row++) {
+      for (let col = 0; col < width; col++) {
+        const { configuration } = state.vertices[row][col];
+
+        // Right edge of (row,col) is the left edge of (row,col+1).
+        horizontalEdges[row][col + 1] = configuration.right;
+        // Bottom edge of (row,col) is the top edge of (row+1,col).
+        verticalEdges[row + 1][col] = configuration.bottom;
+
+        // Boundary edges derive from the inverse mapping.
+        if (col === 0) {
+          horizontalEdges[row][0] = this.oppositeOf(configuration.left);
+        }
+        if (row === 0) {
+          verticalEdges[0][col] = this.oppositeOf(configuration.top);
+        }
+      }
+    }
+
+    return { horizontalEdges, verticalEdges };
+  }
+
+  /**
    * Draw arrows on edges
    */
   private drawArrows(state: LatticeState): void {
@@ -308,10 +381,14 @@ export class PathRenderer {
     this.ctx.fillStyle = this.ctx.strokeStyle;
     this.ctx.lineWidth = this.config.lineWidth;
 
+    // Derive edge arrays from vertex configurations when the provided arrays are
+    // empty (e.g. states produced by the optimized simulation engine).
+    const { horizontalEdges, verticalEdges } = this.ensureEdges(state);
+
     // Draw horizontal arrows
     for (let row = 0; row < state.height; row++) {
       for (let col = 0; col <= state.width; col++) {
-        const edgeState = state.horizontalEdges[row][col];
+        const edgeState = horizontalEdges[row][col];
         if (edgeState !== undefined) {
           const x1 = col * this.config.cellSize + this.config.cellSize / 2;
           const x2 = (col + 1) * this.config.cellSize - this.config.cellSize / 2;
@@ -331,7 +408,7 @@ export class PathRenderer {
     // Draw vertical arrows
     for (let row = 0; row <= state.height; row++) {
       for (let col = 0; col < state.width; col++) {
-        const edgeState = state.verticalEdges[row][col];
+        const edgeState = verticalEdges[row][col];
         if (edgeState !== undefined) {
           const x = (col + 1) * this.config.cellSize;
           const y1 = row * this.config.cellSize + this.config.cellSize / 2;
@@ -653,6 +730,10 @@ export class PathRenderer {
     state: LatticeState,
     currentEdge: { row: number; col: number; type: 'horizontal' | 'vertical' },
   ): { row: number; col: number; type: 'horizontal' | 'vertical' } | null {
+    // Derive edge arrays from vertex configurations when the provided arrays are
+    // empty (e.g. states produced by the optimized simulation engine).
+    const { horizontalEdges, verticalEdges } = this.ensureEdges(state);
+
     // Determine which vertex this edge touches
     let vertexRow: number, vertexCol: number;
     let entryDirection: string;
@@ -670,7 +751,7 @@ export class PathRenderer {
         entryDirection = 'right';
       } else {
         // Interior edge - need to check arrow direction
-        const edgeState = state.horizontalEdges[currentEdge.row][currentEdge.col];
+        const edgeState = horizontalEdges[currentEdge.row][currentEdge.col];
         if (edgeState === EdgeState.In) {
           // Arrow points right, so we enter the vertex to the right
           vertexCol = currentEdge.col;
@@ -694,7 +775,7 @@ export class PathRenderer {
         entryDirection = 'bottom';
       } else {
         // Interior edge
-        const edgeState = state.verticalEdges[currentEdge.row][currentEdge.col];
+        const edgeState = verticalEdges[currentEdge.row][currentEdge.col];
         if (edgeState === EdgeState.In) {
           // Arrow points down
           vertexRow = currentEdge.row;
