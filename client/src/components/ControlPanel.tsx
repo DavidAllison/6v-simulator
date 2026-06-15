@@ -1,10 +1,39 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo } from 'react';
 import { BoundaryCondition, RenderMode } from '../lib/six-vertex/types';
 import type { VertexType } from '../lib/six-vertex/types';
 import { getCurrentVertexColors } from '../lib/six-vertex/themeColors';
 import { useTheme } from '../hooks/useTheme';
 import { VertexLegend } from './VertexEdgeVisualization';
 import './ControlPanel.css';
+
+/** Plain-language tooltip copy for the controls. */
+const TIP = {
+  temperature:
+    'How much random thermal jiggling. Low T settles into the most-favored arrangements (freezes); high T makes all arrangements equally likely (looks random). Note: with all weights equal, every arrangement has the same energy, so temperature has little visible effect — change the weights to see it matter.',
+  weights:
+    "How strongly each of the six vertex types is favored. Equal weights = the 'ice point' (all arrangements equally likely). Raising c-weights favors turns; raising a/b favors straight paths.",
+  latticeSize: 'Grid resolution. Larger N shows the Arctic circle more crisply but runs slower.',
+  initialState:
+    'How the boundary arrows are fixed. Domain Wall (DWBC) forces arrows in on two sides and out on two — the setup that produces the Arctic circle.',
+  seed: 'Fixes the random sequence so a run is exactly reproducible.',
+} as const;
+
+/** Subscript display labels for the six vertex weights. */
+const WEIGHT_LABELS: Record<string, string> = {
+  a1: 'a₁',
+  a2: 'a₂',
+  b1: 'b₁',
+  b2: 'b₂',
+  c1: 'c₁',
+  c2: 'c₂',
+};
+
+/** Small, accessible "ⓘ" affordance carrying the same text as the row's title. */
+const InfoHint: React.FC<{ text: string; label: string }> = ({ text, label }) => (
+  <span className="info-hint" title={text} aria-label={`${label}: ${text}`} role="img" tabIndex={0}>
+    ⓘ
+  </span>
+);
 
 interface ControlPanelProps {
   // Simulation state
@@ -79,7 +108,6 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
   onReset,
   onExportImage,
 }) => {
-  const [showLegend, setShowLegend] = useState(false);
   const { theme } = useTheme();
 
   // Single source of truth: the canonical theme-aware vertex palette shared
@@ -199,8 +227,11 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
         </h3>
 
         <div className="control-item">
-          <label>
-            <span>Lattice Size (N×N)</span>
+          <label title={TIP.latticeSize}>
+            <span className="control-label-row">
+              Lattice Size (N×N)
+              <InfoHint text={TIP.latticeSize} label="Lattice size" />
+            </span>
             <div className="slider-with-value">
               <input
                 type="range"
@@ -221,8 +252,11 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
         </div>
 
         <div className="control-item">
-          <label>
-            <span>Initial State</span>
+          <label title={TIP.initialState}>
+            <span className="control-label-row">
+              Initial State
+              <InfoHint text={TIP.initialState} label="Initial state" />
+            </span>
             <select
               value={boundaryCondition}
               onChange={(e) => onBoundaryConditionChange(e.target.value as BoundaryCondition)}
@@ -230,7 +264,7 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
             >
               <option value={BoundaryCondition.DWBC}>Domain Wall (DWBC)</option>
               <option value={BoundaryCondition.Periodic}>Periodic</option>
-              <option value={BoundaryCondition.Open}>Random</option>
+              <option value={BoundaryCondition.Open}>Open / random</option>
             </select>
           </label>
         </div>
@@ -264,8 +298,11 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
         )}
 
         <div className="control-item">
-          <label>
-            <span>Random Seed</span>
+          <label title={TIP.seed}>
+            <span className="control-label-row">
+              Random Seed
+              <InfoHint text={TIP.seed} label="Random seed" />
+            </span>
             <input
               type="number"
               value={seed}
@@ -291,8 +328,11 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
         </h3>
 
         <div className="control-item">
-          <label>
-            <span>Temperature (T)</span>
+          <label title={TIP.temperature}>
+            <span className="control-label-row">
+              Temperature (T)
+              <InfoHint text={TIP.temperature} label="Temperature" />
+            </span>
             <div className="slider-with-value">
               <input
                 type="range"
@@ -313,15 +353,23 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
         </div>
 
         <div className="weights-grid">
-          <h4>Vertex Weights</h4>
+          <h4 className="control-label-row" title={TIP.weights}>
+            Vertex Weights
+            <InfoHint text={TIP.weights} label="Vertex weights" />
+          </h4>
           {Object.entries(weights).map(([type, weight]) => {
             const color = vertexColors[type as VertexType] ?? 'var(--color-text-muted)';
             const fillPercent = ((weight - 0.1) / 4.9) * 100;
+            const label = WEIGHT_LABELS[type] ?? type;
             return (
               <div key={type} className="weight-control">
                 <div className="weight-header">
-                  <span className="weight-label" style={{ color }}>
-                    {type}
+                  <span
+                    className="weight-label"
+                    style={{ color }}
+                    title={`${label} weight — ${TIP.weights}`}
+                  >
+                    {label}
                   </span>
                   <span className="weight-value">{weight.toFixed(2)}</span>
                 </div>
@@ -344,23 +392,14 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
           })}
         </div>
 
-        {/* Vertex Edge Pattern Legend */}
-        <div className="control-item">
-          <button
-            type="button"
-            className="legend-toggle"
-            onClick={() => setShowLegend(!showLegend)}
-            aria-expanded={showLegend}
-          >
-            <span>Vertex Edge Patterns</span>
-            <span aria-hidden="true">{showLegend ? '▼' : '▶'}</span>
-          </button>
-          {showLegend && (
-            <div className="legend-content">
-              <VertexLegend showArrows={false} />
-              <div className="legend-caption">Bold edges show the connected path segments</div>
-            </div>
-          )}
+        {/* The six vertex types — teaching legend (open by default) */}
+        <div className="control-item vertex-legend-section">
+          <h4 className="vertex-legend-title">The six vertex types</h4>
+          <p className="vertex-legend-caption">
+            Every junction obeys the ice rule: exactly 2 arrows in, 2 out. These are the only 6
+            ways.
+          </p>
+          <VertexLegend showArrows={true} />
         </div>
       </div>
 

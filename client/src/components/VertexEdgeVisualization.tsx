@@ -4,7 +4,9 @@
  */
 
 import React from 'react';
-import { VertexType } from '../lib/six-vertex/types';
+import { VertexType, EdgeState, getVertexConfiguration } from '../lib/six-vertex/types';
+import type { EdgeDirection } from '../lib/six-vertex/types';
+import { getPathSegments } from '../lib/six-vertex/vertexShapes';
 import { getCurrentVertexColors } from '../lib/six-vertex/themeColors';
 import { useTheme } from '../hooks/useTheme';
 
@@ -15,15 +17,46 @@ interface VertexEdgeVisualizationProps {
   showLabel?: boolean;
 }
 
+type EdgeFlags = { left: boolean; right: boolean; top: boolean; bottom: boolean };
+
 /**
- * Edge patterns from the paper's Figure 1:
- * - a1: Bold edges LEFT→CENTER and TOP→CENTER (forms ┐ shape)
- * - a2: Bold edges CENTER→RIGHT and CENTER→BOTTOM (forms └ shape)
- * - b1: Bold edges LEFT→RIGHT (horizontal line through)
- * - b2: Bold edges TOP→BOTTOM (vertical line through)
- * - c1: Bold edges LEFT→CENTER and CENTER→BOTTOM (forms ┘ shape)
- * - c2: Bold edges TOP→CENTER and CENTER→RIGHT (forms ┌ shape)
+ * Which edges are bold for a vertex type, derived from `getPathSegments` —
+ * the SAME source of truth the lattice canvas uses. Each path segment touches
+ * two edges; both of those edges are drawn bold. This guarantees the legend can
+ * never disagree with the rendered lattice.
+ *
+ * Canonical counts (verified against getPathSegments):
+ * - a1: 2 segments (L–R and T–B) → all four edges bold
+ * - a2: 0 segments → no bold edges
+ * - b1: 1 segment (T–B) → vertical edges bold
+ * - b2: 1 segment (L–R) → horizontal edges bold
+ * - c1: 1 segment (L–B) → left + bottom bold
+ * - c2: 1 segment (T–R) → top + right bold
  */
+const getBoldEdgesForType = (vertexType: VertexType): EdgeFlags => {
+  const flags: EdgeFlags = { left: false, right: false, top: false, bottom: false };
+  for (const segment of getPathSegments(vertexType)) {
+    flags[segment.from as EdgeDirection] = true;
+    flags[segment.to as EdgeDirection] = true;
+  }
+  return flags;
+};
+
+/**
+ * Arrow directions for a vertex type, derived from `getVertexConfiguration` —
+ * the canonical 2-in / 2-out ice configuration. `true` = arrow points IN toward
+ * the vertex center, `false` = points OUT.
+ */
+const getArrowConfigForType = (vertexType: VertexType): EdgeFlags => {
+  const config = getVertexConfiguration(vertexType);
+  return {
+    left: config.left === EdgeState.In,
+    right: config.right === EdgeState.In,
+    top: config.top === EdgeState.In,
+    bottom: config.bottom === EdgeState.In,
+  };
+};
+
 export const VertexEdgeVisualization: React.FC<VertexEdgeVisualizationProps> = ({
   vertexType,
   size = 60,
@@ -40,18 +73,8 @@ export const VertexEdgeVisualization: React.FC<VertexEdgeVisualizationProps> = (
   const center = size / 2;
   const padding = 5;
 
-  // Arrow configurations for each vertex type
-  // true = arrow points IN to vertex center, false = arrow points OUT from vertex center
-  const arrowConfigs = {
-    [VertexType.a1]: { left: true, right: false, top: true, bottom: false },
-    [VertexType.a2]: { left: false, right: true, top: false, bottom: true },
-    [VertexType.b1]: { left: true, right: true, top: false, bottom: false },
-    [VertexType.b2]: { left: false, right: false, top: true, bottom: true },
-    [VertexType.c1]: { left: true, right: false, top: false, bottom: true },
-    [VertexType.c2]: { left: false, right: true, top: true, bottom: false },
-  };
-
-  const config = arrowConfigs[vertexType];
+  // Arrow directions derived from the canonical ice configuration.
+  const config = getArrowConfigForType(vertexType);
 
   // Render arrow marker
   const renderArrow = (x1: number, y1: number, x2: number, y2: number, pointsIn: boolean) => {
@@ -82,34 +105,9 @@ export const VertexEdgeVisualization: React.FC<VertexEdgeVisualizationProps> = (
     );
   };
 
-  // Determine which edges are bold based on vertex type
-  // From paper Figure 1: bold edges show where paths pass through
-  const getBoldEdges = () => {
-    switch (vertexType) {
-      case VertexType.a1:
-        // ALL edges bold: Two straight paths (horizontal AND vertical)
-        return { left: true, right: true, top: true, bottom: true };
-      case VertexType.a2:
-        // NO edges bold: Paths are reversed/thin in paper notation
-        return { left: false, right: false, top: false, bottom: false };
-      case VertexType.b1:
-        // Vertical edges bold: One vertical path (top→bottom)
-        return { left: false, right: false, top: true, bottom: true };
-      case VertexType.b2:
-        // Horizontal edges bold: One horizontal path (left→right)
-        return { left: true, right: true, top: false, bottom: false };
-      case VertexType.c1:
-        // Left and bottom edges bold: L-shaped path (left→bottom)
-        return { left: true, right: false, top: false, bottom: true };
-      case VertexType.c2:
-        // Top and right edges bold: L-shaped path (top→right)
-        return { left: false, right: true, top: true, bottom: false };
-      default:
-        return { left: false, right: false, top: false, bottom: false };
-    }
-  };
-
-  const boldEdges = getBoldEdges();
+  // Which edges are bold — derived from the canvas's source of truth so the
+  // legend and the lattice can never disagree.
+  const boldEdges = getBoldEdgesForType(vertexType);
 
   // Canonical, theme-aware vertex palette shared with the Canvas renderer and
   // the ControlPanel/StatisticsPanel legends (single source of truth).
@@ -199,41 +197,61 @@ export const VertexEdgeVisualization: React.FC<VertexEdgeVisualizationProps> = (
   );
 };
 
-// Edge patterns for each vertex type (which edges have bold segments/paths passing through)
-// Based on paper Figure 1: edges are shaded where paths flow through them
-// const edgePatterns = {
-//   a1: { left: true, top: true, right: true, bottom: true }, // All edges (2 straight paths)
-//   a2: { left: false, top: false, right: false, bottom: false }, // No edges shaded
-//   b1: { left: false, top: true, right: false, bottom: true }, // Vertical path only
-//   b2: { left: true, top: false, right: true, bottom: false }, // Horizontal path only
-//   c1: { left: true, top: false, right: false, bottom: true }, // L-shaped: left→bottom
-//   c2: { left: false, top: true, right: true, bottom: false }, // L-shaped: top→right
-// };
+/**
+ * Display name (with proper subscript) and one-line plain-language role for each
+ * vertex type. The roles describe what the bold path looks like at that junction.
+ */
+const VERTEX_INFO: Record<VertexType, { name: string; role: string }> = {
+  [VertexType.a1]: { name: 'a₁', role: 'Both paths cross (horizontal + vertical).' },
+  [VertexType.a2]: { name: 'a₂', role: 'Empty — no path drawn here.' },
+  [VertexType.b1]: { name: 'b₁', role: 'One vertical path (top ↔ bottom).' },
+  [VertexType.b2]: { name: 'b₂', role: 'One horizontal path (left ↔ right).' },
+  [VertexType.c1]: { name: 'c₁', role: 'A turn (left ↔ bottom).' },
+  [VertexType.c2]: {
+    name: 'c₂',
+    role: 'A turn (top ↔ right) — the c-vertices trace the Arctic-circle boundary.',
+  },
+};
+
+const LEGEND_VERTEX_TYPES: VertexType[] = [
+  VertexType.a1,
+  VertexType.a2,
+  VertexType.b1,
+  VertexType.b2,
+  VertexType.c1,
+  VertexType.c2,
+];
 
 /**
- * Legend showing all vertex types with their edge patterns
+ * Teaching legend: every one of the six vertex types with its name (subscript),
+ * arrow diagram, bold-path shape, color swatch, and a one-line plain-language role.
  */
-export const VertexLegend: React.FC<{ showArrows?: boolean }> = ({ showArrows = false }) => {
-  const vertexTypes = [
-    VertexType.a1,
-    VertexType.a2,
-    VertexType.b1,
-    VertexType.b2,
-    VertexType.c1,
-    VertexType.c2,
-  ];
+export const VertexLegend: React.FC<{ showArrows?: boolean }> = ({ showArrows = true }) => {
+  // Subscribe to the theme so swatch colors track light/dark mode.
+  useTheme();
+  const vertexColors = getCurrentVertexColors();
 
   return (
-    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', padding: '10px' }}>
-      {vertexTypes.map((type) => (
-        <VertexEdgeVisualization
-          key={type}
-          vertexType={type}
-          size={50}
-          showArrows={showArrows}
-          showLabel={true}
-        />
-      ))}
+    <div className="vertex-legend-grid">
+      {LEGEND_VERTEX_TYPES.map((type) => {
+        const info = VERTEX_INFO[type];
+        return (
+          <div className="vertex-legend-card" key={type}>
+            <VertexEdgeVisualization vertexType={type} size={56} showArrows={showArrows} />
+            <div className="vertex-legend-text">
+              <div className="vertex-legend-name">
+                <span
+                  className="vertex-legend-swatch"
+                  style={{ backgroundColor: vertexColors[type] }}
+                  aria-hidden="true"
+                />
+                {info.name}
+              </div>
+              <div className="vertex-legend-role">{info.role}</div>
+            </div>
+          </div>
+        );
+      })}
     </div>
   );
 };

@@ -223,35 +223,95 @@
   color: var(--color-text-primary);
 }
 
-.legend-toggle {
-  width: 100%;
-  padding: var(--spacing-sm);
-  background: var(--color-bg-tertiary);
-  color: var(--color-text-primary);
+/* Inline label row with an info affordance */
+.control-label-row {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+}
+
+.info-hint {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--font-size-xs);
+  line-height: 1;
+  color: var(--color-text-secondary);
+  cursor: help;
+  border-radius: 50%;
+}
+
+.info-hint:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring, 0 0 0 3px color-mix(in srgb, var(--color-primary) 35%, transparent));
+}
+
+/* Teaching legend: the six vertex types */
+.vertex-legend-section {
+  background: var(--surface-sunken, var(--color-bg-tertiary));
   border: 1px solid var(--color-border);
   border-radius: var(--border-radius-md);
-  cursor: pointer;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+  padding: var(--spacing-sm);
+}
+
+.vertex-legend-title {
+  margin: 0 0 var(--spacing-xs) 0;
   font-size: var(--font-size-sm);
-  font-family: inherit;
-  transition: background var(--transition-fast);
+  font-weight: 600;
+  color: var(--color-text-primary);
 }
 
-.legend-toggle:hover {
-  background: var(--color-bg-hover);
-}
-
-.legend-content {
-  margin-top: var(--spacing-sm);
-}
-
-.legend-caption {
-  margin-top: var(--spacing-sm);
+.vertex-legend-caption {
+  margin: 0 0 var(--spacing-sm) 0;
   font-size: var(--font-size-xs);
+  line-height: var(--line-height-relaxed, 1.5);
   color: var(--color-text-secondary);
-  font-style: italic;
+}
+
+.vertex-legend-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--spacing-sm);
+}
+
+.vertex-legend-card {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-xs);
+  background: var(--surface-raised, var(--color-bg-secondary));
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius-sm, 4px);
+}
+
+.vertex-legend-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.vertex-legend-name {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  font-size: var(--font-size-sm);
+  font-weight: 700;
+  color: var(--color-text-primary);
+}
+
+.vertex-legend-swatch {
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+  flex-shrink: 0;
+  border: 1px solid var(--color-border);
+}
+
+.vertex-legend-role {
+  font-size: var(--font-size-xs);
+  line-height: var(--line-height-base, 1.4);
+  color: var(--color-text-secondary);
 }
 
 .select-input,
@@ -339,7 +399,6 @@
 .weight-label {
   font-size: 0.875rem;
   font-weight: 600;
-  text-transform: uppercase;
 }
 
 .weight-value {

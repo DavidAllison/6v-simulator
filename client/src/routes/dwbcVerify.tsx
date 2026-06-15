@@ -10,6 +10,7 @@ import {
 } from '../lib/six-vertex/initialStates';
 import { createRenderer, PathRenderer } from '../lib/six-vertex/renderer/pathRenderer';
 import { PhysicsSimulation } from '../lib/six-vertex/physicsSimulation';
+import { PageShell } from '../components/PageShell';
 
 /**
  * Visual verification component for DWBC initial states
@@ -217,168 +218,172 @@ export function DWBCVerify() {
   const lowAnalysis = lowState ? analyzeState(lowState, 'low') : null;
 
   return (
-    <div className="dwbc-verify">
-      <h1>DWBC Verification Tool</h1>
-      <p>
-        This tool verifies that Domain Wall Boundary Conditions are correctly implemented. High DWBC
-        should have arrows pointing in from top/right and out to bottom/left. Low DWBC should have
-        the opposite pattern.
-      </p>
+    <PageShell title="DWBC Patterns" subtitle="The domain-wall boundary configurations">
+      <div className="dwbc-verify">
+        <p>
+          This tool verifies that Domain Wall Boundary Conditions are correctly implemented. High
+          DWBC should have arrows pointing in from top/right and out to bottom/left. Low DWBC should
+          have the opposite pattern.
+        </p>
 
-      <div className="controls">
-        <label>
-          Width:
-          <input
-            type="number"
-            value={latticeSize.width}
-            onChange={(e) =>
-              setLatticeSize({ ...latticeSize, width: parseInt(e.target.value) || 8 })
-            }
-            min={2}
-            max={20}
-          />
-        </label>
+        <div className="controls">
+          <label>
+            Width:
+            <input
+              type="number"
+              value={latticeSize.width}
+              onChange={(e) =>
+                setLatticeSize({ ...latticeSize, width: parseInt(e.target.value) || 8 })
+              }
+              min={2}
+              max={20}
+            />
+          </label>
 
-        <label>
-          Height:
-          <input
-            type="number"
-            value={latticeSize.height}
-            onChange={(e) =>
-              setLatticeSize({ ...latticeSize, height: parseInt(e.target.value) || 8 })
-            }
-            min={2}
-            max={20}
-          />
-        </label>
+          <label>
+            Height:
+            <input
+              type="number"
+              value={latticeSize.height}
+              onChange={(e) =>
+                setLatticeSize({ ...latticeSize, height: parseInt(e.target.value) || 8 })
+              }
+              min={2}
+              max={20}
+            />
+          </label>
 
-        <label>
-          Render Mode:
-          <select value={renderMode} onChange={(e) => setRenderMode(e.target.value as RenderMode)}>
-            <option value={RenderMode.Arrows}>Arrows</option>
-            <option value={RenderMode.Paths}>Paths</option>
-            <option value={RenderMode.Both}>Both</option>
-            <option value={RenderMode.Vertices}>Vertices</option>
-          </select>
-        </label>
+          <label>
+            Render Mode:
+            <select
+              value={renderMode}
+              onChange={(e) => setRenderMode(e.target.value as RenderMode)}
+            >
+              <option value={RenderMode.Arrows}>Arrows</option>
+              <option value={RenderMode.Paths}>Paths</option>
+              <option value={RenderMode.Both}>Both</option>
+              <option value={RenderMode.Vertices}>Vertices</option>
+            </select>
+          </label>
 
-        <label>
-          <input
-            type="checkbox"
-            checked={showGrid}
-            onChange={(e) => setShowGrid(e.target.checked)}
-          />
-          Show Grid
-        </label>
+          <label>
+            <input
+              type="checkbox"
+              checked={showGrid}
+              onChange={(e) => setShowGrid(e.target.checked)}
+            />
+            Show Grid
+          </label>
 
-        <label>
-          <input
-            type="checkbox"
-            checked={showLabels}
-            onChange={(e) => setShowLabels(e.target.checked)}
-          />
-          Show Labels
-        </label>
+          <label>
+            <input
+              type="checkbox"
+              checked={showLabels}
+              onChange={(e) => setShowLabels(e.target.checked)}
+            />
+            Show Labels
+          </label>
 
-        <button onClick={regenerate}>Regenerate</button>
-        <button onClick={runPhysicsTests}>Run Physics Tests</button>
-        <button onClick={testPhysicsSimulation}>Test Simulation</button>
+          <button onClick={regenerate}>Regenerate</button>
+          <button onClick={runPhysicsTests}>Run Physics Tests</button>
+          <button onClick={testPhysicsSimulation}>Test Simulation</button>
+        </div>
+
+        {showPhysicsTest && (
+          <div className="physics-test-results">
+            <h3>Physics Test Results</h3>
+            <button onClick={() => setShowPhysicsTest(false)} style={{ float: 'right' }}>
+              Close
+            </button>
+            <pre>{testResults}</pre>
+          </div>
+        )}
+
+        <div className="states-container">
+          <div className="state-display">
+            <h2>High DWBC</h2>
+            <div className={`ice-status ${highValid ? 'valid' : 'invalid'}`}>
+              Ice Rule: {highValid ? 'Valid' : 'Invalid'}
+            </div>
+
+            {highAnalysis && (
+              <div className="boundary-analysis">
+                <p>
+                  Top boundary (in): {highAnalysis.topIn}/{highAnalysis.expectedTop}
+                </p>
+                <p>
+                  Bottom boundary (out): {highAnalysis.bottomOut}/{highAnalysis.expectedBottom}
+                </p>
+                <p>
+                  Left boundary (out): {highAnalysis.leftOut}/{highAnalysis.expectedLeft}
+                </p>
+                <p>
+                  Right boundary (in): {highAnalysis.rightIn}/{highAnalysis.expectedRight}
+                </p>
+              </div>
+            )}
+
+            <div className="canvas-container">
+              <canvas ref={canvasHighRef} />
+            </div>
+            {showLabels && highState && (
+              <div className="vertex-labels">
+                {highState.vertices.map((row, rowIdx) => (
+                  <div key={rowIdx} className="vertex-row">
+                    {row.map((vertex, colIdx) => (
+                      <span key={colIdx} className="vertex-label">
+                        {vertex.type}
+                      </span>
+                    ))}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div className="state-display">
+            <h2>Low DWBC</h2>
+            <div className={`ice-status ${lowValid ? 'valid' : 'invalid'}`}>
+              Ice Rule: {lowValid ? 'Valid' : 'Invalid'}
+            </div>
+
+            {lowAnalysis && (
+              <div className="boundary-analysis">
+                <p>
+                  Top boundary (out): {lowAnalysis.topIn}/{lowAnalysis.expectedTop}
+                </p>
+                <p>
+                  Bottom boundary (in): {lowAnalysis.bottomOut}/{lowAnalysis.expectedBottom}
+                </p>
+                <p>
+                  Left boundary (in): {lowAnalysis.leftOut}/{lowAnalysis.expectedLeft}
+                </p>
+                <p>
+                  Right boundary (out): {lowAnalysis.rightIn}/{lowAnalysis.expectedRight}
+                </p>
+              </div>
+            )}
+
+            <div className="canvas-container">
+              <canvas ref={canvasLowRef} />
+            </div>
+            {showLabels && lowState && (
+              <div className="vertex-labels">
+                {lowState.vertices.map((row, rowIdx) => (
+                  <div key={rowIdx} className="vertex-row">
+                    {row.map((vertex, colIdx) => (
+                      <span key={colIdx} className="vertex-label">
+                        {vertex.type}
+                      </span>
+                    ))}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
       </div>
-
-      {showPhysicsTest && (
-        <div className="physics-test-results">
-          <h3>Physics Test Results</h3>
-          <button onClick={() => setShowPhysicsTest(false)} style={{ float: 'right' }}>
-            Close
-          </button>
-          <pre>{testResults}</pre>
-        </div>
-      )}
-
-      <div className="states-container">
-        <div className="state-display">
-          <h2>High DWBC</h2>
-          <div className={`ice-status ${highValid ? 'valid' : 'invalid'}`}>
-            Ice Rule: {highValid ? 'Valid' : 'Invalid'}
-          </div>
-
-          {highAnalysis && (
-            <div className="boundary-analysis">
-              <p>
-                Top boundary (in): {highAnalysis.topIn}/{highAnalysis.expectedTop}
-              </p>
-              <p>
-                Bottom boundary (out): {highAnalysis.bottomOut}/{highAnalysis.expectedBottom}
-              </p>
-              <p>
-                Left boundary (out): {highAnalysis.leftOut}/{highAnalysis.expectedLeft}
-              </p>
-              <p>
-                Right boundary (in): {highAnalysis.rightIn}/{highAnalysis.expectedRight}
-              </p>
-            </div>
-          )}
-
-          <div className="canvas-container">
-            <canvas ref={canvasHighRef} />
-          </div>
-          {showLabels && highState && (
-            <div className="vertex-labels">
-              {highState.vertices.map((row, rowIdx) => (
-                <div key={rowIdx} className="vertex-row">
-                  {row.map((vertex, colIdx) => (
-                    <span key={colIdx} className="vertex-label">
-                      {vertex.type}
-                    </span>
-                  ))}
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-
-        <div className="state-display">
-          <h2>Low DWBC</h2>
-          <div className={`ice-status ${lowValid ? 'valid' : 'invalid'}`}>
-            Ice Rule: {lowValid ? 'Valid' : 'Invalid'}
-          </div>
-
-          {lowAnalysis && (
-            <div className="boundary-analysis">
-              <p>
-                Top boundary (out): {lowAnalysis.topIn}/{lowAnalysis.expectedTop}
-              </p>
-              <p>
-                Bottom boundary (in): {lowAnalysis.bottomOut}/{lowAnalysis.expectedBottom}
-              </p>
-              <p>
-                Left boundary (in): {lowAnalysis.leftOut}/{lowAnalysis.expectedLeft}
-              </p>
-              <p>
-                Right boundary (out): {lowAnalysis.rightIn}/{lowAnalysis.expectedRight}
-              </p>
-            </div>
-          )}
-
-          <div className="canvas-container">
-            <canvas ref={canvasLowRef} />
-          </div>
-          {showLabels && lowState && (
-            <div className="vertex-labels">
-              {lowState.vertices.map((row, rowIdx) => (
-                <div key={rowIdx} className="vertex-row">
-                  {row.map((vertex, colIdx) => (
-                    <span key={colIdx} className="vertex-label">
-                      {vertex.type}
-                    </span>
-                  ))}
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      </div>
-    </div>
+    </PageShell>
   );
 }
 

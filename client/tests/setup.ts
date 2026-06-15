@@ -1,4 +1,14 @@
 import '@testing-library/jest-dom';
+import { TextEncoder, TextDecoder } from 'node:util';
+
+// jsdom does not provide TextEncoder/TextDecoder, which react-router (pulled in
+// by components that use the router) references at module load. Polyfill them.
+if (typeof globalThis.TextEncoder === 'undefined') {
+  globalThis.TextEncoder = TextEncoder as typeof globalThis.TextEncoder;
+}
+if (typeof globalThis.TextDecoder === 'undefined') {
+  globalThis.TextDecoder = TextDecoder as typeof globalThis.TextDecoder;
+}
 
 // Add any global test setup here
 beforeEach(() => {

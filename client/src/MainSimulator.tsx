@@ -15,6 +15,9 @@ import StatisticsPanel from './components/StatisticsPanel';
 import VisualizationCanvas from './components/VisualizationCanvas';
 import { SaveLoadPanel } from './components/SaveLoadPanel';
 import { CollapsiblePanel } from './components/CollapsiblePanel';
+import IntroPanel from './components/IntroPanel';
+import PresetBar from './components/PresetBar';
+import type { PresetConfig } from './components/PresetBar';
 import type { SimulationData } from './lib/storage';
 import { useTheme } from './hooks/useTheme';
 import { getThemeColors } from './lib/six-vertex/themeColors';
@@ -239,6 +242,33 @@ function MainSimulator() {
     setSeed((prev) => prev + 1);
   }, [handlePause]);
 
+  // Apply a one-click preset scenario. Reuses the exact setters the sliders
+  // use (so the controls reflect the new values) and forces a single clean
+  // re-initialization via the same seed-bump path that handleReset uses:
+  // changing the seed/size recreates initializeSimulation, whose effect rebuilds
+  // the simulation reading the freshly-set weights and boundary config.
+  const handleApplyPreset = useCallback(
+    (config: PresetConfig) => {
+      handlePause();
+
+      // Clamp lattice size to the bounds the ControlPanel slider enforces (4–100).
+      const clampedSize = Math.min(100, Math.max(4, Math.round(config.latticeSize)));
+
+      setBoundaryCondition(config.boundaryCondition);
+      setDwbcType(config.dwbcType);
+      setLatticeSize(clampedSize);
+      setWeights({ ...config.weights });
+      // Seed bump guarantees the re-init effect fires even if size/config match
+      // the current state, mirroring handleReset's fresh-start behavior.
+      setSeed((prev) => prev + 1);
+
+      // The re-init effect runs (and replaces simulationRef.current) before the
+      // run effect on the same commit, so it is safe to request a run here.
+      setIsRunning(config.run);
+    },
+    [handlePause],
+  );
+
   const handleExportImage = useCallback(() => {
     if (rendererRef.current) {
       const dataUrl = rendererRef.current.exportImage('png');
@@ -390,6 +420,8 @@ function MainSimulator() {
           </button>
         </div>
       )}
+      <IntroPanel />
+      <PresetBar onApplyPreset={handleApplyPreset} />
       <CollapsiblePanel title="Controls" side="left" className="panel-section">
         <ControlPanel
           isRunning={isRunning}

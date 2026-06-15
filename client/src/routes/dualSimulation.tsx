@@ -3,6 +3,7 @@ import { DualSimulationManager } from '../lib/six-vertex/dualSimulation';
 import { DualSimulationDisplay } from '../components/DualSimulationDisplay';
 import type { DualSimulationConfig, ConvergenceMetrics } from '../lib/six-vertex/dualSimulation';
 import type { LatticeState } from '../lib/six-vertex/types';
+import { PageShell } from '../components/PageShell';
 import '../App.css';
 import styles from './dualSimulation.module.css';
 
@@ -135,179 +136,184 @@ export function DualSimulation() {
   const cellSize = Math.min(20, 400 / size);
 
   return (
-    <div className={`dual-simulation-page ${styles.page}`}>
-      <h1>Dual Simulation with Convergence Tracking</h1>
+    <PageShell
+      title="Compare DWBC High vs Low"
+      subtitle="Two simulations side by side with convergence tracking"
+    >
+      <div className={`dual-simulation-page ${styles.page}`}>
+        <div className={`control-panel ${styles.panel}`}>
+          <div className={`controls-grid ${styles.controlsGrid}`}>
+            {/* Size control */}
+            <div className="control-group">
+              <label>
+                Lattice Size: {size}×{size}
+                <input
+                  type="range"
+                  min="8"
+                  max="32"
+                  value={size}
+                  onChange={(e) => setSize(Number(e.target.value))}
+                  disabled={isRunning}
+                />
+              </label>
+            </div>
 
-      <div className={`control-panel ${styles.panel}`}>
-        <div className={`controls-grid ${styles.controlsGrid}`}>
-          {/* Size control */}
-          <div className="control-group">
-            <label>
-              Lattice Size: {size}×{size}
-              <input
-                type="range"
-                min="8"
-                max="32"
-                value={size}
-                onChange={(e) => setSize(Number(e.target.value))}
-                disabled={isRunning}
-              />
-            </label>
-          </div>
-
-          {/* Temperature control */}
-          <div className="control-group">
-            <label>
-              Temperature: {temperature.toFixed(2)}
-              <input
-                type="range"
-                min="0.1"
-                max="2"
-                step="0.1"
-                value={temperature}
-                onChange={(e) => handleTemperatureChange(Number(e.target.value))}
-              />
-            </label>
-          </div>
-
-          {/* Steps per frame */}
-          <div className="control-group">
-            <label>
-              Speed: {stepsPerFrame} steps/frame
-              <input
-                type="range"
-                min="10"
-                max="1000"
-                step="10"
-                value={stepsPerFrame}
-                onChange={(e) => setStepsPerFrame(Number(e.target.value))}
-              />
-            </label>
-          </div>
-
-          {/* Show arrows toggle */}
-          <div className="control-group">
-            <label>
-              <input
-                type="checkbox"
-                checked={showArrows}
-                onChange={(e) => setShowArrows(e.target.checked)}
-              />
-              Show Arrows
-            </label>
-          </div>
-        </div>
-
-        {/* Weight controls */}
-        <div className={`weights-section ${styles.weightsSection}`}>
-          <h3>Vertex Weights</h3>
-          <div className={`weights-grid ${styles.weightsGrid}`}>
-            {Object.entries(weights).map(([type, value]) => (
-              <label key={type}>
-                {type.toUpperCase()}: {value.toFixed(1)}
+            {/* Temperature control */}
+            <div className="control-group">
+              <label>
+                Temperature: {temperature.toFixed(2)}
                 <input
                   type="range"
                   min="0.1"
                   max="2"
                   step="0.1"
-                  value={value}
-                  onChange={(e) =>
-                    handleWeightChange(type as keyof typeof weights, Number(e.target.value))
-                  }
+                  value={temperature}
+                  onChange={(e) => handleTemperatureChange(Number(e.target.value))}
                 />
               </label>
-            ))}
-          </div>
-        </div>
+            </div>
 
-        {/* Action buttons */}
-        <div className={`action-buttons ${styles.actionButtons}`}>
-          <button
-            type="button"
-            onClick={() => setIsRunning(!isRunning)}
-            className={`btn ${isRunning ? 'btn--danger' : 'btn--success'}`}
-          >
-            {isRunning ? 'Stop' : 'Start'}
-          </button>
+            {/* Steps per frame */}
+            <div className="control-group">
+              <label>
+                Speed: {stepsPerFrame} steps/frame
+                <input
+                  type="range"
+                  min="10"
+                  max="1000"
+                  step="10"
+                  value={stepsPerFrame}
+                  onChange={(e) => setStepsPerFrame(Number(e.target.value))}
+                />
+              </label>
+            </div>
 
-          <button type="button" onClick={handleReset} className="btn btn--primary">
-            Reset
-          </button>
-
-          <button
-            type="button"
-            onClick={handleSwapConfigs}
-            disabled={isRunning}
-            className="btn btn--secondary"
-          >
-            Swap Configs
-          </button>
-        </div>
-      </div>
-
-      {/* Dual simulation display */}
-      <DualSimulationDisplay
-        latticeA={latticeA}
-        latticeB={latticeB}
-        showArrows={showArrows}
-        cellSize={cellSize}
-      />
-
-      {/* Live convergence metrics */}
-      {metrics && (
-        <div className={`convergence-panel ${styles.convergencePanel}`}>
-          <div>
-            <div className={styles.metricLabel}>Convergence</div>
-            <div className={styles.metricValue}>{(metrics.volumeRatio * 100).toFixed(1)}%</div>
-          </div>
-          <div>
-            <div className={styles.metricLabel}>Volume difference</div>
-            <div className={styles.metricValue}>{metrics.volumeDifference.toFixed(1)}</div>
-          </div>
-          <div>
-            <div className={styles.metricLabel}>Avg height diff</div>
-            <div className={styles.metricValue}>{metrics.averageHeightDifference.toFixed(3)}</div>
-          </div>
-          <div>
-            <div className={styles.metricLabel}>Smoothed diff</div>
-            <div className={styles.metricValue}>{metrics.smoothedDifference.toFixed(2)}</div>
-          </div>
-          <div>
-            <div className={styles.metricLabel}>Status</div>
-            <div
-              className={`${styles.statusValue} ${metrics.isConverged ? styles.statusConverged : ''}`}
-            >
-              {metrics.isConverged ? 'Converged ✓' : isRunning ? 'Running…' : 'Not converged'}
+            {/* Show arrows toggle */}
+            <div className="control-group">
+              <label>
+                <input
+                  type="checkbox"
+                  checked={showArrows}
+                  onChange={(e) => setShowArrows(e.target.checked)}
+                />
+                Show Arrows
+              </label>
             </div>
           </div>
-        </div>
-      )}
 
-      {/* Information panel */}
-      <div className={`info-panel ${styles.panel}`}>
-        <h3>About Dual Simulation Convergence</h3>
-        <p>
-          This demonstration runs two 6-vertex model simulations simultaneously with different
-          initial conditions (DWBC High and Low). The convergence tracking monitors when the height
-          functions of both simulations reach similar values, indicating that the systems have
-          equilibrated to comparable macroscopic states despite different starting configurations.
-        </p>
-        <ul>
-          <li>
-            <strong>Volume</strong>: The total sum of all vertex heights in the lattice
-          </li>
-          <li>
-            <strong>Average Height</strong>: The mean height across all vertices
-          </li>
-          <li>
-            <strong>Convergence</strong>: Achieved when volume ratio exceeds 95% and remains stable
-          </li>
-          <li>
-            <strong>Smoothed Difference</strong>: Moving average of volume differences to reduce
-            noise
-          </li>
-        </ul>
+          {/* Weight controls */}
+          <div className={`weights-section ${styles.weightsSection}`}>
+            <h3>Vertex Weights</h3>
+            <div className={`weights-grid ${styles.weightsGrid}`}>
+              {Object.entries(weights).map(([type, value]) => (
+                <label key={type}>
+                  {type.toUpperCase()}: {value.toFixed(1)}
+                  <input
+                    type="range"
+                    min="0.1"
+                    max="2"
+                    step="0.1"
+                    value={value}
+                    onChange={(e) =>
+                      handleWeightChange(type as keyof typeof weights, Number(e.target.value))
+                    }
+                  />
+                </label>
+              ))}
+            </div>
+          </div>
+
+          {/* Action buttons */}
+          <div className={`action-buttons ${styles.actionButtons}`}>
+            <button
+              type="button"
+              onClick={() => setIsRunning(!isRunning)}
+              className={`btn ${isRunning ? 'btn--danger' : 'btn--success'}`}
+            >
+              {isRunning ? 'Stop' : 'Start'}
+            </button>
+
+            <button type="button" onClick={handleReset} className="btn btn--primary">
+              Reset
+            </button>
+
+            <button
+              type="button"
+              onClick={handleSwapConfigs}
+              disabled={isRunning}
+              className="btn btn--secondary"
+            >
+              Swap Configs
+            </button>
+          </div>
+        </div>
+
+        {/* Dual simulation display */}
+        <DualSimulationDisplay
+          latticeA={latticeA}
+          latticeB={latticeB}
+          showArrows={showArrows}
+          cellSize={cellSize}
+        />
+
+        {/* Live convergence metrics */}
+        {metrics && (
+          <div className={`convergence-panel ${styles.convergencePanel}`}>
+            <div>
+              <div className={styles.metricLabel}>Convergence</div>
+              <div className={styles.metricValue}>{(metrics.volumeRatio * 100).toFixed(1)}%</div>
+            </div>
+            <div>
+              <div className={styles.metricLabel}>Volume difference</div>
+              <div className={styles.metricValue}>{metrics.volumeDifference.toFixed(1)}</div>
+            </div>
+            <div>
+              <div className={styles.metricLabel}>Avg height diff</div>
+              <div className={styles.metricValue}>{metrics.averageHeightDifference.toFixed(3)}</div>
+            </div>
+            <div>
+              <div className={styles.metricLabel}>Smoothed diff</div>
+              <div className={styles.metricValue}>{metrics.smoothedDifference.toFixed(2)}</div>
+            </div>
+            <div>
+              <div className={styles.metricLabel}>Status</div>
+              <div
+                className={`${styles.statusValue} ${metrics.isConverged ? styles.statusConverged : ''}`}
+              >
+                {metrics.isConverged ? 'Converged ✓' : isRunning ? 'Running…' : 'Not converged'}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Information panel */}
+        <div className={`info-panel ${styles.panel}`}>
+          <h3>About Dual Simulation Convergence</h3>
+          <p>
+            This demonstration runs two 6-vertex model simulations simultaneously with different
+            initial conditions (DWBC High and Low). The convergence tracking monitors when the
+            height functions of both simulations reach similar values, indicating that the systems
+            have equilibrated to comparable macroscopic states despite different starting
+            configurations.
+          </p>
+          <ul>
+            <li>
+              <strong>Volume</strong>: The total sum of all vertex heights in the lattice
+            </li>
+            <li>
+              <strong>Average Height</strong>: The mean height across all vertices
+            </li>
+            <li>
+              <strong>Convergence</strong>: Achieved when volume ratio exceeds 95% and remains
+              stable
+            </li>
+            <li>
+              <strong>Smoothed Difference</strong>: Moving average of volume differences to reduce
+              noise
+            </li>
+          </ul>
+        </div>
       </div>
-    </div>
+    </PageShell>
   );
 }

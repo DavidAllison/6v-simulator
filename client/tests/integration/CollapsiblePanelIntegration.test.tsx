@@ -1,16 +1,20 @@
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
+import { MemoryRouter } from 'react-router-dom';
 import MainSimulator from '../../src/MainSimulator';
 import { ThemeProvider } from '../../src/contexts/ThemeContext';
 
-// MainSimulator depends on ThemeContext (added in the dark-mode refactor),
-// so it must be rendered inside a ThemeProvider.
+// MainSimulator depends on ThemeContext (dark-mode refactor) and now on router
+// context (the preset bar navigates via useNavigate), so it must render inside
+// both a Router and a ThemeProvider.
 const renderSimulator = () =>
   render(
-    <ThemeProvider>
-      <MainSimulator />
-    </ThemeProvider>,
+    <MemoryRouter>
+      <ThemeProvider>
+        <MainSimulator />
+      </ThemeProvider>
+    </MemoryRouter>,
   );
 
 // Mock the simulation and renderer modules to avoid canvas errors in tests
