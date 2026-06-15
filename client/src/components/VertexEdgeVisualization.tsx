@@ -5,6 +5,8 @@
 
 import React from 'react';
 import { VertexType } from '../lib/six-vertex/types';
+import { getCurrentVertexColors } from '../lib/six-vertex/themeColors';
+import { useTheme } from '../hooks/useTheme';
 
 interface VertexEdgeVisualizationProps {
   vertexType: VertexType;
@@ -28,6 +30,10 @@ export const VertexEdgeVisualization: React.FC<VertexEdgeVisualizationProps> = (
   showArrows = false,
   showLabel = false,
 }) => {
+  // Subscribe to the theme so the diagram (and its vertex palette) re-renders
+  // when light/dark mode toggles.
+  useTheme();
+
   const strokeWidth = 2;
   const boldStrokeWidth = 5;
   const arrowSize = 8;
@@ -71,7 +77,7 @@ export const VertexEdgeVisualization: React.FC<VertexEdgeVisualizationProps> = (
           ${tipX - Math.cos(baseAngle1) * arrowSize},${tipY - Math.sin(baseAngle1) * arrowSize}
           ${tipX - Math.cos(baseAngle2) * arrowSize},${tipY - Math.sin(baseAngle2) * arrowSize}
         `}
-        fill="#333"
+        fill="var(--color-text-primary)"
       />
     );
   };
@@ -105,19 +111,17 @@ export const VertexEdgeVisualization: React.FC<VertexEdgeVisualizationProps> = (
 
   const boldEdges = getBoldEdges();
 
-  // Vertex type colors
-  const vertexColors = {
-    [VertexType.a1]: '#ff6b6b',
-    [VertexType.a2]: '#4ecdc4',
-    [VertexType.b1]: '#45b7d1',
-    [VertexType.b2]: '#96ceb4',
-    [VertexType.c1]: '#ffd93d',
-    [VertexType.c2]: '#c9a0ff',
-  };
+  // Canonical, theme-aware vertex palette shared with the Canvas renderer and
+  // the ControlPanel/StatisticsPanel legends (single source of truth).
+  const vertexColors = getCurrentVertexColors();
+
+  // Theme tokens for the diagram chrome (bold/thin edges, center point, border).
+  const boldEdgeColor = 'var(--color-text-primary)';
+  const thinEdgeColor = 'var(--color-text-muted)';
 
   return (
-    <div style={{ display: 'inline-block', margin: '5px' }}>
-      <svg width={size} height={size} style={{ border: '1px solid #ddd' }}>
+    <div style={{ display: 'inline-block', margin: 'var(--spacing-xs)' }}>
+      <svg width={size} height={size} style={{ border: '1px solid var(--color-border)' }}>
         {/* Background */}
         <rect
           x={0}
@@ -129,7 +133,7 @@ export const VertexEdgeVisualization: React.FC<VertexEdgeVisualizationProps> = (
         />
 
         {/* Center vertex point */}
-        <circle cx={center} cy={center} r={4} fill="#333" />
+        <circle cx={center} cy={center} r={4} fill={boldEdgeColor} />
 
         {/* Left edge */}
         <line
@@ -137,7 +141,7 @@ export const VertexEdgeVisualization: React.FC<VertexEdgeVisualizationProps> = (
           y1={center}
           x2={center - 4}
           y2={center}
-          stroke={boldEdges.left ? '#333' : '#999'}
+          stroke={boldEdges.left ? boldEdgeColor : thinEdgeColor}
           strokeWidth={boldEdges.left ? boldStrokeWidth : strokeWidth}
           strokeLinecap="round"
         />
@@ -149,7 +153,7 @@ export const VertexEdgeVisualization: React.FC<VertexEdgeVisualizationProps> = (
           y1={center}
           x2={size - padding}
           y2={center}
-          stroke={boldEdges.right ? '#333' : '#999'}
+          stroke={boldEdges.right ? boldEdgeColor : thinEdgeColor}
           strokeWidth={boldEdges.right ? boldStrokeWidth : strokeWidth}
           strokeLinecap="round"
         />
@@ -161,7 +165,7 @@ export const VertexEdgeVisualization: React.FC<VertexEdgeVisualizationProps> = (
           y1={padding}
           x2={center}
           y2={center - 4}
-          stroke={boldEdges.top ? '#333' : '#999'}
+          stroke={boldEdges.top ? boldEdgeColor : thinEdgeColor}
           strokeWidth={boldEdges.top ? boldStrokeWidth : strokeWidth}
           strokeLinecap="round"
         />
@@ -173,14 +177,23 @@ export const VertexEdgeVisualization: React.FC<VertexEdgeVisualizationProps> = (
           y1={center + 4}
           x2={center}
           y2={size - padding}
-          stroke={boldEdges.bottom ? '#333' : '#999'}
+          stroke={boldEdges.bottom ? boldEdgeColor : thinEdgeColor}
           strokeWidth={boldEdges.bottom ? boldStrokeWidth : strokeWidth}
           strokeLinecap="round"
         />
         {renderArrow(center, center, center, size - padding, config.bottom)}
       </svg>
       {showLabel && (
-        <div style={{ textAlign: 'center', fontSize: '12px', marginTop: '2px' }}>{vertexType}</div>
+        <div
+          style={{
+            textAlign: 'center',
+            fontSize: 'var(--font-size-xs)',
+            color: 'var(--color-text-primary)',
+            marginTop: '2px',
+          }}
+        >
+          {vertexType}
+        </div>
       )}
     </div>
   );

@@ -20,8 +20,8 @@
 
 /* Dark mode specific header styling */
 [data-theme='dark'] .app-header {
-  background: linear-gradient(135deg, #1f2937 0%, #374151 100%);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  background: linear-gradient(135deg, var(--color-bg-tertiary) 0%, var(--color-bg-quaternary) 100%);
+  border-bottom: 1px solid var(--color-border);
 }
 
 .header-content {
@@ -57,13 +57,9 @@
   color: var(--color-text-primary);
 }
 
-[data-theme='dark'] .app-header h1 {
-  color: white;
-}
-
 .header-info {
   font-size: 0.875rem;
-  color: rgba(255, 255, 255, 0.8);
+  color: var(--color-text-secondary);
   font-style: italic;
 }
 
@@ -88,15 +84,6 @@
   text-decoration: none;
 }
 
-[data-theme='dark'] .header-nav a {
-  color: rgba(255, 255, 255, 0.9);
-}
-
-[data-theme='dark'] .header-nav a:hover {
-  background-color: rgba(255, 255, 255, 0.1);
-  color: white;
-}
-
 /* Main Content - Using CSS Grid for equal-height columns */
 .main-content {
   display: grid;
@@ -115,6 +102,37 @@
 .panel-section {
   height: 100%;
   align-self: stretch;
+}
+
+/* Dismissible in-UI notice banner (replaces blocking alert() dialogs).
+   Spans the full width of the simulator's 3-column grid. */
+.simulator-alert {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--spacing-md);
+}
+
+.simulator-alert__message {
+  flex: 1;
+}
+
+.simulator-alert__dismiss {
+  flex: 0 0 auto;
+  background: transparent;
+  border: none;
+  color: inherit;
+  font-size: var(--font-size-xl);
+  line-height: 1;
+  padding: 0;
+  cursor: pointer;
+  opacity: 0.7;
+  transition: opacity var(--transition-fast);
+}
+
+.simulator-alert__dismiss:hover {
+  opacity: 1;
 }
 
 /* Animations */
@@ -196,7 +214,7 @@
 button:focus-visible,
 input:focus-visible,
 select:focus-visible {
-  outline: 2px solid #3b82f6;
+  outline: 2px solid var(--color-primary);
   outline-offset: 2px;
 }
 

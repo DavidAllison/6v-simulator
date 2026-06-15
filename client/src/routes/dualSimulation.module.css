@@ -1,0 +1,65 @@
+/* Dual-simulation route styling. Token-based so light/dark themes work for free. */
+
+.page {
+  padding: var(--spacing-xl);
+}
+
+.panel {
+  background: var(--panel-bg);
+  padding: var(--spacing-xl);
+  border-radius: var(--border-radius-lg);
+  margin-bottom: var(--spacing-xl);
+}
+
+.controlsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--spacing-md);
+}
+
+.weightsSection {
+  margin-top: var(--spacing-xl);
+}
+
+.weightsGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--spacing-sm);
+}
+
+.actionButtons {
+  margin-top: var(--spacing-xl);
+  display: flex;
+  gap: var(--spacing-sm);
+}
+
+.convergencePanel {
+  margin-top: var(--spacing-xl);
+  padding: var(--spacing-md) var(--spacing-xl);
+  background: var(--panel-bg);
+  border-radius: var(--border-radius-lg);
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: var(--spacing-sm);
+  align-items: center;
+}
+
+.metricLabel {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-secondary);
+}
+
+.metricValue {
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-semibold);
+}
+
+.statusValue {
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-secondary);
+}
+
+.statusConverged {
+  color: var(--color-success);
+}

@@ -5,6 +5,7 @@
   min-height: 100vh;
 }
 
+/* Header is an intentional always-dark banner (theme-independent) with inverse text. */
 .tests-page__header {
   background: linear-gradient(135deg, #1f2937 0%, #374151 100%);
   color: var(--color-text-inverse);
@@ -110,17 +111,17 @@
 
 .test-suite__status--passing {
   background-color: var(--color-success-light);
-  color: #155724;
+  color: var(--color-success);
 }
 
 .test-suite__status--failing {
   background-color: var(--color-danger-light);
-  color: #721c24;
+  color: var(--color-danger);
 }
 
 .test-suite__status--pending {
   background-color: var(--color-warning-light);
-  color: #856404;
+  color: var(--color-warning);
 }
 
 /* Test List */
@@ -196,7 +197,11 @@
   transform: none;
 }
 
-/* Test Results */
+/*
+ * Test Results is an intentional always-dark terminal surface (VS Code style),
+ * deliberately theme-independent so log output reads the same in both modes.
+ * The syntax-highlight colors below are part of that fixed terminal palette.
+ */
 .test-results {
   background-color: #1e1e1e;
   color: #d4d4d4;

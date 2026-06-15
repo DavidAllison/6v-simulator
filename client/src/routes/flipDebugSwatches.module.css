@@ -1,0 +1,41 @@
+/* Additional token-based classes for the flip debugger.
+ * Kept in a separate (new) module so the existing flipDebug.module.css is untouched.
+ * The six vertex-background classes mirror getCurrentVertexColors() but resolve
+ * through CSS custom properties so they react to theme changes automatically. */
+
+/* Table-cell vertex backgrounds (used in the 2x2-neighborhood change table). */
+.cellA1 {
+  background-color: var(--vertex-a1);
+}
+.cellA2 {
+  background-color: var(--vertex-a2);
+}
+.cellB1 {
+  background-color: var(--vertex-b1);
+}
+.cellB2 {
+  background-color: var(--vertex-b2);
+}
+.cellC1 {
+  background-color: var(--vertex-c1);
+}
+.cellC2 {
+  background-color: var(--vertex-c2);
+}
+
+/* SVG path/marker chrome — bold path segments and the central vertex dot. */
+.pathBold {
+  stroke: var(--color-text-primary);
+  stroke-width: 5;
+  stroke-linecap: round;
+}
+
+.pathThin {
+  stroke: var(--color-text-muted);
+  stroke-width: 1;
+  stroke-linecap: round;
+}
+
+.centerDot {
+  fill: var(--color-text-primary);
+}

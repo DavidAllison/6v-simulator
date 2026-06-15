@@ -4,6 +4,7 @@ import { DualSimulationDisplay } from '../components/DualSimulationDisplay';
 import type { DualSimulationConfig, ConvergenceMetrics } from '../lib/six-vertex/dualSimulation';
 import type { LatticeState } from '../lib/six-vertex/types';
 import '../App.css';
+import styles from './dualSimulation.module.css';
 
 export function DualSimulation() {
   const [size, setSize] = useState(16);
@@ -134,26 +135,11 @@ export function DualSimulation() {
   const cellSize = Math.min(20, 400 / size);
 
   return (
-    <div className="dual-simulation-page" style={{ padding: '20px' }}>
+    <div className={`dual-simulation-page ${styles.page}`}>
       <h1>Dual Simulation with Convergence Tracking</h1>
 
-      <div
-        className="control-panel"
-        style={{
-          background: 'var(--panel-bg)',
-          padding: '20px',
-          borderRadius: '8px',
-          marginBottom: '20px',
-        }}
-      >
-        <div
-          className="controls-grid"
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-            gap: '15px',
-          }}
-        >
+      <div className={`control-panel ${styles.panel}`}>
+        <div className={`controls-grid ${styles.controlsGrid}`}>
           {/* Size control */}
           <div className="control-group">
             <label>
@@ -213,16 +199,9 @@ export function DualSimulation() {
         </div>
 
         {/* Weight controls */}
-        <div className="weights-section" style={{ marginTop: '20px' }}>
+        <div className={`weights-section ${styles.weightsSection}`}>
           <h3>Vertex Weights</h3>
-          <div
-            className="weights-grid"
-            style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(3, 1fr)',
-              gap: '10px',
-            }}
-          >
+          <div className={`weights-grid ${styles.weightsGrid}`}>
             {Object.entries(weights).map(([type, value]) => (
               <label key={type}>
                 {type.toUpperCase()}: {value.toFixed(1)}
@@ -242,54 +221,24 @@ export function DualSimulation() {
         </div>
 
         {/* Action buttons */}
-        <div
-          className="action-buttons"
-          style={{
-            marginTop: '20px',
-            display: 'flex',
-            gap: '10px',
-          }}
-        >
+        <div className={`action-buttons ${styles.actionButtons}`}>
           <button
+            type="button"
             onClick={() => setIsRunning(!isRunning)}
-            style={{
-              padding: '10px 20px',
-              background: isRunning ? 'var(--red-500)' : 'var(--green-500)',
-              color: 'white',
-              border: 'none',
-              borderRadius: '6px',
-              cursor: 'pointer',
-            }}
+            className={`btn ${isRunning ? 'btn--danger' : 'btn--success'}`}
           >
             {isRunning ? 'Stop' : 'Start'}
           </button>
 
-          <button
-            onClick={handleReset}
-            style={{
-              padding: '10px 20px',
-              background: 'var(--blue-500)',
-              color: 'white',
-              border: 'none',
-              borderRadius: '6px',
-              cursor: 'pointer',
-            }}
-          >
+          <button type="button" onClick={handleReset} className="btn btn--primary">
             Reset
           </button>
 
           <button
+            type="button"
             onClick={handleSwapConfigs}
             disabled={isRunning}
-            style={{
-              padding: '10px 20px',
-              background: 'var(--purple-500)',
-              color: 'white',
-              border: 'none',
-              borderRadius: '6px',
-              cursor: 'pointer',
-              opacity: isRunning ? 0.5 : 1,
-            }}
+            className="btn btn--secondary"
           >
             Swap Configs
           </button>
@@ -306,53 +255,27 @@ export function DualSimulation() {
 
       {/* Live convergence metrics */}
       {metrics && (
-        <div
-          className="convergence-panel"
-          style={{
-            marginTop: '20px',
-            padding: '16px 20px',
-            background: 'var(--panel-bg)',
-            borderRadius: '8px',
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))',
-            gap: '12px',
-            alignItems: 'center',
-          }}
-        >
+        <div className={`convergence-panel ${styles.convergencePanel}`}>
           <div>
-            <div style={{ fontSize: '0.75rem', opacity: 0.7 }}>Convergence</div>
-            <div style={{ fontSize: '1.25rem', fontWeight: 600 }}>
-              {(metrics.volumeRatio * 100).toFixed(1)}%
-            </div>
+            <div className={styles.metricLabel}>Convergence</div>
+            <div className={styles.metricValue}>{(metrics.volumeRatio * 100).toFixed(1)}%</div>
           </div>
           <div>
-            <div style={{ fontSize: '0.75rem', opacity: 0.7 }}>Volume difference</div>
-            <div style={{ fontSize: '1.25rem', fontWeight: 600 }}>
-              {metrics.volumeDifference.toFixed(1)}
-            </div>
+            <div className={styles.metricLabel}>Volume difference</div>
+            <div className={styles.metricValue}>{metrics.volumeDifference.toFixed(1)}</div>
           </div>
           <div>
-            <div style={{ fontSize: '0.75rem', opacity: 0.7 }}>Avg height diff</div>
-            <div style={{ fontSize: '1.25rem', fontWeight: 600 }}>
-              {metrics.averageHeightDifference.toFixed(3)}
-            </div>
+            <div className={styles.metricLabel}>Avg height diff</div>
+            <div className={styles.metricValue}>{metrics.averageHeightDifference.toFixed(3)}</div>
           </div>
           <div>
-            <div style={{ fontSize: '0.75rem', opacity: 0.7 }}>Smoothed diff</div>
-            <div style={{ fontSize: '1.25rem', fontWeight: 600 }}>
-              {metrics.smoothedDifference.toFixed(2)}
-            </div>
+            <div className={styles.metricLabel}>Smoothed diff</div>
+            <div className={styles.metricValue}>{metrics.smoothedDifference.toFixed(2)}</div>
           </div>
           <div>
-            <div style={{ fontSize: '0.75rem', opacity: 0.7 }}>Status</div>
+            <div className={styles.metricLabel}>Status</div>
             <div
-              style={{
-                fontSize: '1rem',
-                fontWeight: 700,
-                color: metrics.isConverged
-                  ? 'var(--green-500, #22c55e)'
-                  : 'var(--text-secondary, #888)',
-              }}
+              className={`${styles.statusValue} ${metrics.isConverged ? styles.statusConverged : ''}`}
             >
               {metrics.isConverged ? 'Converged ✓' : isRunning ? 'Running…' : 'Not converged'}
             </div>
@@ -361,15 +284,7 @@ export function DualSimulation() {
       )}
 
       {/* Information panel */}
-      <div
-        className="info-panel"
-        style={{
-          marginTop: '20px',
-          padding: '20px',
-          background: 'var(--panel-bg)',
-          borderRadius: '8px',
-        }}
-      >
+      <div className={`info-panel ${styles.panel}`}>
         <h3>About Dual Simulation Convergence</h3>
         <p>
           This demonstration runs two 6-vertex model simulations simultaneously with different

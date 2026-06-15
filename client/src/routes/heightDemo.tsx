@@ -7,6 +7,7 @@ import { generateDWBCState } from '../lib/six-vertex/initialStates';
 import { calculateHeightFunction, type HeightData } from '../lib/six-vertex/heightFunction';
 import type { LatticeState, DWBCConfig } from '../lib/six-vertex/types';
 import '../App.css';
+import styles from './heightDemo.module.css';
 
 export function HeightDemo() {
   const [size, setSize] = useState(8);
@@ -73,27 +74,26 @@ export function HeightDemo() {
   const cellSize = Math.min(600 / size, 60);
 
   return (
-    <div className="height-demo" style={{ padding: '20px' }}>
+    <div className={`height-demo ${styles.page}`}>
       <h1>Height Function Visualization</h1>
 
-      <div className="controls" style={{ marginBottom: '20px' }}>
-        <div style={{ marginBottom: '10px' }}>
-          <label>
-            Size:
-            <input
-              type="range"
-              min="4"
-              max="24"
-              value={size}
-              onChange={(e) => setSize(Number(e.target.value))}
-              style={{ marginLeft: '10px', marginRight: '10px' }}
-            />
-            {size}×{size}
-          </label>
+      <div className={`controls ${styles.controls}`}>
+        <div className={styles.controlRow}>
+          <label htmlFor="height-size">Size: </label>
+          <input
+            id="height-size"
+            type="range"
+            min="4"
+            max="24"
+            value={size}
+            onChange={(e) => setSize(Number(e.target.value))}
+            className={styles.rangeInput}
+          />
+          {size}×{size}
         </div>
 
-        <div style={{ marginBottom: '10px' }}>
-          <label style={{ marginRight: '20px' }}>
+        <div className={styles.controlRow}>
+          <label className={styles.radioLabel}>
             <input
               type="radio"
               value="high"
@@ -113,21 +113,22 @@ export function HeightDemo() {
           </label>
         </div>
 
-        <div style={{ marginBottom: '10px' }}>
-          <label style={{ marginRight: '20px' }}>
+        <div className={styles.controlRow}>
+          <label className={styles.selectLabel} htmlFor="height-color-scale">
             Color Scale:
-            <select
-              value={colorScale}
-              onChange={(e) => setColorScale(e.target.value as 'blue' | 'heat' | 'grayscale')}
-              style={{ marginLeft: '10px' }}
-            >
-              <option value="heat">Heat Map</option>
-              <option value="blue">Blue Scale</option>
-              <option value="grayscale">Grayscale</option>
-            </select>
           </label>
+          <select
+            id="height-color-scale"
+            value={colorScale}
+            onChange={(e) => setColorScale(e.target.value as 'blue' | 'heat' | 'grayscale')}
+            className={styles.select}
+          >
+            <option value="heat">Heat Map</option>
+            <option value="blue">Blue Scale</option>
+            <option value="grayscale">Grayscale</option>
+          </select>
 
-          <label>
+          <label className={styles.selectLabel}>
             <input
               type="checkbox"
               checked={showValues}
@@ -137,12 +138,12 @@ export function HeightDemo() {
           </label>
         </div>
 
-        <button onClick={generateLattice} style={{ padding: '5px 15px' }}>
+        <button type="button" onClick={generateLattice} className="btn btn--secondary btn--small">
           Regenerate
         </button>
       </div>
 
-      <div className="stats" style={{ marginBottom: '20px' }}>
+      <div className={`stats ${styles.stats}`}>
         <h3>Statistics</h3>
         <p>Total Volume: {heightData.totalVolume.toFixed(2)}</p>
         <p>Average Height: {heightData.averageHeight.toFixed(3)}</p>
@@ -151,65 +152,66 @@ export function HeightDemo() {
         <p>Range: {heightData.maxHeight - heightData.minHeight}</p>
       </div>
 
-      <div className="height-grid" style={{ display: 'inline-block' }}>
+      <div className={`height-grid ${styles.heightGrid}`}>
         <h3>Height Function Heatmap</h3>
         <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: `repeat(${size}, ${cellSize}px)`,
-            gridTemplateRows: `repeat(${size}, ${cellSize}px)`,
-            gap: '1px',
-            backgroundColor: '#e0e0e0',
-            padding: '1px',
-            border: '2px solid #333',
-          }}
+          className={styles.heatmap}
+          style={
+            {
+              gridTemplateColumns: `repeat(${size}, ${cellSize}px)`,
+              gridTemplateRows: `repeat(${size}, ${cellSize}px)`,
+            } as React.CSSProperties
+          }
         >
           {heightData.heights.map((row, rowIdx) =>
-            row.map((height, colIdx) => (
-              <div
-                key={`${rowIdx}-${colIdx}`}
-                style={{
-                  width: cellSize,
-                  height: cellSize,
-                  backgroundColor: getHeightColor(
-                    height,
-                    heightData.minHeight,
-                    heightData.maxHeight,
-                  ),
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: cellSize > 30 && showValues ? `${Math.min(cellSize / 3, 14)}px` : '0',
-                  color: showValues ? '#fff' : 'transparent',
-                  fontWeight: 'bold',
-                  textShadow: showValues ? '1px 1px 2px rgba(0,0,0,0.8)' : 'none',
-                  border: '1px solid rgba(255,255,255,0.1)',
-                }}
-                title={`Position (${rowIdx},${colIdx}): Height = ${height}`}
-              >
-                {showValues && cellSize > 30 ? height : ''}
-              </div>
-            )),
+            row.map((height, colIdx) => {
+              const showCellValue = showValues && cellSize > 30;
+              return (
+                <div
+                  key={`${rowIdx}-${colIdx}`}
+                  className={`${styles.cell} ${showValues ? '' : styles['cell--hideValues']}`}
+                  style={
+                    {
+                      width: cellSize,
+                      height: cellSize,
+                      fontSize: showCellValue ? `${Math.min(cellSize / 3, 14)}px` : 0,
+                      '--cell-bg': getHeightColor(
+                        height,
+                        heightData.minHeight,
+                        heightData.maxHeight,
+                      ),
+                    } as React.CSSProperties
+                  }
+                  title={`Position (${rowIdx},${colIdx}): Height = ${height}`}
+                >
+                  {showCellValue ? height : ''}
+                </div>
+              );
+            }),
           )}
         </div>
 
         {/* Color scale legend */}
-        <div style={{ marginTop: '20px' }}>
+        <div className={styles.legend}>
           <h4>Color Scale</h4>
           <div
-            style={{
-              width: '300px',
-              height: '30px',
-              background: `linear-gradient(to right, ${Array.from({ length: 20 }, (_, i) => {
-                const normalized = i / 19;
-                const value =
-                  heightData.minHeight + normalized * (heightData.maxHeight - heightData.minHeight);
-                return getHeightColor(value, heightData.minHeight, heightData.maxHeight);
-              }).join(', ')})`,
-              border: '1px solid #333',
-            }}
+            className={styles.legendBar}
+            style={
+              {
+                '--legend-gradient': `linear-gradient(to right, ${Array.from(
+                  { length: 20 },
+                  (_, i) => {
+                    const normalized = i / 19;
+                    const value =
+                      heightData.minHeight +
+                      normalized * (heightData.maxHeight - heightData.minHeight);
+                    return getHeightColor(value, heightData.minHeight, heightData.maxHeight);
+                  },
+                ).join(', ')})`,
+              } as React.CSSProperties
+            }
           />
-          <div style={{ display: 'flex', justifyContent: 'space-between', width: '300px' }}>
+          <div className={styles.legendScale}>
             <span>{heightData.minHeight}</span>
             <span>{((heightData.minHeight + heightData.maxHeight) / 2).toFixed(1)}</span>
             <span>{heightData.maxHeight}</span>
@@ -217,14 +219,14 @@ export function HeightDemo() {
         </div>
       </div>
 
-      <div style={{ marginTop: '30px' }}>
+      <div className={styles.about}>
         <h3>About the Height Function</h3>
-        <p style={{ maxWidth: '600px', lineHeight: '1.6' }}>
+        <p className={styles.prose}>
           The height function is a fundamental concept in the 6-vertex model. It is calculated by
           counting specific edge crossings when traveling from the origin (0,0) to each vertex.
           Specifically:
         </p>
-        <ul style={{ maxWidth: '600px', lineHeight: '1.6' }}>
+        <ul className={styles.prose}>
           <li>When an edge points LEFT into a vertex, the height increases by +1</li>
           <li>When an edge points DOWN into a vertex, the height increases by +1</li>
           <li>The total volume is the sum of all vertex heights</li>
@@ -232,7 +234,7 @@ export function HeightDemo() {
             The height function provides insight into the macroscopic properties of the system
           </li>
         </ul>
-        <p style={{ maxWidth: '600px', lineHeight: '1.6' }}>
+        <p className={styles.prose}>
           In DWBC (Domain Wall Boundary Conditions), the height function exhibits characteristic
           patterns that differ between the "high" and "low" configurations, reflecting the
           underlying vertex arrangements.

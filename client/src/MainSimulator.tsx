@@ -31,6 +31,7 @@ function MainSimulator() {
 
   // Simulation state
   const [isRunning, setIsRunning] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [stats, setStats] = useState<SimulationStats | null>(null);
   const [latticeState, setLatticeState] = useState<LatticeState | null>(null);
   const [latticeSize, setLatticeSize] = useState(10);
@@ -132,7 +133,7 @@ function MainSimulator() {
     } catch (error) {
       console.error('Failed to initialize simulation:', error);
       // Show error in UI instead of crashing
-      alert(`Failed to initialize simulation: ${error}`);
+      setErrorMessage(`Failed to initialize simulation: ${error}`);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [latticeSize, temperature, boundaryCondition, dwbcType, seed]);
@@ -193,7 +194,7 @@ function MainSimulator() {
       }
     } catch (error) {
       console.error('Error during step:', error);
-      alert(`Error during step: ${error}`);
+      setErrorMessage(`Error during step: ${error}`);
     }
   }, []);
 
@@ -351,7 +352,7 @@ function MainSimulator() {
         console.log('Simulation loaded successfully');
       } catch (error) {
         console.error('Failed to load simulation data:', error);
-        alert('Failed to load simulation. Please check the console for details.');
+        setErrorMessage('Failed to load simulation. Please check the console for details.');
       }
     },
     [isRunning, handlePause],
@@ -376,6 +377,19 @@ function MainSimulator() {
 
   return (
     <div className="main-content">
+      {errorMessage && (
+        <div className="alert alert--danger simulator-alert" role="alert">
+          <span className="simulator-alert__message">{errorMessage}</span>
+          <button
+            type="button"
+            className="simulator-alert__dismiss"
+            aria-label="Dismiss notification"
+            onClick={() => setErrorMessage(null)}
+          >
+            &times;
+          </button>
+        </div>
+      )}
       <CollapsiblePanel title="Controls" side="left" className="panel-section">
         <ControlPanel
           isRunning={isRunning}
@@ -409,7 +423,7 @@ function MainSimulator() {
                 if (simulationRef.current) {
                   setIsRunning(true);
                 } else {
-                  alert('Failed to initialize simulation. Please try resetting.');
+                  setErrorMessage('Failed to initialize simulation. Please try resetting.');
                 }
               }, 100);
             } else {
