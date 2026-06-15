@@ -370,7 +370,14 @@ export class PathRenderer {
   }
 
   /**
-   * Draw arrows on edges
+   * Draw arrows showing the flow direction on every edge.
+   *
+   * Each arrow is drawn directly from a vertex's `configuration` (the
+   * authoritative ice-rule in/out state, always present on both the standard and
+   * optimized engines) as a half-edge from the vertex centre to the edge
+   * midpoint. An `In` edge points toward the vertex; an `Out` edge points away.
+   * Reading the configuration directly keeps the arrows correct and live as the
+   * simulation steps, and avoids degenerate zero-length segments.
    */
   private drawArrows(state: LatticeState): void {
     // Use semi-transparent arrows when overlaying on paths
@@ -380,48 +387,33 @@ export class PathRenderer {
         : this.config.colors.arrow;
     this.ctx.fillStyle = this.ctx.strokeStyle;
     this.ctx.lineWidth = this.config.lineWidth;
+    this.ctx.setLineDash([]);
 
-    // Derive edge arrays from vertex configurations when the provided arrays are
-    // empty (e.g. states produced by the optimized simulation engine).
-    const { horizontalEdges, verticalEdges } = this.ensureEdges(state);
+    const cell = this.config.cellSize;
+    const half = cell / 2;
 
-    // Draw horizontal arrows
     for (let row = 0; row < state.height; row++) {
-      for (let col = 0; col <= state.width; col++) {
-        const edgeState = horizontalEdges[row][col];
-        if (edgeState !== undefined) {
-          const x1 = col * this.config.cellSize + this.config.cellSize / 2;
-          const x2 = (col + 1) * this.config.cellSize - this.config.cellSize / 2;
-          const y = (row + 1) * this.config.cellSize;
-
-          if (edgeState === EdgeState.In) {
-            // Arrow points right
-            this.drawArrow(x1, y, x2, y);
-          } else {
-            // Arrow points left
-            this.drawArrow(x2, y, x1, y);
-          }
-        }
-      }
-    }
-
-    // Draw vertical arrows
-    for (let row = 0; row <= state.height; row++) {
       for (let col = 0; col < state.width; col++) {
-        const edgeState = verticalEdges[row][col];
-        if (edgeState !== undefined) {
-          const x = (col + 1) * this.config.cellSize;
-          const y1 = row * this.config.cellSize + this.config.cellSize / 2;
-          const y2 = (row + 1) * this.config.cellSize - this.config.cellSize / 2;
+        const { configuration } = state.vertices[row][col];
+        const cx = (col + 1) * cell;
+        const cy = (row + 1) * cell;
 
-          if (edgeState === EdgeState.In) {
-            // Arrow points down
-            this.drawArrow(x, y1, x, y2);
-          } else {
-            // Arrow points up
-            this.drawArrow(x, y2, x, y1);
-          }
-        }
+        // For each edge: Out points away from the vertex, In points toward it.
+        // Right edge (horizontal, to the right of the vertex centre).
+        if (configuration.right === EdgeState.Out) this.drawArrow(cx, cy, cx + half, cy);
+        else this.drawArrow(cx + half, cy, cx, cy);
+
+        // Left edge.
+        if (configuration.left === EdgeState.Out) this.drawArrow(cx, cy, cx - half, cy);
+        else this.drawArrow(cx - half, cy, cx, cy);
+
+        // Top edge.
+        if (configuration.top === EdgeState.Out) this.drawArrow(cx, cy, cx, cy - half);
+        else this.drawArrow(cx, cy - half, cx, cy);
+
+        // Bottom edge.
+        if (configuration.bottom === EdgeState.Out) this.drawArrow(cx, cy, cx, cy + half);
+        else this.drawArrow(cx, cy + half, cx, cy);
       }
     }
   }

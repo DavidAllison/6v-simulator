@@ -2,6 +2,8 @@ import { useRef, useEffect } from 'react';
 import type { LatticeState } from '../lib/six-vertex/types';
 import { PathRenderer } from '../lib/six-vertex/renderer/pathRenderer';
 import { RenderMode } from '../lib/six-vertex/types';
+import { getThemeColors } from '../lib/six-vertex/themeColors';
+import { useTheme } from '../hooks/useTheme';
 import { PanZoomCanvas } from './PanZoomCanvas';
 import './DualSimulationDisplay.css';
 
@@ -25,6 +27,13 @@ export function DualSimulationDisplay({
   const canvasARef = useRef<HTMLCanvasElement>(null);
   const canvasBRef = useRef<HTMLCanvasElement>(null);
 
+  // Theme-aware canvas colors so the lattices match the page in dark mode
+  // (otherwise they render on a stark white background). Depend on the boolean,
+  // not the freshly-built colors object, to avoid re-creating the renderer every
+  // render.
+  const { theme } = useTheme();
+  const isDark = theme === 'dark';
+
   // Render each lattice once at a fixed natural resolution; PanZoomCanvas owns
   // fit-to-screen and any subsequent pan/zoom via a CSS transform.
   const naturalCell = Math.max(baseCellSize, MIN_NATURAL_CELL);
@@ -34,18 +43,20 @@ export function DualSimulationDisplay({
     const renderer = new PathRenderer(canvasARef.current, {
       cellSize: naturalCell,
       mode: showArrows ? RenderMode.Arrows : RenderMode.Paths,
+      colors: getThemeColors(isDark),
     });
     renderer.render(latticeA);
-  }, [latticeA, showArrows, naturalCell]);
+  }, [latticeA, showArrows, naturalCell, isDark]);
 
   useEffect(() => {
     if (!latticeB || !canvasBRef.current) return;
     const renderer = new PathRenderer(canvasBRef.current, {
       cellSize: naturalCell,
       mode: showArrows ? RenderMode.Arrows : RenderMode.Paths,
+      colors: getThemeColors(isDark),
     });
     renderer.render(latticeB);
-  }, [latticeB, showArrows, naturalCell]);
+  }, [latticeB, showArrows, naturalCell, isDark]);
 
   if (!latticeA || !latticeB) {
     return (

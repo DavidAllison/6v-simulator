@@ -44,8 +44,8 @@ class MockCanvasContext {
   strokeRect(): void {}
   beginPath(): void {}
   closePath(): void {}
-  moveTo(): void {}
-  lineTo(): void {}
+  moveTo(_x?: number, _y?: number): void {}
+  lineTo(_x?: number, _y?: number): void {}
   quadraticCurveTo(): void {}
   bezierCurveTo(): void {}
   arc(): void {}
@@ -86,6 +86,37 @@ function withEmptyEdges(state: LatticeState): LatticeState {
 
 const oppositeOf = (e: EdgeState): EdgeState => (e === EdgeState.In ? EdgeState.Out : EdgeState.In);
 
+/**
+ * Recording context that captures every line segment (moveTo -> lineTo) so tests
+ * can assert what was actually drawn. Used to lock the arrow geometry: arrows
+ * must be non-degenerate and must reflect the per-vertex configuration.
+ */
+class RecordingContext extends MockCanvasContext {
+  segments: Array<{ x1: number; y1: number; x2: number; y2: number }> = [];
+  private cx = 0;
+  private cy = 0;
+  override moveTo(x = 0, y = 0): void {
+    this.cx = x;
+    this.cy = y;
+  }
+  override lineTo(x = 0, y = 0): void {
+    this.segments.push({ x1: this.cx, y1: this.cy, x2: x, y2: y });
+    this.cx = x;
+    this.cy = y;
+  }
+}
+
+class RecordingCanvas extends MockCanvas {
+  override context: RecordingContext;
+  constructor() {
+    super();
+    this.context = new RecordingContext(this);
+  }
+  override getContext(type: string): RecordingContext | null {
+    return type === '2d' ? this.context : null;
+  }
+}
+
 describe('arrow rendering with empty edge arrays (optimized engine states)', () => {
   it('does not throw in Arrows mode for a DWBC High state with empty edges', () => {
     const { renderer } = makeRenderer({ mode: RenderMode.Arrows });
@@ -105,6 +136,41 @@ describe('arrow rendering with empty edge arrays (optimized engine states)', () 
   it('still renders Arrows mode when edge arrays are populated', () => {
     const { renderer } = makeRenderer({ mode: RenderMode.Arrows });
     expect(() => renderer.render(generateDWBCHigh(8))).not.toThrow();
+  });
+
+  // --- Regression: arrows must reflect state and not be degenerate ---------
+  // A prior bug computed horizontal arrow endpoints as
+  //   x1 = col*cell + cell/2,  x2 = (col+1)*cell - cell/2  (== x1)
+  // so every arrow was a zero-length segment that drawArrow() rendered as a
+  // fixed-orientation arrowhead, identical for every edge regardless of In/Out.
+  // Result: a uniform arrow field that never changed as the simulation stepped.
+  function renderArrowSegments(state: LatticeState) {
+    const canvas = new RecordingCanvas();
+    const renderer = new PathRenderer(canvas as unknown as HTMLCanvasElement, {
+      mode: RenderMode.Arrows,
+      cellSize: 20,
+    });
+    renderer.render(state);
+    return canvas.context.segments;
+  }
+
+  it('draws non-degenerate arrow shafts (not zero-length segments)', () => {
+    const segments = renderArrowSegments(withEmptyEdges(generateDWBCHigh(8)));
+    const nonDegenerate = segments.filter((s) => s.x1 !== s.x2 || s.y1 !== s.y2);
+    expect(nonDegenerate.length).toBeGreaterThan(0);
+    // There must be genuinely horizontal shafts (y constant, x varying) and
+    // vertical shafts (x constant, y varying) — the degenerate bug had neither.
+    expect(segments.some((s) => s.y1 === s.y2 && Math.abs(s.x1 - s.x2) > 1)).toBe(true);
+    expect(segments.some((s) => s.x1 === s.x2 && Math.abs(s.y1 - s.y2) > 1)).toBe(true);
+  });
+
+  it('produces different arrows for different configurations (not a frozen field)', () => {
+    const high = renderArrowSegments(withEmptyEdges(generateDWBCHigh(8)));
+    const low = renderArrowSegments(withEmptyEdges(generateDWBCLow(8)));
+    const key = (segs: typeof high) => segs.map((s) => `${s.x1},${s.y1},${s.x2},${s.y2}`).join('|');
+    // DWBC High and Low have different vertex configurations, so their arrow
+    // fields must differ. The degenerate bug rendered both identically.
+    expect(key(high)).not.toBe(key(low));
   });
 
   it('reconstructs edges via the canonical inverse mapping from initialStates.ts', () => {
