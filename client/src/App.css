@@ -254,15 +254,11 @@
 }
 
 @media (max-width: 1200px) {
-  /* Stack the work columns; each panel and the canvas take full width. */
+  /* Stack the work columns; the canvas takes full width. Panel widths are
+     handled in CollapsiblePanel.css (after their base .left/.right rules, so
+     the full-width override wins the cascade). */
   .simulator-workspace {
     flex-direction: column;
-  }
-
-  .collapsible-panel.left,
-  .collapsible-panel.right {
-    width: 100%;
-    min-width: 0;
   }
 }
 
