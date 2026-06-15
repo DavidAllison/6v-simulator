@@ -422,63 +422,68 @@ function MainSimulator() {
       )}
       <IntroPanel />
       <PresetBar onApplyPreset={handleApplyPreset} />
-      <CollapsiblePanel title="Controls" side="left" className="panel-section">
-        <ControlPanel
-          isRunning={isRunning}
-          latticeSize={latticeSize}
-          temperature={temperature}
-          seed={seed}
-          boundaryCondition={boundaryCondition}
-          dwbcType={dwbcType}
-          weights={weights}
-          renderMode={renderMode}
-          showGrid={showGrid}
-          animateFlips={animateFlips}
-          stepsPerFrame={stepsPerFrame}
-          onLatticeSizeChange={setLatticeSize}
-          onTemperatureChange={setTemperature}
-          onSeedChange={setSeed}
-          onBoundaryConditionChange={setBoundaryCondition}
-          onDwbcTypeChange={setDwbcType}
-          onWeightChange={handleWeightChange}
-          onRenderModeChange={setRenderMode}
-          onShowGridChange={setShowGrid}
-          onAnimateFlipsChange={setAnimateFlips}
-          onStepsPerFrameChange={setStepsPerFrame}
-          onStep={handleStep}
-          onRun={() => {
-            if (!simulationRef.current) {
-              console.error('Simulation not initialized');
-              initializeSimulation();
-              // Wait a bit for initialization then try to run
-              setTimeout(() => {
-                if (simulationRef.current) {
-                  setIsRunning(true);
-                } else {
-                  setErrorMessage('Failed to initialize simulation. Please try resetting.');
-                }
-              }, 100);
-            } else {
-              setIsRunning(true);
-            }
-          }}
-          onPause={handlePause}
-          onReset={handleReset}
-          onExportImage={handleExportImage}
+      <div className="simulator-workspace">
+        <CollapsiblePanel title="Controls" side="left" className="panel-section">
+          <ControlPanel
+            isRunning={isRunning}
+            latticeSize={latticeSize}
+            temperature={temperature}
+            seed={seed}
+            boundaryCondition={boundaryCondition}
+            dwbcType={dwbcType}
+            weights={weights}
+            renderMode={renderMode}
+            showGrid={showGrid}
+            animateFlips={animateFlips}
+            stepsPerFrame={stepsPerFrame}
+            onLatticeSizeChange={setLatticeSize}
+            onTemperatureChange={setTemperature}
+            onSeedChange={setSeed}
+            onBoundaryConditionChange={setBoundaryCondition}
+            onDwbcTypeChange={setDwbcType}
+            onWeightChange={handleWeightChange}
+            onRenderModeChange={setRenderMode}
+            onShowGridChange={setShowGrid}
+            onAnimateFlipsChange={setAnimateFlips}
+            onStepsPerFrameChange={setStepsPerFrame}
+            onStep={handleStep}
+            onRun={() => {
+              if (!simulationRef.current) {
+                console.error('Simulation not initialized');
+                initializeSimulation();
+                // Wait a bit for initialization then try to run
+                setTimeout(() => {
+                  if (simulationRef.current) {
+                    setIsRunning(true);
+                  } else {
+                    setErrorMessage('Failed to initialize simulation. Please try resetting.');
+                  }
+                }, 100);
+              } else {
+                setIsRunning(true);
+              }
+            }}
+            onPause={handlePause}
+            onReset={handleReset}
+            onExportImage={handleExportImage}
+          />
+        </CollapsiblePanel>
+
+        <VisualizationCanvas
+          renderer={rendererRef.current}
+          latticeState={latticeState}
+          onRendererReady={handleRendererReady}
+          renderConfig={renderConfig}
         />
-      </CollapsiblePanel>
 
-      <VisualizationCanvas
-        renderer={rendererRef.current}
-        latticeState={latticeState}
-        onRendererReady={handleRendererReady}
-        renderConfig={renderConfig}
-      />
-
-      <CollapsiblePanel title="Info" side="right" className="panel-section">
-        <StatisticsPanel stats={stats} fps={fps} />
-        <SaveLoadPanel getCurrentData={getCurrentSimulationData} onLoadData={loadSimulationData} />
-      </CollapsiblePanel>
+        <CollapsiblePanel title="Info" side="right" className="panel-section">
+          <StatisticsPanel stats={stats} fps={fps} />
+          <SaveLoadPanel
+            getCurrentData={getCurrentSimulationData}
+            onLoadData={loadSimulationData}
+          />
+        </CollapsiblePanel>
+      </div>
     </div>
   );
 }

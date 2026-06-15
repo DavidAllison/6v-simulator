@@ -113,7 +113,10 @@
 .panel-content {
   flex: 1;
   width: 100%;
-  overflow: hidden;
+  /* Scroll the panel's own content when it is taller than the workspace row,
+     instead of growing the whole page. */
+  overflow-y: auto;
+  overflow-x: hidden;
   background: transparent;
   border-radius: 0;
   box-shadow: none;
@@ -146,6 +149,16 @@
   .collapsible-panel {
     width: 100%;
     min-width: unset;
+    max-width: none;
+  }
+
+  /* The base .left/.right rules pin width to 300px at (0,2,0) specificity; this
+     same-specificity override is declared later in this file, so it wins and the
+     stacked panels fill the column width on tablet/mobile. */
+  .collapsible-panel.left,
+  .collapsible-panel.right {
+    width: 100%;
+    min-width: 0;
     max-width: none;
   }
 

@@ -133,6 +133,10 @@
   --vertex-b2: #56b4e9;
   --vertex-c1: #009e73;
   --vertex-c2: #cc79a7;
+
+  /* Approximate height of the sticky app header; used to pin the simulator
+     workspace to the remaining viewport height (see App.css .main-content). */
+  --app-header-height: 70px;
 }
 
 /* Dark Theme */
