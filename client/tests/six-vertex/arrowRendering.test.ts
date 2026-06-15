@@ -181,11 +181,10 @@ describe('arrow rendering with empty edge arrays (optimized engine states)', () 
     //   top    = oppositeOf(verticalEdges[r][c])       -> V[0][c]     = oppositeOf(top)
     //   bottom = verticalEdges[r + 1][c]               -> V[r + 1][c] = bottom
     //
-    // Note: DWBC vertex configurations are per-vertex Fig.1 configs and are NOT
-    // globally edge-consistent between neighbors (a vertex's left edge does not
-    // generally equal oppositeOf its left neighbor's right edge). So we verify
-    // each edge against the SOURCE vertex the inverse derives it from, not a
-    // round-trip through all four edges of every vertex.
+    // We verify each reconstructed edge against the SOURCE vertex the inverse
+    // derives it from (each vertex's own right/bottom, and boundary left/top),
+    // which is exactly what ensureEdges consumes — rather than round-tripping
+    // through all four edges of every vertex.
     const reference = generateDWBCLow(6);
     const stripped = withEmptyEdges(reference);
 
