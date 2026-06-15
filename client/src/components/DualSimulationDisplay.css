@@ -1,20 +1,21 @@
 .dual-simulation-display {
   width: 100%;
-  /* Concrete height so the two lattice canvases have room to render. The route
+  /* Side by side (as the heading promises) so both lattices are visible at once
+     and each box stays near-square — a square lattice then fills it instead of
+     floating in a wide, short letterbox. Concrete height because the route
      places this in normal page flow, so height:100% would collapse to ~0. */
-  height: min(78vh, 820px);
+  height: clamp(360px, 56vh, 620px);
   display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
+  flex-direction: row;
+  gap: 1rem;
   padding: 0.5rem;
   background: transparent;
   box-sizing: border-box;
-  min-height: 480px;
   overflow: hidden;
   position: relative;
 }
 
-/* Individual simulation container - exactly 50% height each */
+/* Individual simulation container - equal share of the row */
 .simulation-container {
   flex: 1 1 0; /* Each container takes equal space */
   display: flex;
@@ -24,6 +25,7 @@
   border-radius: 0.5rem;
   overflow: hidden;
   min-height: 0;
+  min-width: 0; /* allow shrink in the row layout */
   box-sizing: border-box;
   position: relative;
 }
@@ -94,11 +96,17 @@
   border-color: var(--color-border-dark);
 }
 
-/* Mobile responsive */
+/* Mobile responsive: stack the two simulations, since side-by-side is too narrow. */
 @media (max-width: 768px) {
   .dual-simulation-display {
-    gap: 0.25rem;
+    flex-direction: column;
+    height: auto;
+    gap: 0.5rem;
     padding: 0.25rem;
+  }
+
+  .simulation-container {
+    min-height: 320px;
   }
 
   .simulation-label {

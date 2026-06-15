@@ -150,7 +150,10 @@
 
 .nav-link.active {
   color: var(--color-primary);
-  background: var(--color-primary-light);
+  /* Translucent tint over the page background keeps the active label readable in
+     both themes (solid --color-primary-light is near-primary in dark → low
+     contrast). */
+  background: color-mix(in srgb, var(--color-primary) 14%, transparent);
   border-bottom-color: var(--color-primary);
 }
 
