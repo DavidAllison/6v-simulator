@@ -9,7 +9,11 @@ import {
   getAllFlippablePositions,
   getWeightRatio,
 } from '../../src/lib/six-vertex/physicsFlips';
-import { generateRandomIceState, validateIceRule } from '../../src/lib/six-vertex/initialStates';
+import {
+  generateDWBCHigh,
+  generateRandomIceState,
+  validateIceRule,
+} from '../../src/lib/six-vertex/initialStates';
 import { VertexType, LatticeState } from '../../src/lib/six-vertex/types';
 import { SeededRNG } from '../../src/lib/six-vertex/rng';
 
@@ -25,6 +29,7 @@ function runSimulation(
 ): {
   vertexFrequencies: Map<VertexType, number>;
   acceptanceRate: number;
+  acceptedMoves: number;
   finalState: LatticeState;
 } {
   let state = initialState;
@@ -85,13 +90,20 @@ function runSimulation(
   return {
     vertexFrequencies,
     acceptanceRate: attemptedMoves > 0 ? acceptedMoves / attemptedMoves : 0,
+    acceptedMoves,
     finalState: state,
   };
 }
 
 describe('Equilibrium Distribution Tests', () => {
-  describe('Small Lattice Convergence (N=2)', () => {
-    it('should converge to uniform distribution with equal weights', () => {
+  // NOTE: The 2x2 corner-flip dynamics are effectively frozen on tiny lattices
+  // (N=2 random ice states have 0 flippable plaquettes; N=2 DWBC has only 1),
+  // so the Markov chain never mixes there and statistical tests are vacuous.
+  // These tests therefore run on N=8 starting from generateDWBCHigh (a state
+  // on the flip manifold with ~N-1 flippable plaquettes), which mixes well.
+  describe('Lattice Convergence (N=8)', () => {
+    it('should converge to a spread-out distribution with equal weights', () => {
+      const N = 8;
       const rng = new SeededRNG(42);
       const weights: Record<VertexType, number> = {
         [VertexType.a1]: 1,
@@ -102,30 +114,34 @@ describe('Equilibrium Distribution Tests', () => {
         [VertexType.c2]: 1,
       };
 
-      const initialState = generateRandomIceState(2, 2, 12345);
-      const { vertexFrequencies, acceptanceRate } = runSimulation(
+      const initialState = generateDWBCHigh(N);
+      const { vertexFrequencies, acceptedMoves, finalState } = runSimulation(
         initialState,
         weights,
-        50000,
+        60000,
         rng,
-        5000,
+        10000,
       );
 
-      // With equal weights, expect roughly uniform distribution
-      // But ice rule constraints mean not all types appear equally
-      for (const [type, frequency] of vertexFrequencies) {
-        // Each type should appear with non-zero frequency
+      // Sanity: the chain must actually move, otherwise the test is vacuous.
+      // (A frozen chain would report 0 accepted moves and a single vertex type.)
+      expect(acceptedMoves).toBeGreaterThan(1000);
+      expect(vertexFrequencies.size).toBeGreaterThanOrEqual(5);
+      expect(validateIceRule(finalState)).toBe(true);
+
+      // With equal weights, expect a spread-out distribution.
+      // Ice rule constraints mean not all types appear equally, but no single
+      // type should dominate.
+      for (const [, frequency] of vertexFrequencies) {
+        // Each type that appears should do so with non-zero frequency
         expect(frequency).toBeGreaterThan(0);
         // But not dominate
         expect(frequency).toBeLessThan(0.5);
       }
-
-      // Should have reasonable acceptance rate
-      expect(acceptanceRate).toBeGreaterThan(0.3);
-      expect(acceptanceRate).toBeLessThan(1.0);
     });
 
     it('should favor high-weight vertices', () => {
+      const N = 8;
       const rng = new SeededRNG(43);
       const weights: Record<VertexType, number> = {
         [VertexType.a1]: 1,
@@ -136,10 +152,19 @@ describe('Equilibrium Distribution Tests', () => {
         [VertexType.c2]: 10, // High weight
       };
 
-      const initialState = generateRandomIceState(2, 2, 12346);
-      const { vertexFrequencies } = runSimulation(initialState, weights, 50000, rng, 5000);
+      const initialState = generateDWBCHigh(N);
+      const { vertexFrequencies, acceptedMoves } = runSimulation(
+        initialState,
+        weights,
+        60000,
+        rng,
+        10000,
+      );
 
-      // c vertices should appear more frequently
+      // Sanity: the chain must actually move.
+      expect(acceptedMoves).toBeGreaterThan(1000);
+
+      // c vertices (weight 10) should appear more frequently than a vertices (weight 1)
       const cFrequency =
         (vertexFrequencies.get(VertexType.c1) || 0) + (vertexFrequencies.get(VertexType.c2) || 0);
       const aFrequency =
@@ -186,6 +211,7 @@ describe('Equilibrium Distribution Tests', () => {
     });
 
     it('should show temperature dependence', () => {
+      const N = 8;
       const rng1 = new SeededRNG(45);
       const rng2 = new SeededRNG(45);
 
@@ -209,19 +235,24 @@ describe('Equilibrium Distribution Tests', () => {
         [VertexType.c2]: 100,
       };
 
-      const initialState = generateRandomIceState(3, 3, 12348);
+      // Start both chains from the same mixing state (on the flip manifold).
+      const initialState = generateDWBCHigh(N);
 
-      const highTempResult = runSimulation(initialState, highTempWeights, 50000, rng1, 5000);
+      const highTempResult = runSimulation(initialState, highTempWeights, 60000, rng1, 10000);
 
-      const lowTempResult = runSimulation(initialState, lowTempWeights, 50000, rng2, 5000);
+      const lowTempResult = runSimulation(initialState, lowTempWeights, 60000, rng2, 10000);
 
-      // Low temperature should have more peaked distribution
+      // Sanity: the high-temperature chain must actually move (the low-temperature
+      // chain is allowed to mostly reject, which is the physical point of the test).
+      expect(highTempResult.acceptedMoves).toBeGreaterThan(1000);
+
+      // Low temperature should have a more peaked (lower-entropy) distribution.
       const highTempEntropy = calculateEntropy(highTempResult.vertexFrequencies);
       const lowTempEntropy = calculateEntropy(lowTempResult.vertexFrequencies);
 
       expect(lowTempEntropy).toBeLessThan(highTempEntropy);
 
-      // Low temperature should have lower acceptance rate
+      // Low temperature should have a lower acceptance rate (down-weight moves rejected).
       expect(lowTempResult.acceptanceRate).toBeLessThan(highTempResult.acceptanceRate);
     });
   });
@@ -238,13 +269,17 @@ describe('Equilibrium Distribution Tests', () => {
         [VertexType.c2]: 3,
       };
 
-      const initialState = generateRandomIceState(2, 2, 12349);
+      const initialState = generateDWBCHigh(8);
 
       // Run to equilibrium
       const equilibriumResult = runSimulation(initialState, weights, 20000, rng, 10000);
 
+      // Sanity: equilibration must have actually moved the chain.
+      expect(equilibriumResult.acceptedMoves).toBeGreaterThan(1000);
+
       // Now measure transition rates from equilibrium
       const transitionCounts = new Map<string, number>();
+      let totalTransitions = 0;
       let state = equilibriumResult.finalState;
 
       for (let step = 0; step < 10000; step++) {
@@ -279,14 +314,17 @@ describe('Equilibrium Distribution Tests', () => {
             const afterTypes = getStateSignature(state);
             const transitionKey = `${beforeTypes}->${afterTypes}`;
             transitionCounts.set(transitionKey, (transitionCounts.get(transitionKey) || 0) + 1);
+            totalTransitions++;
           }
         }
       }
 
-      // Transitions should be roughly balanced in equilibrium
-      // This is a weak test - full detailed balance verification would require
-      // enumerating all states, which is not practical
-      expect(transitionCounts.size).toBeGreaterThan(0);
+      // Detailed balance can only be probed if the chain explores many states.
+      // Full detailed balance verification would require enumerating all states,
+      // which is not practical; instead we require that the chain genuinely
+      // explored a rich set of transitions (a frozen chain would yield ~0).
+      expect(totalTransitions).toBeGreaterThan(1000);
+      expect(transitionCounts.size).toBeGreaterThan(100);
     });
   });
 
@@ -302,9 +340,10 @@ describe('Equilibrium Distribution Tests', () => {
         [VertexType.c2]: 1,
       };
 
-      const initialState = generateRandomIceState(2, 2, 12350);
+      const initialState = generateDWBCHigh(8);
       const visitedStates = new Set<string>();
       let state = initialState;
+      let flips = 0;
 
       // Run simulation and track unique states
       for (let step = 0; step < 10000; step++) {
@@ -333,12 +372,18 @@ describe('Equilibrium Distribution Tests', () => {
           );
           if (rng.random() < Math.min(1, ratio)) {
             state = executeFlip(state, pos.position.row, pos.position.col, direction);
+            flips++;
           }
         }
       }
 
-      // Should visit multiple distinct states
-      expect(visitedStates.size).toBeGreaterThan(5);
+      // Sanity: the chain must actually move (a frozen chain would stay put).
+      expect(flips).toBeGreaterThan(1000);
+
+      // An ergodic chain on N=8 explores a large fraction of microstates; with
+      // 10k steps it should reach thousands of distinct configurations, not a
+      // handful. A small threshold here would pass vacuously on a stuck chain.
+      expect(visitedStates.size).toBeGreaterThan(1000);
     });
 
     it('should return to initial configuration eventually', () => {
@@ -398,7 +443,7 @@ describe('Equilibrium Distribution Tests', () => {
 
   describe('Statistical Moments', () => {
     it('should have correct mean vertex frequencies', () => {
-      const rng = new SeededRNG(49);
+      // Each run uses its own seeded RNG (new SeededRNG(50 + run)) for determinism.
       const weights: Record<VertexType, number> = {
         [VertexType.a1]: 1,
         [VertexType.a2]: 1,
@@ -412,15 +457,17 @@ describe('Equilibrium Distribution Tests', () => {
       const numRuns = 10;
       const allFrequencies: Map<VertexType, number[]> = new Map();
 
+      let minAccepted = Infinity;
       for (let run = 0; run < numRuns; run++) {
-        const initialState = generateRandomIceState(3, 3, 12352 + run);
-        const { vertexFrequencies } = runSimulation(
+        const initialState = generateDWBCHigh(8);
+        const { vertexFrequencies, acceptedMoves } = runSimulation(
           initialState,
           weights,
           20000,
           new SeededRNG(50 + run),
           5000,
         );
+        minAccepted = Math.min(minAccepted, acceptedMoves);
 
         for (const [type, freq] of vertexFrequencies) {
           if (!allFrequencies.has(type)) {
@@ -429,6 +476,11 @@ describe('Equilibrium Distribution Tests', () => {
           allFrequencies.get(type)!.push(freq);
         }
       }
+
+      // Sanity: every run's chain must actually move.
+      expect(minAccepted).toBeGreaterThan(1000);
+      // All six vertex types should be observed across the ensemble.
+      expect(allFrequencies.size).toBe(6);
 
       // Calculate mean and variance
       for (const [type, frequencies] of allFrequencies) {
@@ -461,8 +513,9 @@ describe('Equilibrium Distribution Tests', () => {
         [VertexType.c2]: 1,
       };
 
-      const initialState = generateRandomIceState(3, 3, 12353);
+      const initialState = generateDWBCHigh(8);
       let state = initialState;
+      let flips = 0;
 
       // Track a specific observable (e.g., number of a1 vertices)
       const observable: number[] = [];
@@ -503,16 +556,23 @@ describe('Equilibrium Distribution Tests', () => {
           );
           if (rng.random() < Math.min(1, ratio)) {
             state = executeFlip(state, pos.position.row, pos.position.col, direction);
+            flips++;
           }
         }
       }
+
+      // Sanity: the chain must move, and the observable must actually vary,
+      // otherwise the autocorrelation of a constant series is meaningless.
+      expect(flips).toBeGreaterThan(1000);
+      expect(new Set(observable).size).toBeGreaterThan(3);
 
       // Calculate autocorrelation at different lags
       const autocorr0 = calculateAutocorrelation(observable, 0);
       const autocorr10 = calculateAutocorrelation(observable, 10);
       const autocorr100 = calculateAutocorrelation(observable, 100);
 
-      // Autocorrelation should decay with lag
+      // Autocorrelation should decay with lag: perfectly correlated at lag 0,
+      // and weaker at lag 100 than at lag 10 as the chain decorrelates.
       expect(autocorr0).toBeCloseTo(1, 5);
       expect(Math.abs(autocorr100)).toBeLessThan(Math.abs(autocorr10));
       expect(Math.abs(autocorr100)).toBeLessThan(0.5);
@@ -559,5 +619,13 @@ function calculateAutocorrelation(data: number[], lag: number): number {
     denominator += Math.pow(data[i] - mean, 2);
   }
 
-  return denominator === 0 ? 0 : numerator / denominator;
+  // A constant series has zero variance; its autocorrelation is undefined.
+  // By convention rho(0) = 1 (a series is perfectly correlated with itself),
+  // and rho(lag>0) is reported as 0 (no measurable correlation structure).
+  // Returning 0 at lag 0 here was an estimator bug that made rho(0) != 1.
+  if (denominator === 0) {
+    return lag === 0 ? 1 : 0;
+  }
+
+  return numerator / denominator;
 }

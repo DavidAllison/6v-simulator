@@ -7,8 +7,6 @@ import {
   isFlippable,
   executeFlip,
   FlipDirection,
-  FlipCapability,
-  getWeightRatio,
   getAllFlippablePositions,
   calculateHeight,
 } from '../../src/lib/six-vertex/physicsFlips';
@@ -17,7 +15,7 @@ import {
   generateDWBCLow,
   validateIceRule,
 } from '../../src/lib/six-vertex/initialStates';
-import { VertexType, LatticeState } from '../../src/lib/six-vertex/types';
+import { VertexType } from '../../src/lib/six-vertex/types';
 
 describe('Physics Flips - Invariant Tests', () => {
   describe('Flip Capability Detection', () => {
@@ -25,19 +23,31 @@ describe('Physics Flips - Invariant Tests', () => {
       const state = generateDWBCHigh(8);
 
       // In DWBC High initial state:
-      // - Anti-diagonal has c2 vertices
+      // - Anti-diagonal (row + col === size - 1) has c2 vertices
       // - Upper-left has b1, lower-right has b2
-
-      // c2 vertices can flip up if upper-right neighbor is a2 or c2
-      // Since upper-right of c2 on anti-diagonal is b2, c2 cannot flip up initially
-
-      // b1 vertices cannot flip (not a1 or c2 for up, not c1 or a1 for down)
-      // b2 vertices cannot flip (not suitable types)
+      //
+      // Ground truth: main.c getisflippable (up branch, type=HIGH) returns 1 when
+      // the vertex is a1 (0) or c2 (5) AND its upper-right neighbor [r-1][c+1] is
+      // a2 (1) or c2 (5). For a c2 on the anti-diagonal at (row, col), the
+      // upper-right neighbor (row-1, col+1) is ALSO on the anti-diagonal
+      // ((row-1)+(col+1) === size-1), hence also c2 -> the c2 IS up-flippable.
+      //
+      // The c2 at (0, size-1) has no upper neighbor (row 0), so it is excluded by
+      // the `rpos > 0` bound. That leaves size-1 = 7 up-flippable c2 vertices
+      // (rows 1..7). No vertex is down-flippable: down requires the vertex to be
+      // a1 (0) or c1 (4) with lower-left neighbor a2 (1) or c1 (4); the c2 cells
+      // are neither a1 nor c1, and b1/b2 cells are not flippable in either
+      // direction.
 
       const flippable = getAllFlippablePositions(state);
 
-      // Initially, DWBC High should have no flippable positions
-      expect(flippable).toHaveLength(0);
+      // 7 up-flippable c2 vertices along the anti-diagonal (rows 1..7).
+      expect(flippable).toHaveLength(7);
+      expect(flippable.every((f) => f.capability.canFlipUp)).toBe(true);
+      expect(flippable.every((f) => !f.capability.canFlipDown)).toBe(true);
+      for (const f of flippable) {
+        expect(state.vertices[f.position.row][f.position.col].type).toBe(VertexType.c2);
+      }
     });
 
     it('should correctly identify flippable positions in DWBC Low', () => {
@@ -253,19 +263,20 @@ describe('Physics Flips - Invariant Tests', () => {
     it('should correctly transform vertices for down flip', () => {
       const state = generateDWBCLow(6);
 
-      // Set up a specific configuration
-      state.vertices[2][2].type = VertexType.a1;
-      state.vertices[2][1].type = VertexType.b1;
-      state.vertices[3][1].type = VertexType.a2;
-      state.vertices[3][2].type = VertexType.b2;
+      // Set up the canonical down-flippable plaquette (mirror of the up-flip case).
+      // The down flip is the exact inverse of the up flip (main.c updatepositions, LOW).
+      state.vertices[2][2].type = VertexType.a1; // base
+      state.vertices[2][1].type = VertexType.b2; // left
+      state.vertices[3][1].type = VertexType.a2; // down-left
+      state.vertices[3][2].type = VertexType.b1; // down
 
       const newState = executeFlip(state, 2, 2, FlipDirection.Down);
 
       // Check transformations according to main.c logic
-      expect(newState.vertices[2][2].type).toBe(VertexType.c2); // a1 -> c2
-      expect(newState.vertices[2][1].type).toBe(VertexType.c1); // b1 -> c1
-      expect(newState.vertices[3][1].type).toBe(VertexType.c1); // a2 -> c1
-      expect(newState.vertices[3][2].type).toBe(VertexType.c2); // b2 -> c2
+      expect(newState.vertices[2][2].type).toBe(VertexType.c2); // base:      a1 -> c2
+      expect(newState.vertices[2][1].type).toBe(VertexType.c1); // left:      b2 -> c1
+      expect(newState.vertices[3][1].type).toBe(VertexType.c2); // down-left: a2 -> c2
+      expect(newState.vertices[3][2].type).toBe(VertexType.c1); // down:      b1 -> c1
     });
 
     it('should handle c-type vertex transformations', () => {

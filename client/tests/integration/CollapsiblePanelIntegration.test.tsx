@@ -2,6 +2,16 @@ import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import MainSimulator from '../../src/MainSimulator';
+import { ThemeProvider } from '../../src/contexts/ThemeContext';
+
+// MainSimulator depends on ThemeContext (added in the dark-mode refactor),
+// so it must be rendered inside a ThemeProvider.
+const renderSimulator = () =>
+  render(
+    <ThemeProvider>
+      <MainSimulator />
+    </ThemeProvider>,
+  );
 
 // Mock the simulation and renderer modules to avoid canvas errors in tests
 jest.mock('../../src/lib/six-vertex/simulation', () => ({
@@ -115,7 +125,7 @@ describe('CollapsiblePanel Integration', () => {
   });
 
   it('should render both collapsible panels in MainSimulator', () => {
-    render(<MainSimulator />);
+    renderSimulator();
 
     // Check for both panels by looking for their collapse buttons
     const buttons = screen.getAllByRole('button');
@@ -130,7 +140,7 @@ describe('CollapsiblePanel Integration', () => {
   });
 
   it('should collapse left panel when clicked', async () => {
-    render(<MainSimulator />);
+    renderSimulator();
 
     // Find the left panel by looking for Controls title
     const leftPanelButton = screen.getByLabelText(/Collapse Controls/i);
@@ -152,7 +162,7 @@ describe('CollapsiblePanel Integration', () => {
   });
 
   it('should collapse right panel when clicked', async () => {
-    render(<MainSimulator />);
+    renderSimulator();
 
     // Find the right panel by looking for Info title
     const rightPanelButton = screen.getByLabelText(/Collapse Info/i);
@@ -174,7 +184,7 @@ describe('CollapsiblePanel Integration', () => {
   });
 
   it('should persist panel states in localStorage', async () => {
-    const { unmount } = render(<MainSimulator />);
+    const { unmount } = renderSimulator();
 
     // Collapse the left panel
     const leftPanelButton = screen.getByLabelText(/Collapse Controls/i);
@@ -187,7 +197,7 @@ describe('CollapsiblePanel Integration', () => {
 
     // Unmount and remount to simulate page refresh
     unmount();
-    render(<MainSimulator />);
+    renderSimulator();
 
     // Check that the left panel is still collapsed
     const newLeftPanelButton = screen.getByLabelText(/Expand Controls/i);
@@ -196,7 +206,7 @@ describe('CollapsiblePanel Integration', () => {
   });
 
   it('should show correct arrow directions for panels', () => {
-    render(<MainSimulator />);
+    renderSimulator();
 
     // Find the panels
     const leftPanelButton = screen.getByLabelText(/Collapse Controls/i);

@@ -4,11 +4,7 @@
  */
 
 import { PhysicsSimulation } from '../../src/lib/six-vertex/physicsSimulation';
-import {
-  generateRandomIceState,
-  generateDWBCHigh,
-  generateDWBCLow,
-} from '../../src/lib/six-vertex/initialStates';
+import { generateRandomIceState, generateDWBCLow } from '../../src/lib/six-vertex/initialStates';
 import {
   executeFlip,
   FlipDirection,
@@ -90,9 +86,8 @@ describe('Seeded RNG Reproducibility', () => {
   describe('Deterministic Simulation Evolution', () => {
     it('should evolve identically with same seed and parameters', () => {
       const config = {
-        width: 6,
-        height: 6,
-        initialState: 'random' as const,
+        size: 6,
+        initialState: 'dwbc-high' as const,
         weights: {
           [VertexType.a1]: 1.5,
           [VertexType.a2]: 1.5,
@@ -109,8 +104,8 @@ describe('Seeded RNG Reproducibility', () => {
 
       // Run same number of steps
       for (let i = 0; i < 500; i++) {
-        sim1.step();
-        sim2.step();
+        sim1.performStep();
+        sim2.performStep();
       }
 
       // Final states should be identical
@@ -124,20 +119,18 @@ describe('Seeded RNG Reproducibility', () => {
       }
 
       // Statistics should match
-      expect(sim1.getStepCount()).toBe(sim2.getStepCount());
-      expect(sim1.getAcceptanceRate()).toBe(sim2.getAcceptanceRate());
+      const stats1 = sim1.getStats();
+      const stats2 = sim2.getStats();
+      expect(stats1.step).toBe(stats2.step);
+      expect(stats1.acceptanceRate).toBe(stats2.acceptanceRate);
       expect(sim1.getHeight()).toBe(sim2.getHeight());
-
-      const stats1 = sim1.getStatistics();
-      const stats2 = sim2.getStatistics();
       expect(stats1.vertexCounts).toEqual(stats2.vertexCounts);
     });
 
     it('should diverge with different seeds', () => {
       const baseConfig = {
-        width: 6,
-        height: 6,
-        initialState: 'random' as const,
+        size: 6,
+        initialState: 'dwbc-high' as const,
         weights: {
           [VertexType.a1]: 1,
           [VertexType.a2]: 1,
@@ -153,8 +146,8 @@ describe('Seeded RNG Reproducibility', () => {
 
       // Run same number of steps
       for (let i = 0; i < 100; i++) {
-        sim1.step();
-        sim2.step();
+        sim1.performStep();
+        sim2.performStep();
       }
 
       // States should differ
@@ -265,27 +258,28 @@ describe('Seeded RNG Reproducibility', () => {
       // Test that operations are order-independent when using same seed
       const seed = 77777;
 
-      // Path 1: Generate state then run simulation
+      // Path 1: Generate a state, then draw from an independent RNG.
       const rng1 = new SeededRNG(seed);
       const state1 = generateRandomIceState(4, 4, seed);
       const values1 = Array.from({ length: 10 }, () => rng1.random());
 
-      // Path 2: Run RNG then generate state
+      // Path 2: Draw from an independent RNG, then generate a state.
       const rng2 = new SeededRNG(seed);
       const values2 = Array.from({ length: 10 }, () => rng2.random());
       const state2 = generateRandomIceState(4, 4, seed);
 
-      // Random values should differ (different order)
-      expect(values1).not.toEqual(values2);
+      // generateRandomIceState seeds its own internal RNG, so it does not
+      // consume from rng1/rng2. Two RNGs seeded identically therefore produce
+      // the same sequence regardless of how state generation is interleaved.
+      expect(values1).toEqual(values2);
 
-      // But states with same seed should match
+      // And states generated with the same seed must match.
       expect(getStateSignature(state1)).toBe(getStateSignature(state2));
     });
 
     it('should maintain reproducibility after reset', () => {
       const simulation = new PhysicsSimulation({
-        width: 4,
-        height: 4,
+        size: 4,
         initialState: 'dwbc-high',
         weights: {
           [VertexType.a1]: 1,
@@ -300,7 +294,7 @@ describe('Seeded RNG Reproducibility', () => {
 
       // Run simulation
       for (let i = 0; i < 100; i++) {
-        simulation.step();
+        simulation.performStep();
       }
 
       const stateAfterRun = getStateSignature(simulation.getState());
@@ -309,7 +303,7 @@ describe('Seeded RNG Reproducibility', () => {
       simulation.reset();
 
       for (let i = 0; i < 100; i++) {
-        simulation.step();
+        simulation.performStep();
       }
 
       const stateAfterReset = getStateSignature(simulation.getState());
@@ -346,9 +340,8 @@ describe('Seeded RNG Reproducibility', () => {
 
     it('should maintain separate seeds for different simulations', () => {
       const sim1 = new PhysicsSimulation({
-        width: 4,
-        height: 4,
-        initialState: 'random',
+        size: 4,
+        initialState: 'dwbc-high',
         weights: {
           [VertexType.a1]: 1,
           [VertexType.a2]: 1,
@@ -361,9 +354,8 @@ describe('Seeded RNG Reproducibility', () => {
       });
 
       const sim2 = new PhysicsSimulation({
-        width: 4,
-        height: 4,
-        initialState: 'random',
+        size: 4,
+        initialState: 'dwbc-high',
         weights: {
           [VertexType.a1]: 1,
           [VertexType.a2]: 1,
@@ -377,8 +369,8 @@ describe('Seeded RNG Reproducibility', () => {
 
       // Run both simulations
       for (let i = 0; i < 50; i++) {
-        sim1.step();
-        sim2.step();
+        sim1.performStep();
+        sim2.performStep();
       }
 
       // States should differ
@@ -392,7 +384,6 @@ describe('Seeded RNG Reproducibility', () => {
   describe('Statistical Reproducibility', () => {
     it('should produce same statistical distributions with same seed', () => {
       const runSimulation = (seed: number) => {
-        const rng = new SeededRNG(seed);
         const counts: Record<VertexType, number> = {
           [VertexType.a1]: 0,
           [VertexType.a2]: 0,
@@ -425,9 +416,8 @@ describe('Seeded RNG Reproducibility', () => {
 
     it('should maintain reproducible acceptance rates', () => {
       const config = {
-        width: 6,
-        height: 6,
-        initialState: 'random' as const,
+        size: 6,
+        initialState: 'dwbc-high' as const,
         weights: {
           [VertexType.a1]: 0.5,
           [VertexType.a2]: 0.5,
@@ -446,10 +436,10 @@ describe('Seeded RNG Reproducibility', () => {
         const sim = new PhysicsSimulation(config);
 
         for (let i = 0; i < 1000; i++) {
-          sim.step();
+          sim.performStep();
         }
 
-        rates.push(sim.getAcceptanceRate());
+        rates.push(sim.getStats().acceptanceRate);
       }
 
       // All runs should have identical acceptance rate

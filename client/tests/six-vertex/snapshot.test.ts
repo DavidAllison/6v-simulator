@@ -6,11 +6,9 @@
 import {
   generateDWBCHigh,
   generateDWBCLow,
-  generateRandomIceState,
   validateIceRule,
 } from '../../src/lib/six-vertex/initialStates';
 import { VertexType, LatticeState } from '../../src/lib/six-vertex/types';
-import { getVertexASCII } from '../../src/lib/six-vertex/vertexShapes';
 
 /**
  * Generate ASCII representation of lattice state for visual verification
@@ -408,9 +406,11 @@ describe('DWBC Pattern Snapshot Tests', () => {
       // Should contain expected characters
       expect(ascii).toMatch(/[AaBbCc]/);
 
-      // Count vertex representations
+      // Count vertex representations (exclude the title line, which contains
+      // incidental letters like the 'a' and 'c' in "Lattice").
+      const body = ascii.split('\n').slice(1).join('\n');
       const charCounts: Record<string, number> = {};
-      for (const char of ascii.replace(/[^AaBbCc]/g, '')) {
+      for (const char of body.replace(/[^AaBbCc]/g, '')) {
         charCounts[char] = (charCounts[char] || 0) + 1;
       }
 

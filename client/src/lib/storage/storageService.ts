@@ -27,7 +27,7 @@ import { formatBytes, getCompressionRatio } from './compression';
 
 export class StorageService {
   private provider: StorageProvider | null = null;
-  private eventHandlers: Map<keyof StorageEvents, Set<Function>> = new Map();
+  private eventHandlers: Map<keyof StorageEvents, Set<(...args: unknown[]) => unknown>> = new Map();
   private isInitialized = false;
 
   constructor() {
@@ -388,14 +388,14 @@ export class StorageService {
   on<K extends keyof StorageEvents>(event: K, handler: StorageEvents[K]): void {
     const handlers = this.eventHandlers.get(event);
     if (handlers) {
-      handlers.add(handler as Function);
+      handlers.add(handler as (...args: unknown[]) => unknown);
     }
   }
 
   off<K extends keyof StorageEvents>(event: K, handler: StorageEvents[K]): void {
     const handlers = this.eventHandlers.get(event);
     if (handlers) {
-      handlers.delete(handler as Function);
+      handlers.delete(handler as (...args: unknown[]) => unknown);
     }
   }
 
@@ -407,7 +407,7 @@ export class StorageService {
     if (handlers) {
       handlers.forEach((handler) => {
         try {
-          (handler as Function)(...args);
+          (handler as (...args: unknown[]) => unknown)(...args);
         } catch (error) {
           console.error(`Error in event handler for ${event}:`, error);
         }

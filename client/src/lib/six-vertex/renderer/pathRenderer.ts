@@ -301,7 +301,6 @@ export class PathRenderer {
    */
   private drawArrows(state: LatticeState): void {
     // Use semi-transparent arrows when overlaying on paths
-    const alpha = this.config.mode === RenderMode.Both ? 0.7 : 1.0;
     this.ctx.strokeStyle =
       this.config.mode === RenderMode.Both
         ? `${this.config.colors.arrow}B3` // Add transparency

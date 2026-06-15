@@ -4,7 +4,7 @@
  */
 
 import type { LatticeState } from '../types';
-import { EdgeState, VertexType } from '../types';
+import { VertexType } from '../types';
 
 /**
  * Render in the exact style of the paper's Figures 2 and 3
