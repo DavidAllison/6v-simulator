@@ -30,6 +30,8 @@ CloudFront via OAC. There is no public bucket ACL and no S3 website endpoint.
 | `cloudfront-spa-rewrite.js` | Viewer-request function: directory-index + SPA fallback to `/index.html`. | Production distribution. |
 | `pr-preview-router.js` | Viewer-request function: maps `pr-<N>.dev.6v.allison.la` → the `pr-<N>/` S3 prefix, with SPA fallback. | Preview distribution. |
 | `cloudfront-response-headers-policy.json` | Security headers — CSP (incl. `frame-ancestors`), HSTS, `X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`. | `aws cloudfront create-response-headers-policy --response-headers-policy-config file://cloudfront-response-headers-policy.json`, then attach the policy to both distributions' default cache behavior. |
+| `github-oidc-trust-policy.json` | Trust policy for the GitHub OIDC deploy role (scoped to this repo). | Consumed by `setup-github-oidc.sh`. |
+| `setup-github-oidc.sh` | One-time, idempotent setup of the OIDC provider + deploy role so CI can drop the long-lived access key (issue #42). | Run by an AWS admin; see [`docs/CI_OIDC_MIGRATION.md`](../../docs/CI_OIDC_MIGRATION.md). |
 
 ## How a deploy works (driven by CI)
 
@@ -59,6 +61,9 @@ CloudFront via OAC. There is no public bucket ACL and no S3 website endpoint.
   headers that a `<meta>` CSP cannot set — is in
   `cloudfront-response-headers-policy.json`; apply it to both distributions to
   supersede the meta tag.
-- **Hardening backlog.** Migrating CI auth from a long-lived IAM user key to
-  GitHub OIDC + an assumed IAM role would remove the static secret entirely
-  (tracked in issue #42).
+- **CI auth via OIDC (issue #42).** A ready-to-apply package to replace the
+  long-lived IAM user key with GitHub OIDC + an assumed role lives here
+  (`github-oidc-trust-policy.json`, `setup-github-oidc.sh`) with a runbook at
+  [`docs/CI_OIDC_MIGRATION.md`](../../docs/CI_OIDC_MIGRATION.md). The cutover
+  requires an AWS admin and is gated (the role must exist before the workflows
+  switch), so it is not applied automatically.
