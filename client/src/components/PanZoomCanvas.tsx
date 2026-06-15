@@ -186,7 +186,7 @@ export function PanZoomCanvas({
     const scaleX = availableWidth / width;
     const scaleY = availableHeight / height;
     let scale =
-      fitMode === 'fill' ? Math.min(scaleX, scaleY) * 0.95 : Math.min(scaleX, scaleY) * 0.85;
+      fitMode === 'fill' ? Math.min(scaleX, scaleY) * 0.95 : Math.min(scaleX, scaleY) * 0.92;
 
     if (initialScale !== undefined) {
       scale = initialScale;

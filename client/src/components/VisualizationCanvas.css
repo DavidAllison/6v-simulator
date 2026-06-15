@@ -4,11 +4,19 @@
   border-radius: 12px;
   box-shadow: var(--shadow-md);
   border: 1px solid var(--color-border);
-  position: relative;
   overflow: hidden;
   display: flex;
   flex-direction: column;
   transition: all var(--transition-base);
+  /* The side control/stats panels are tall; without this the grid stretches the
+     canvas column to match them and the centered lattice falls below the fold.
+     Cap to the viewport and stick so the figure stays visible while the controls
+     scroll. align-self:start opts out of the grid's stretch. */
+  align-self: start;
+  position: sticky;
+  top: 0.5rem;
+  max-height: calc(100vh - 5.5rem);
+  min-height: 420px;
 }
 
 .canvas-wrapper {
