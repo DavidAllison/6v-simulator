@@ -49,9 +49,16 @@ function App() {
 
           <nav className="header-nav" aria-label="Primary">
             <div className="nav-group nav-group--primary">
-              <NavLink to="/" className="nav-link" end>
-                Simulator
-              </NavLink>
+              {/* Blank label keeps this group the same height as the labelled
+                  groups so every nav link aligns on a common row. */}
+              <span className="nav-group__label" aria-hidden="true">
+                &nbsp;
+              </span>
+              <div className="nav-group__items">
+                <NavLink to="/" className="nav-link" end>
+                  Simulator
+                </NavLink>
+              </div>
             </div>
 
             <div className="nav-group">

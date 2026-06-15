@@ -116,9 +116,12 @@ const VisualizationCanvas: React.FC<VisualizationCanvasProps> = ({
     const canvasWidth = (latticeState.width + 1) * cellSize;
     const canvasHeight = (latticeState.height + 1) * cellSize;
 
-    const scaleX = (containerRect.width - 100) / canvasWidth;
-    const scaleY = (containerRect.height - 100) / canvasHeight;
-    const newZoom = Math.min(scaleX, scaleY, 1);
+    // Fit to the container with a small margin, scaling UP for small lattices so
+    // they fill the figure area instead of sitting tiny (capped to keep large
+    // lattices crisp).
+    const scaleX = (containerRect.width - 48) / canvasWidth;
+    const scaleY = (containerRect.height - 48) / canvasHeight;
+    const newZoom = Math.min(Math.max(Math.min(scaleX, scaleY), 0.25), 4);
 
     setZoom(newZoom);
     setPan({ x: 0, y: 0 });
