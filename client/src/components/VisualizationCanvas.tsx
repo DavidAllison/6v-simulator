@@ -21,6 +21,10 @@ const VisualizationCanvas: React.FC<VisualizationCanvasProps> = ({
   const [zoom, setZoom] = useState(1);
   const [pan, setPan] = useState({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
+  // Mirror of isDragging for the ResizeObserver, so it can skip re-fitting
+  // mid-drag without the effect re-subscribing (a re-subscribe fires an initial
+  // ResizeObserver callback, which would snap the user's pan back to fit).
+  const isDraggingRef = useRef(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
   const [hoveredVertex, setHoveredVertex] = useState<{ row: number; col: number } | null>(null);
 
@@ -59,6 +63,7 @@ const VisualizationCanvas: React.FC<VisualizationCanvasProps> = ({
       if (e.button === 0) {
         // Left click
         setIsDragging(true);
+        isDraggingRef.current = true;
         setDragStart({ x: e.clientX - pan.x, y: e.clientY - pan.y });
       }
     },
@@ -94,10 +99,12 @@ const VisualizationCanvas: React.FC<VisualizationCanvasProps> = ({
 
   const handleMouseUp = useCallback(() => {
     setIsDragging(false);
+    isDraggingRef.current = false;
   }, []);
 
   const handleMouseLeave = useCallback(() => {
     setIsDragging(false);
+    isDraggingRef.current = false;
     setHoveredVertex(null);
   }, []);
 
@@ -146,6 +153,25 @@ const VisualizationCanvas: React.FC<VisualizationCanvasProps> = ({
     const id = requestAnimationFrame(() => handleFitToScreen());
     return () => cancelAnimationFrame(id);
   }, [latticeSize, handleFitToScreen]);
+
+  // Keep the lattice maximized when the available space changes (collapsing a
+  // side panel, expanding the intro, window resize). Re-fit on container resize,
+  // skipping while the user is actively panning so we don't fight the drag.
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container || typeof ResizeObserver === 'undefined') return;
+    let frame = 0;
+    const observer = new ResizeObserver(() => {
+      if (isDraggingRef.current) return;
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(() => handleFitToScreen());
+    });
+    observer.observe(container);
+    return () => {
+      cancelAnimationFrame(frame);
+      observer.disconnect();
+    };
+  }, [handleFitToScreen]);
 
   return (
     <div className="visualization-container" ref={containerRef}>

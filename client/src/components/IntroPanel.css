@@ -1,27 +1,81 @@
 .intro-panel {
-  position: relative;
-  grid-column: 1 / -1;
+  flex: 0 0 auto;
+  width: 100%;
   background: var(--surface-raised);
   border: 1px solid var(--color-info-border);
   border-radius: var(--border-radius-lg);
-  box-shadow: var(--shadow-md);
-  padding: var(--spacing-lg) var(--spacing-xl);
-  max-width: 70ch;
-  margin: 0 auto;
-  width: 100%;
+  box-shadow: var(--shadow-sm);
+  padding: var(--spacing-xs) var(--spacing-md);
+  box-sizing: border-box;
   animation: introFadeIn 0.3s ease-out;
 }
 
-.intro-panel__heading {
-  margin: 0 0 var(--spacing-sm);
-  font-size: var(--font-size-2xl);
+/* Compact single-row banner */
+.intro-panel__bar {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+}
+
+.intro-panel__lede {
+  margin: 0;
+  flex: 1 1 auto;
+  min-width: 0;
+  font-size: var(--font-size-sm);
+  line-height: var(--line-height-tight);
+}
+
+.intro-panel__title {
+  font-weight: 600;
   color: var(--color-primary);
-  padding-right: var(--spacing-xl);
+}
+
+.intro-panel__tagline {
+  color: var(--color-text-secondary);
+}
+
+.intro-panel__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2xs);
+  flex: 0 0 auto;
+}
+
+.intro-panel__more {
+  background: transparent;
+  border: 1px solid var(--color-info-border);
+  color: var(--color-info-text);
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  white-space: nowrap;
+  padding: var(--spacing-2xs) var(--spacing-sm);
+  border-radius: var(--border-radius-full);
+  cursor: pointer;
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease;
+}
+
+.intro-panel__more:hover {
+  background: var(--color-info-light);
+  border-color: var(--color-primary);
+}
+
+.intro-panel__more:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+.intro-panel__detail {
+  max-width: 80ch;
+  padding-top: var(--spacing-sm);
+  margin-top: var(--spacing-xs);
+  border-top: 1px solid var(--color-border);
 }
 
 .intro-panel__body {
-  margin: 0 0 var(--spacing-md);
-  font-size: var(--font-size-base);
+  margin: 0 0 var(--spacing-sm);
+  font-size: var(--font-size-sm);
   line-height: var(--line-height-relaxed);
   color: var(--color-text-secondary);
 }
@@ -34,15 +88,12 @@
 }
 
 .intro-panel__dismiss {
-  position: absolute;
-  top: var(--spacing-sm);
-  right: var(--spacing-sm);
   background: transparent;
   border: none;
   color: var(--color-text-secondary);
-  font-size: var(--font-size-2xl);
+  font-size: var(--font-size-xl);
   line-height: 1;
-  padding: var(--spacing-2xs) var(--spacing-xs);
+  padding: 0 var(--spacing-2xs);
   cursor: pointer;
   border-radius: var(--border-radius-sm);
   opacity: 0.7;
@@ -60,9 +111,9 @@
 
 /* Compact reopen affordance shown once the intro is dismissed. */
 .intro-reopen {
-  grid-column: 1 / -1;
+  flex: 0 0 auto;
   display: flex;
-  justify-content: center;
+  justify-content: flex-start;
   width: 100%;
 }
 

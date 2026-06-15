@@ -1,5 +1,9 @@
 .visualization-container {
-  flex: 1;
+  /* The lattice is the focus: fill all remaining width and height of the
+     workspace row so the figure is maximized. min-* lets it shrink in flex. */
+  flex: 1 1 0;
+  min-width: 0;
+  min-height: 0;
   background: var(--color-bg-primary);
   border-radius: 12px;
   box-shadow: var(--shadow-md);
@@ -8,30 +12,33 @@
   display: flex;
   flex-direction: column;
   transition: all var(--transition-base);
-  /* The side control/stats panels are tall; without this the grid stretches the
-     canvas column to match them and the centered lattice falls below the fold.
-     Cap to the viewport and stick so the figure stays visible while the controls
-     scroll. align-self:start opts out of the grid's stretch. */
-  align-self: start;
-  position: sticky;
-  top: 0.5rem;
-  max-height: calc(100vh - 5.5rem);
-  min-height: 420px;
+}
+
+/* On narrow/stacked layouts there is no fixed workspace height, so give the
+   figure a generous concrete height instead of collapsing to its content. */
+@media (max-width: 1200px) {
+  .visualization-container {
+    min-height: min(70vh, 560px);
+  }
 }
 
 .canvas-wrapper {
   flex: 1;
   position: relative;
   overflow: hidden;
+  /* Flex-center the figure so it stays centered at any zoom. (The old
+     top/left:50% + translate(-50%) + scale combination drifted off-center as
+     zoom changed.) Pan/zoom are applied on .canvas-transform around its own
+     center, so pan:0 keeps the lattice perfectly centered. */
+  display: flex;
+  align-items: center;
+  justify-content: center;
   /* Flat background so the scientific figure reads cleanly (no checkerboard). */
   background-color: var(--color-bg-secondary);
   transition: background var(--transition-base);
 }
 
 .canvas-transform {
-  position: absolute;
-  top: 50%;
-  left: 50%;
   transform-origin: center center;
   transition: transform 0.1s ease-out;
 }
@@ -41,7 +48,6 @@
   background: transparent;
   border-radius: 4px;
   box-shadow: 0 2px 8px var(--color-shadow);
-  transform: translate(-50%, -50%);
 }
 
 .canvas-controls {
