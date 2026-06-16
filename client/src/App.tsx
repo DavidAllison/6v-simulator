@@ -6,6 +6,7 @@ import { PerformanceDemo } from './routes/performanceDemo';
 import { DWBCDebug } from './routes/dwbcDebug';
 import { FlipDebug } from './routes/flipDebug';
 import { DualSimulation } from './routes/dualSimulation';
+import { NSimulation } from './routes/nSimulation';
 import { HeightDemo } from './routes/heightDemo';
 import ErrorBoundary from './components/ErrorBoundary';
 import { ThemeToggle } from './components/ThemeToggle';
@@ -69,6 +70,9 @@ function App() {
                 <NavLink to="/dual-simulation" className="nav-link">
                   Compare High vs Low
                 </NavLink>
+                <NavLink to="/n-simulation" className="nav-link">
+                  Compare N Sims
+                </NavLink>
                 <NavLink to="/height-demo" className="nav-link">
                   Height Function
                 </NavLink>
@@ -110,6 +114,7 @@ function App() {
             <Route path="/dwbc-debug" element={<DWBCDebug />} />
             <Route path="/flip-debug" element={<FlipDebug />} />
             <Route path="/dual-simulation" element={<DualSimulation />} />
+            <Route path="/n-simulation" element={<NSimulation />} />
             <Route path="/height-demo" element={<HeightDemo />} />
             <Route path="/performance" element={<PerformanceDemo />} />
           </Routes>

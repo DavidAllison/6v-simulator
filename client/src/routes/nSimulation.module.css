@@ -1,0 +1,134 @@
+/* N-simulation route styling. Token-based so light/dark themes work for free. */
+
+.page {
+  padding: var(--spacing-xl);
+}
+
+.panel {
+  background: var(--panel-bg);
+  padding: var(--spacing-xl);
+  border-radius: var(--border-radius-lg);
+  margin-bottom: var(--spacing-xl);
+}
+
+.controlsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--spacing-md);
+}
+
+.weightsSection {
+  margin-top: var(--spacing-xl);
+}
+
+.weightsGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--spacing-sm);
+}
+
+.actionButtons {
+  margin-top: var(--spacing-xl);
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-sm);
+  align-items: center;
+}
+
+.badge {
+  margin-left: auto;
+  padding: var(--spacing-xs) var(--spacing-md);
+  border-radius: var(--border-radius-lg);
+  font-weight: var(--font-weight-bold);
+  background: var(--color-success);
+  color: #fff;
+}
+
+.instancesSection {
+  margin-top: var(--spacing-xl);
+}
+
+.instanceRow {
+  display: grid;
+  grid-template-columns: 1fr auto auto auto;
+  gap: var(--spacing-sm);
+  align-items: center;
+  margin-bottom: var(--spacing-sm);
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: var(--spacing-lg);
+  margin-bottom: var(--spacing-xl);
+}
+
+.instanceCard {
+  background: var(--panel-bg);
+  border-radius: var(--border-radius-lg);
+  padding: var(--spacing-md);
+  display: flex;
+  flex-direction: column;
+}
+
+.instanceHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: var(--spacing-sm);
+}
+
+.instanceTitle {
+  font-weight: var(--font-weight-semibold);
+}
+
+.instanceMeta {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-secondary);
+}
+
+.canvasHolder {
+  position: relative;
+  height: 260px;
+  background: var(--canvas-bg, var(--panel-bg));
+  border-radius: var(--border-radius-md);
+  overflow: hidden;
+}
+
+.instanceObservable {
+  margin-top: var(--spacing-sm);
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+}
+
+.convergencePanel {
+  margin-top: 0;
+  margin-bottom: var(--spacing-xl);
+  padding: var(--spacing-md) var(--spacing-xl);
+  background: var(--panel-bg);
+  border-radius: var(--border-radius-lg);
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: var(--spacing-sm);
+  align-items: center;
+}
+
+.metricLabel {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-secondary);
+}
+
+.metricValue {
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-semibold);
+}
+
+.statusValue {
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-secondary);
+}
+
+.statusConverged {
+  color: var(--color-success);
+}
