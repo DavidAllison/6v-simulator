@@ -128,7 +128,6 @@ export class OptimizedPhysicsSimulation {
   private successfulFlips: number = 0;
   private attemptedFlips: number = 0;
   private currentHeight: number = 0;
-  private rho: number;
 
   // Performance options
   private batchSize: number;
@@ -149,9 +148,6 @@ export class OptimizedPhysicsSimulation {
     this.weights[VERTEX_B2] = config.weights.b2;
     this.weights[VERTEX_C1] = config.weights.c1;
     this.weights[VERTEX_C2] = config.weights.c2;
-
-    // Calculate rho
-    this.rho = this.calculateRho();
 
     // Initialize state
     this.initializeState(config.initialState || 'dwbc-high');
@@ -196,30 +192,6 @@ export class OptimizedPhysicsSimulation {
   public step(): any {
     this.performStep();
     return this.getStats();
-  }
-
-  /**
-   * Calculate optimal rho value
-   */
-  private calculateRho(): number {
-    let maxWeight = 0;
-
-    // Check all possible 2x2 configurations
-    for (let v1 = 0; v1 < 6; v1++) {
-      for (let v2 = 0; v2 < 6; v2++) {
-        for (let v3 = 0; v3 < 6; v3++) {
-          for (let v4 = 0; v4 < 6; v4++) {
-            const weight =
-              this.weights[v1] * this.weights[v2] * this.weights[v3] * this.weights[v4];
-            if (weight > maxWeight) {
-              maxWeight = weight;
-            }
-          }
-        }
-      }
-    }
-
-    return 1.0 / maxWeight;
   }
 
   /**
@@ -474,7 +446,13 @@ export class OptimizedPhysicsSimulation {
     if (pos.canFlipUp && !pos.canFlipDown) {
       // Can only flip up
       const weightRatio = this.getWeightRatio(pos.row, pos.col, FlipDirection.Up);
-      const acceptanceProbability = Math.min(1.0, this.rho * weightRatio);
+      // Heat-bath acceptance over {stay, flip}: p = w_after/(w_before+w_after) =
+      // ratio/(1+ratio). This matches the biflip branch below and samples the
+      // correct Gibbs measure. The old `min(1, ratio/maxWeight)` divided by the
+      // global max plaquette weight, collapsing acceptance to ~0 whenever any
+      // weight was favored — it froze c-/a-dominant runs and inverted the
+      // equilibrium (favoring a vertex type produced FEWER of it). See #69.
+      const acceptanceProbability = weightRatio / (1.0 + weightRatio);
 
       if (this.rng.next() < acceptanceProbability) {
         if (this.executeFlipInPlace(pos.row, pos.col, FlipDirection.Up)) {
@@ -485,7 +463,8 @@ export class OptimizedPhysicsSimulation {
     } else if (!pos.canFlipUp && pos.canFlipDown) {
       // Can only flip down
       const weightRatio = this.getWeightRatio(pos.row, pos.col, FlipDirection.Down);
-      const acceptanceProbability = Math.min(1.0, this.rho * weightRatio);
+      // Heat-bath acceptance over {stay, flip}; see the Up branch above (#69).
+      const acceptanceProbability = weightRatio / (1.0 + weightRatio);
 
       if (this.rng.next() < acceptanceProbability) {
         if (this.executeFlipInPlace(pos.row, pos.col, FlipDirection.Down)) {

@@ -102,3 +102,43 @@ describe('reproducibility of the shipping engine', () => {
     expect(diff).toBeGreaterThan(0);
   });
 });
+
+describe('equilibrium responds correctly to weights (#69 acceptance rule)', () => {
+  // A correct sampler MUST increase a vertex type's equilibrium fraction when its
+  // weight is favored. The old acceptance rule (min(1, ratio/maxWeight)) did the
+  // opposite: favoring c/a produced FEWER of them and froze (acceptance ~0).
+  const cFraction = (sim: OptimizedPhysicsSimulation) => {
+    const v = sim.getStats().vertexCounts;
+    const t = v.a1 + v.a2 + v.b1 + v.b2 + v.c1 + v.c2;
+    return (v.c1 + v.c2) / t;
+  };
+  const aFraction = (sim: OptimizedPhysicsSimulation) => {
+    const v = sim.getStats().vertexCounts;
+    const t = v.a1 + v.a2 + v.b1 + v.b2 + v.c1 + v.c2;
+    return (v.a1 + v.a2) / t;
+  };
+  const run = (weights: typeof EQUAL, seed = 7) => {
+    const sim = new OptimizedPhysicsSimulation({
+      size: 32,
+      weights,
+      seed,
+      initialState: 'dwbc-high',
+    });
+    sim.run(300000);
+    return sim;
+  };
+
+  it('favoring c-vertices increases the c fraction (and keeps acceptance > 0)', () => {
+    const ice = run(EQUAL);
+    const cdom = run(C_DOMINANT);
+    expect(cFraction(cdom)).toBeGreaterThan(cFraction(ice));
+    expect(cdom.getStats().acceptanceRate).toBeGreaterThan(0);
+  });
+
+  it('favoring a-vertices increases the a fraction (and keeps acceptance > 0)', () => {
+    const ice = run(EQUAL);
+    const adom = run(A_DOMINANT);
+    expect(aFraction(adom)).toBeGreaterThan(aFraction(ice));
+    expect(adom.getStats().acceptanceRate).toBeGreaterThan(0);
+  });
+});
