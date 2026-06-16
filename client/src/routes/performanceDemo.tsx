@@ -97,13 +97,12 @@ export function PerformanceDemo() {
         {
           onStats: (stats) => {
             setSimulationStats(stats);
-            if (rendererRef.current && simRef.current) {
-              simRef.current.getState();
-            }
           },
-          onState: (state) => {
-            if (rendererRef.current) {
-              rendererRef.current.render(state);
+          // The worker now pushes a compact typed-array snapshot (not the object
+          // graph). Render it via the fast bitmap path.
+          onRawState: (vertices: Int8Array, width: number, height: number) => {
+            if (rendererRef.current?.renderRaw) {
+              rendererRef.current.renderRaw(width, height, vertices);
             }
           },
         },

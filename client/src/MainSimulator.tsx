@@ -132,9 +132,17 @@ function MainSimulator() {
       // Use optimized simulation for better performance
       const simConfig: SimulationConfig = {
         useOptimized: true,
-        useWorker: false, // Disable worker for now to avoid issues
+        // Offload the MC loop to a Web Worker for large lattices. The facade
+        // gates this internally to size > LARGE_LATTICE_THRESHOLD and falls back
+        // to the main thread when workers are unavailable, so small lattices and
+        // step-by-step debugging keep their synchronous behavior.
+        useWorker: true,
         workerThreshold: 50,
       };
+
+      // Dispose the controller we're about to replace so its Web Worker (if any)
+      // is terminated rather than leaked. Idempotent with the effect cleanup.
+      simulationRef.current?.dispose?.();
 
       const simulation = createSimulation(params, simConfig);
       simulationRef.current = simulation;
@@ -192,10 +200,14 @@ function MainSimulator() {
   useEffect(() => {
     initializeSimulation();
 
+    const previous = simulationRef.current;
     return () => {
-      if (simulationRef.current?.isRunning()) {
-        simulationRef.current.pause();
+      if (previous?.isRunning()) {
+        previous.pause();
       }
+      // Terminate the discarded controller's Web Worker so threads don't leak
+      // across re-inits (size/seed/boundary changes recreate the simulation).
+      previous?.dispose?.();
       if (animationFrameRef.current) {
         cancelAnimationFrame(animationFrameRef.current);
       }
@@ -257,17 +269,21 @@ function MainSimulator() {
     if (!simulationRef.current || !isRunning) return;
 
     try {
-      // Run multiple steps per frame for performance
+      // Large lattices run inside a Web Worker: hand off to the facade's run()
+      // (which starts the worker's continuous loop) ONCE — the worker then pushes
+      // stats + raw snapshots via onStep/onStateChange, which redraw the canvas.
+      // Do NOT also drive a main-thread step loop here (would diverge/double-run).
+      if (isLargeRef.current) {
+        void simulationRef.current.run(Number.MAX_SAFE_INTEGER);
+        return;
+      }
+
+      // Small lattices stay fully synchronous on the main thread: step N times
+      // per animation frame and redraw from the object state via onStateChange.
       for (let i = 0; i < stepsPerFrame; i++) {
         if (simulationRef.current) {
           simulationRef.current.step();
         }
-      }
-
-      // Large lattices skip the per-step object onStateChange; pull the compact
-      // snapshot once per frame to redraw via the fast bitmap path.
-      if (isLargeRef.current) {
-        pullRawState();
       }
 
       animationFrameRef.current = requestAnimationFrame(() => runSimulation());
@@ -281,7 +297,7 @@ function MainSimulator() {
       // Don't show alert in animation loop to avoid spam
       console.error('Simulation stopped due to error:', error);
     }
-  }, [isRunning, stepsPerFrame, pullRawState]);
+  }, [isRunning, stepsPerFrame]);
 
   const handlePause = useCallback(() => {
     setIsRunning(false);
@@ -408,7 +424,7 @@ function MainSimulator() {
           const params: SimulationParams = data.params;
           const simConfig: SimulationConfig = {
             useOptimized: true,
-            useWorker: false,
+            useWorker: true,
             workerThreshold: 50,
           };
 

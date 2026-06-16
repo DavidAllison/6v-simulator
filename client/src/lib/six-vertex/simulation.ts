@@ -14,8 +14,9 @@ import type {
   SimulationController,
   SimulationEvents,
   Position,
+  Vertex,
 } from './types';
-import { VertexType, BoundaryCondition } from './types';
+import { VertexType, BoundaryCondition, getVertexConfiguration } from './types';
 import { SeededRNG } from './rng';
 import { findValidFlips, executeFlip, calculateFlipEnergyChange } from './flips';
 import { generateDWBCState, generateRandomIceState } from './initialStates';
@@ -68,6 +69,16 @@ export class MonteCarloSimulation implements SimulationController {
   private workerSim: WorkerSimulation | null = null;
   private useOptimized = false;
   private useWorker = false;
+
+  // Worker async-cache model: the worker engine is the source of truth in worker
+  // mode, but the facade's getStats()/getRawState() are synchronous. We cache the
+  // latest snapshots pushed by the worker (via callbacks) and serve them from the
+  // cache. getState() returns null in worker mode (consumers use the raw path).
+  private workerActive = false;
+  private latestRawState: RawLatticeState | null = null;
+  // Set when run() is called before the (async) worker has finished initializing.
+  // The worker starts its continuous loop as soon as it becomes ready.
+  private pendingRun = false;
 
   constructor(params?: Partial<SimulationParams>, config?: SimulationConfig) {
     this.params = this.getDefaultParams(params);
@@ -142,8 +153,16 @@ export class MonteCarloSimulation implements SimulationController {
     // Determine which implementation to use based on size
     const size = Math.min(width, height);
     this.useOptimized = (this.config.useOptimized ?? true) && size > 8;
+    // Only offload to a Web Worker for LARGE lattices, and only when the caller
+    // opted in and workers are actually supported. Small lattices stay fully
+    // synchronous on the main thread so step-by-step debugging and the object
+    // renderer keep working. The MC loop blocks the UI thread only for big N,
+    // which is exactly the case the worker exists to fix.
     this.useWorker =
-      this.config.useWorker ?? (size >= (this.config.workerThreshold ?? 50) && isWorkerSupported());
+      (this.config.useWorker ?? false) && size > LARGE_LATTICE_THRESHOLD && isWorkerSupported();
+    this.workerActive = false;
+    this.workerSim = null;
+    this.latestRawState = null;
 
     // Initialize optimized simulation if needed
     if (this.useOptimized && !this.useWorker) {
@@ -168,6 +187,8 @@ export class MonteCarloSimulation implements SimulationController {
       try {
         createWorkerSimulation(
           {
+            // Same config the main-thread optimized engine would use, so the
+            // worker reproduces the identical trajectory for a given seed.
             size,
             weights: params.weights || {
               a1: 1.0,
@@ -178,25 +199,43 @@ export class MonteCarloSimulation implements SimulationController {
               c2: 1.0,
             },
             seed: params.seed,
-            batchSize: size <= 50 ? 100 : 50,
+            batchSize: size <= 24 ? 100 : size <= 50 ? 50 : 20,
             initialState: params.dwbcConfig?.type === 'low' ? 'dwbc-low' : 'dwbc-high',
           },
           {
             onStats: (stats) => {
-              this.stats = stats;
-              this.emit('onStep', stats);
+              this.stats = stats as SimulationStats;
+              this.emit('onStep', this.stats);
             },
-            onState: (state) => {
-              this.state = state;
-              this.emit('onStateChange', state);
+            // Worker pushes a compact typed-array snapshot; cache it and emit
+            // onStateChange so the large-aware UI handler pulls via getRawState().
+            onRawState: (vertices, width, height) => {
+              this.latestRawState = { width, height, vertices };
+              // The object payload is unused for large worker mode; emit an empty
+              // sentinel and let the handler read getRawState().
+              this.emit('onStateChange', this.state as unknown as LatticeState);
+            },
+            onError: (error) => {
+              this.emit('onError', new Error(error));
             },
           },
         )
           .then((workerSim) => {
-            this.workerSim = workerSim;
-            // Request initial state
-            if (this.workerSim) {
-              this.workerSim.getState();
+            if (workerSim) {
+              this.workerSim = workerSim;
+              this.workerActive = true;
+              // Request an initial snapshot + stats to seed the cache.
+              workerSim.getRawState();
+              workerSim.getStats();
+              // If the user pressed Run before the worker finished initializing,
+              // honour that intent now (unless they paused/stopped in between).
+              if (this.pendingRun && this.isRunningFlag && !this.isPaused) {
+                workerSim.startContinuous(60);
+              }
+              this.pendingRun = false;
+            } else {
+              // Worker unavailable (e.g. test/build env): fall back cleanly.
+              this.fallBackToOptimized(size, params);
             }
           })
           .catch((error) => {
@@ -204,14 +243,11 @@ export class MonteCarloSimulation implements SimulationController {
               'Failed to create worker, falling back to optimized implementation',
               error,
             );
-            this.useWorker = false;
-            this.useOptimized = true;
-            // Fall back to optimized implementation
-            this.initializeOptimized(size, params);
+            this.fallBackToOptimized(size, params);
           });
       } catch (error) {
         console.warn('Worker creation failed', error);
-        this.initializeOptimized(size, params);
+        this.fallBackToOptimized(size, params);
       }
     } else {
       // Generate initial state without optimization
@@ -222,7 +258,18 @@ export class MonteCarloSimulation implements SimulationController {
     this.updateStats();
   }
 
-  private initializeOptimized(size: number, params: SimulationParams): void {
+  /**
+   * Fall back to the main-thread optimized engine when the worker cannot be used
+   * (unsupported, init failed, or test/build env). Fully initializes the engine
+   * and seeds the UI with an initial state + stats so nothing renders blank.
+   */
+  private fallBackToOptimized(size: number, params: SimulationParams): void {
+    this.useWorker = false;
+    this.workerActive = false;
+    this.workerSim = null;
+    this.latestRawState = null;
+    this.useOptimized = true;
+
     this.optimizedSim = new OptimizedPhysicsSimulation({
       size,
       weights: params.weights || {
@@ -238,6 +285,17 @@ export class MonteCarloSimulation implements SimulationController {
       initialState: params.dwbcConfig?.type === 'low' ? 'dwbc-low' : 'dwbc-high',
     });
     this.adoptOptimizedState();
+
+    // Seed the UI: large lattices render from the raw snapshot, others from the
+    // object form. updateStats() emits onStep, and (for small N) onStateChange.
+    this.stats = this.optimizedSim.getStats();
+    if (this.isLargeLattice()) {
+      this.emit('onStep', this.stats);
+      this.emit('onStateChange', this.state as unknown as LatticeState);
+    } else if (this.state) {
+      this.emit('onStateChange', this.state);
+      this.emit('onStep', this.stats);
+    }
   }
 
   private generateInitialState(width: number, height: number, params: SimulationParams): void {
@@ -268,8 +326,32 @@ export class MonteCarloSimulation implements SimulationController {
   reset(): void {
     if (!this.dims) return;
 
+    // Tear down any existing worker so initialize() can spin up a fresh one with
+    // the same seed (which reproduces the trajectory) without leaking the old.
+    if (this.workerSim) {
+      this.workerSim.stop();
+      this.workerSim.terminate();
+      this.workerSim = null;
+      this.workerActive = false;
+    }
+
     const { width, height } = this.dims;
     this.initialize(width, height, this.params);
+  }
+
+  /**
+   * Release background resources. Terminates the Web Worker (if any) so it does
+   * not leak when this controller is discarded (e.g. on re-init for a new size).
+   */
+  dispose(): void {
+    this.isRunningFlag = false;
+    this.pendingRun = false;
+    if (this.workerSim) {
+      this.workerSim.stop();
+      this.workerSim.terminate();
+      this.workerSim = null;
+      this.workerActive = false;
+    }
   }
 
   /**
@@ -282,10 +364,52 @@ export class MonteCarloSimulation implements SimulationController {
       this.state = this.optimizedSim.getState();
       this.stateDirty = false;
     }
+    // Worker mode keeps no object state on the main thread; rebuild it lazily
+    // from the cached raw snapshot when something actually needs it (e.g. save).
+    if (!this.state && this.workerActive && this.latestRawState) {
+      return this.buildStateFromRaw(this.latestRawState);
+    }
     if (!this.state) {
       throw new Error('Simulation not initialized');
     }
     return this.state;
+  }
+
+  /**
+   * Build the object-graph LatticeState from a compact raw snapshot. Expensive
+   * for large N, so only used on demand (save/export in worker mode).
+   */
+  private buildStateFromRaw(raw: RawLatticeState): LatticeState {
+    const numToType = [
+      VertexType.a1,
+      VertexType.a2,
+      VertexType.b1,
+      VertexType.b2,
+      VertexType.c1,
+      VertexType.c2,
+    ];
+    const vertices: Vertex[][] = [];
+    for (let row = 0; row < raw.height; row++) {
+      const rowVertices: Vertex[] = [];
+      for (let col = 0; col < raw.width; col++) {
+        const type = numToType[raw.vertices[row * raw.width + col]];
+        // Use the canonical mapping (single source of truth) so arrow/edge
+        // rendering of a worker-rebuilt state matches every other code path.
+        rowVertices.push({
+          position: { row, col },
+          type,
+          configuration: getVertexConfiguration(type),
+        });
+      }
+      vertices.push(rowVertices);
+    }
+    return {
+      width: raw.width,
+      height: raw.height,
+      vertices,
+      horizontalEdges: [],
+      verticalEdges: [],
+    };
   }
 
   /**
@@ -297,6 +421,11 @@ export class MonteCarloSimulation implements SimulationController {
   }
 
   getRawState(): RawLatticeState | null {
+    // Worker mode: serve the latest snapshot pushed by the worker. May be null
+    // briefly until the first snapshot arrives after init.
+    if (this.workerActive) {
+      return this.latestRawState;
+    }
     if (!this.optimizedSim) {
       return null;
     }
@@ -333,6 +462,13 @@ export class MonteCarloSimulation implements SimulationController {
    * Perform a single Monte Carlo step
    */
   step(): void {
+    // Worker mode: fire-and-forget; stats + raw state arrive via callbacks which
+    // update the cache and emit onStep/onStateChange.
+    if (this.workerActive && this.workerSim) {
+      this.workerSim.step();
+      return;
+    }
+
     // Large lattices keep this.state null (object form is built lazily), so guard
     // on the optimized engine too — otherwise stepping silently no-ops for big N.
     if (!this.state && !this.optimizedSim) {
@@ -363,12 +499,6 @@ export class MonteCarloSimulation implements SimulationController {
       // Try to recover or fallback
       this.emit('onError', error as Error);
       return;
-    }
-
-    // Use worker if available
-    if (this.workerSim) {
-      this.workerSim.run(1);
-      return; // Stats and state updates handled by callbacks
     }
 
     // Original (non-optimized) implementation. Only reached when no optimized
@@ -417,6 +547,26 @@ export class MonteCarloSimulation implements SimulationController {
    * Run simulation for a specified number of steps
    */
   async run(steps: number): Promise<void> {
+    // Worker mode: hand off to the worker's continuous loop. The worker pushes
+    // stats + raw snapshots via callbacks; stop()/pause() halts it. The promise
+    // resolves immediately because the loop lives in the worker thread.
+    if (this.workerActive && this.workerSim) {
+      this.isRunningFlag = true;
+      this.isPaused = false;
+      this.workerSim.startContinuous(60);
+      return;
+    }
+
+    // Worker intended but still initializing (async): record the intent so the
+    // worker starts as soon as it is ready, rather than throwing below (the
+    // optimized engine is intentionally not created in worker mode).
+    if (this.useWorker && !this.workerActive) {
+      this.isRunningFlag = true;
+      this.isPaused = false;
+      this.pendingRun = true;
+      return;
+    }
+
     if (!this.state && !this.optimizedSim) {
       throw new Error('Simulation not initialized');
     }
@@ -436,6 +586,10 @@ export class MonteCarloSimulation implements SimulationController {
         this.stats = this.optimizedSim.getStats();
         if (this.isLargeLattice()) {
           this.stateDirty = true;
+          // Main-thread fallback for a large lattice: emit so the large-aware UI
+          // handler pulls the raw snapshot and redraws (worker mode does this via
+          // onRawState instead). Without this the canvas would not animate.
+          this.emit('onStateChange', this.state as unknown as LatticeState);
         } else {
           this.state = this.optimizedSim.getState();
           if (this.state) {
@@ -451,21 +605,6 @@ export class MonteCarloSimulation implements SimulationController {
           await new Promise((resolve) => setTimeout(resolve, 0));
         }
       }
-    }
-    // Use worker if available
-    else if (this.workerSim) {
-      this.workerSim.run(steps);
-      // Wait for completion (handled by callbacks)
-      await new Promise((resolve) => {
-        const checkComplete = () => {
-          if (this.stats.step >= steps || !this.isRunningFlag) {
-            resolve(undefined);
-          } else {
-            setTimeout(checkComplete, 100);
-          }
-        };
-        checkComplete();
-      });
     }
     // Original implementation
     else {
@@ -495,6 +634,10 @@ export class MonteCarloSimulation implements SimulationController {
    */
   pause(): void {
     this.isPaused = true;
+    // Worker mode: halt the worker's continuous loop. step()/run() can restart it.
+    if (this.workerActive && this.workerSim) {
+      this.workerSim.stop();
+    }
   }
 
   /**
@@ -502,6 +645,9 @@ export class MonteCarloSimulation implements SimulationController {
    */
   resume(): void {
     this.isPaused = false;
+    if (this.workerActive && this.workerSim) {
+      this.workerSim.startContinuous(60);
+    }
   }
 
   /**
@@ -648,10 +794,8 @@ export class MonteCarloSimulation implements SimulationController {
     stats: SimulationStats;
     state: LatticeState;
   } {
-    if (!this.state) {
-      throw new Error('Simulation not initialized');
-    }
-
+    // getState() handles worker mode (rebuilds the object form from the cached
+    // raw snapshot) and the large optimized-engine case (rebuilds if stale).
     return {
       params: this.getParams(),
       stats: this.getStats(),
@@ -682,6 +826,28 @@ export class MonteCarloSimulation implements SimulationController {
     this.dims = { width: data.state.width, height: data.state.height };
     this.useOptimized = (this.config.useOptimized ?? true) && size > 8;
 
+    // Flatten the imported vertex types into the engine's typed-array state.
+    const typeToNum: Record<string, number> = { a1: 0, a2: 1, b1: 2, b2: 3, c1: 4, c2: 5 };
+    const flatten = (): Int8Array => {
+      const raw = new Int8Array(size * size);
+      for (let r = 0; r < size; r++) {
+        for (let c = 0; c < size; c++) {
+          raw[r * size + c] = typeToNum[data.state.vertices[r][c].type] ?? 0;
+        }
+      }
+      return raw;
+    };
+
+    // Worker mode: if a worker is already running for this lattice, adopt the
+    // imported config in the worker engine (zero-copy transfer of a fresh copy).
+    // The buffer is transferred, so send a copy we don't keep.
+    if (this.workerActive && this.workerSim && size > LARGE_LATTICE_THRESHOLD) {
+      this.workerSim.setState(flatten());
+      // Stats + a fresh rawState snapshot arrive via callbacks and refresh the
+      // cache; until then the cache may hold the pre-import snapshot.
+      return;
+    }
+
     if (this.useOptimized && !this.useWorker) {
       // Recreate the optimized engine, then load the imported configuration into
       // it (previously this was a no-op, so the engine kept a default DWBC state
@@ -694,15 +860,7 @@ export class MonteCarloSimulation implements SimulationController {
         initialState: data.params.dwbcConfig?.type === 'low' ? 'dwbc-low' : 'dwbc-high',
       });
 
-      // Flatten the imported vertex types into the engine's typed-array state.
-      const typeToNum: Record<string, number> = { a1: 0, a2: 1, b1: 2, b2: 3, c1: 4, c2: 5 };
-      const raw = new Int8Array(size * size);
-      for (let r = 0; r < size; r++) {
-        for (let c = 0; c < size; c++) {
-          raw[r * size + c] = typeToNum[data.state.vertices[r][c].type] ?? 0;
-        }
-      }
-      this.optimizedSim.setState(raw);
+      this.optimizedSim.setState(flatten());
       this.stats = this.optimizedSim.getStats();
     }
 
