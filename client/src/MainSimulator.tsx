@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useCallback } from 'react';
+import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import type {
   SimulationController,
   LatticeState,
@@ -504,15 +504,22 @@ function MainSimulator() {
     }
   }, [isRunning, runSimulation]);
 
-  // Render config with theme-aware colors
-  const renderConfig: Partial<RenderConfig> = {
-    mode: renderMode,
-    showGrid,
-    animateFlips,
-    cellSize: 30,
-    lineWidth: 2,
-    colors: getThemeColors(isDarkMode),
-  };
+  // Render config with theme-aware colors. Memoized so its identity is stable
+  // across the many re-renders a run triggers (one per stats/state update). An
+  // unstable identity made VisualizationCanvas's config-and-draw effect re-run
+  // every frame, forcing a redundant full redraw on top of the one the
+  // onStateChange handler already performs.
+  const renderConfig: Partial<RenderConfig> = useMemo(
+    () => ({
+      mode: renderMode,
+      showGrid,
+      animateFlips,
+      cellSize: 30,
+      lineWidth: 2,
+      colors: getThemeColors(isDarkMode),
+    }),
+    [renderMode, showGrid, animateFlips, isDarkMode],
+  );
 
   return (
     <div className="main-content">

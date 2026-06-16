@@ -1,4 +1,4 @@
-import { describe, it, expect } from '@jest/globals';
+import { describe, it, expect, jest } from '@jest/globals';
 // Test the engine directly (OptimizedPhysicsSimulation) rather than the
 // MonteCarloSimulation facade: the facade transitively imports the Web Worker
 // module, whose import.meta.url is incompatible with the ts-jest module target.
@@ -133,5 +133,44 @@ describe('latticeBitmap', () => {
         255,
       ]);
     }
+  });
+
+  it('reuses one ImageData per context across same-size repaints, reallocating only on resize', () => {
+    const createImageData = jest.fn((w: number, h: number) => ({
+      width: w,
+      height: h,
+      data: new Uint8ClampedArray(w * h * 4),
+      colorSpace: 'srgb' as PredefinedColorSpace,
+    }));
+    const ctx = {
+      createImageData,
+      putImageData: () => {},
+    } as unknown as CanvasRenderingContext2D;
+
+    const frame = Int8Array.from([0, 1, 2, 3]); // 2x2
+    paintLatticeBitmap(ctx, 2, 2, frame);
+    paintLatticeBitmap(ctx, 2, 2, frame);
+    paintLatticeBitmap(ctx, 2, 2, frame);
+    // Same dimensions → buffer reused, allocated exactly once (no per-frame churn).
+    expect(createImageData).toHaveBeenCalledTimes(1);
+
+    // Dimension change → must allocate a correctly-sized buffer.
+    paintLatticeBitmap(ctx, 3, 3, Int8Array.from([0, 1, 2, 3, 4, 5, 0, 1, 2]));
+    expect(createImageData).toHaveBeenCalledTimes(2);
+    expect(createImageData).toHaveBeenLastCalledWith(3, 3);
+
+    // A different context gets its own cached buffer (WeakMap keyed by context).
+    const createImageData2 = jest.fn((w: number, h: number) => ({
+      width: w,
+      height: h,
+      data: new Uint8ClampedArray(w * h * 4),
+      colorSpace: 'srgb' as PredefinedColorSpace,
+    }));
+    const ctx2 = {
+      createImageData: createImageData2,
+      putImageData: () => {},
+    } as unknown as CanvasRenderingContext2D;
+    paintLatticeBitmap(ctx2, 2, 2, frame);
+    expect(createImageData2).toHaveBeenCalledTimes(1);
   });
 });

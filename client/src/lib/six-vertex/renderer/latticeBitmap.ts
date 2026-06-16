@@ -23,6 +23,16 @@ const VERTEX_RGB: ReadonlyArray<readonly [number, number, number]> = [
   [0xcc, 0x79, 0xa7], // c2
 ];
 
+// Per-context ImageData cache. At 1024x1024 each ImageData backs a 4 MB buffer;
+// allocating a fresh one every animation frame churns the GC hard during a run.
+// We keep one buffer per canvas context, reusing it whenever the lattice
+// dimensions are unchanged (the common case — only the pixel data varies). Keyed
+// by the context via a WeakMap so a discarded canvas's buffer is collectable.
+const imageDataCache = new WeakMap<
+  CanvasRenderingContext2D,
+  { width: number; height: number; img: ImageData }
+>();
+
 /**
  * Paint a flat row-major Int8Array of numeric vertex types into the context,
  * one pixel per vertex. `vertices` must have at least width*height entries.
@@ -34,7 +44,14 @@ export function paintLatticeBitmap(
   vertices: Int8Array,
 ): void {
   const count = width * height;
-  const img = ctx.createImageData(width, height);
+  const cached = imageDataCache.get(ctx);
+  let img: ImageData;
+  if (cached && cached.width === width && cached.height === height) {
+    img = cached.img;
+  } else {
+    img = ctx.createImageData(width, height);
+    imageDataCache.set(ctx, { width, height, img });
+  }
   const data = img.data;
   for (let i = 0; i < count; i++) {
     const rgb = VERTEX_RGB[vertices[i]] ?? VERTEX_RGB[0];
