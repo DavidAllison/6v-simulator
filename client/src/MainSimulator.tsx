@@ -13,6 +13,7 @@ import type { SimulationConfig } from './lib/six-vertex/simulation';
 import { PathRenderer } from './lib/six-vertex/renderer/pathRenderer';
 import ControlPanel from './components/ControlPanel';
 import StatisticsPanel from './components/StatisticsPanel';
+import { anisotropyDelta } from './lib/six-vertex/observables';
 import VisualizationCanvas from './components/VisualizationCanvas';
 import { SaveLoadPanel } from './components/SaveLoadPanel';
 import { CollapsiblePanel } from './components/CollapsiblePanel';
@@ -535,7 +536,13 @@ function MainSimulator() {
         />
 
         <CollapsiblePanel title="Info" side="right" className="panel-section">
-          <StatisticsPanel stats={stats} fps={fps} />
+          <StatisticsPanel
+            stats={stats}
+            fps={fps}
+            temperature={temperature}
+            beta={1.0 / temperature}
+            delta={anisotropyDelta(weights)}
+          />
           <SaveLoadPanel
             getCurrentData={getCurrentSimulationData}
             onLoadData={loadSimulationData}

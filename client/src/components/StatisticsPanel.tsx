@@ -8,9 +8,21 @@ import './StatisticsPanel.css';
 interface StatisticsPanelProps {
   stats: SimulationStats | null;
   fps: number;
+  /** Current temperature T (from params); shown in Simulation Info. */
+  temperature?: number;
+  /** Inverse temperature β = 1/T (from params). */
+  beta?: number;
+  /** Anisotropy parameter Δ derived from the current weights, or null if undefined. */
+  delta?: number | null;
 }
 
-const StatisticsPanel: React.FC<StatisticsPanelProps> = ({ stats, fps }) => {
+const StatisticsPanel: React.FC<StatisticsPanelProps> = ({
+  stats,
+  fps,
+  temperature,
+  beta,
+  delta,
+}) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const { theme } = useTheme();
 
@@ -232,26 +244,20 @@ const StatisticsPanel: React.FC<StatisticsPanelProps> = ({ stats, fps }) => {
           <div className="stats-grid">
             <div
               className="stat-item"
-              title="A 3-D terrain reading of the configuration; frozen corners are flat facets, the Arctic circle is the curved slope."
+              title="Height-function value tracked by the model as flips occur (related to the number of c-type vertices); grows as the disordered region fills in."
             >
               <span className="stat-label">Height</span>
-              <span className="stat-value">{stats.height?.toFixed(2) || 'N/A'}</span>
+              <span className="stat-value">{stats.height?.toFixed(2) ?? 'N/A'}</span>
             </div>
-            <div className="stat-item" title="Sum of all heights — volume under that terrain.">
-              <span className="stat-label">Volume</span>
-              <span className="stat-value">{stats.volume?.toFixed(2) || 'N/A'}</span>
-            </div>
-            <div className="stat-item" title="Anisotropy parameter that selects the model's phase.">
-              <span className="stat-label">Delta (Δ)</span>
-              <span className="stat-value">{stats.delta?.toFixed(4) || 'N/A'}</span>
-            </div>
-            <div
-              className="stat-item"
-              title="Roughly, how many microscopic arrangements look like this one — high in the disordered center, ~0 in frozen corners."
-            >
-              <span className="stat-label">Entropy</span>
-              <span className="stat-value">{stats.entropy?.toFixed(3) || 'N/A'}</span>
-            </div>
+            {delta !== undefined && delta !== null && (
+              <div
+                className="stat-item"
+                title="Anisotropy Δ = (a²+b²−c²)/(2ab) from the current weights. Δ>1 ferroelectric, −1<Δ<1 disordered, Δ<−1 antiferroelectric."
+              >
+                <span className="stat-label">Delta (Δ)</span>
+                <span className="stat-value">{delta.toFixed(4)}</span>
+              </div>
+            )}
           </div>
         </div>
       )}
@@ -281,12 +287,12 @@ const StatisticsPanel: React.FC<StatisticsPanelProps> = ({ stats, fps }) => {
           <div className="info-item">
             <span className="info-label">Temperature</span>
             <span className="info-value">
-              {stats.beta && stats.beta !== 0 ? (1 / stats.beta).toFixed(2) : 'N/A'}
+              {temperature !== undefined ? temperature.toFixed(2) : 'N/A'}
             </span>
           </div>
           <div className="info-item">
             <span className="info-label">Beta (β)</span>
-            <span className="info-value">{stats.beta ? stats.beta.toFixed(3) : 'N/A'}</span>
+            <span className="info-value">{beta !== undefined ? beta.toFixed(3) : 'N/A'}</span>
           </div>
         </div>
       </div>
