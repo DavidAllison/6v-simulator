@@ -365,6 +365,8 @@ function MainSimulator() {
           handlePause();
         }
 
+        const large = data.latticeState.width > LARGE_LATTICE_THRESHOLD;
+
         // Import the data into the simulation
         if (simulationRef.current) {
           simulationRef.current.importData({
@@ -374,8 +376,7 @@ function MainSimulator() {
           });
 
           // Update local state to match loaded data
-          setLatticeState(data.latticeState);
-          setStats(data.stats);
+          setStats(simulationRef.current.getStats());
           setLatticeSize(data.latticeState.width);
           setTemperature(data.params.temperature);
           setWeights(data.params.weights);
@@ -387,9 +388,20 @@ function MainSimulator() {
             setSeed(data.params.seed);
           }
 
-          // Re-render the loaded state
-          if (rendererRef.current && data.latticeState) {
-            rendererRef.current.render(data.latticeState);
+          // Re-render the loaded state. Large lattices use the compact bitmap
+          // path (pulled from the engine, which importData now actually loads);
+          // building the per-cell object form for ~1M cells would freeze the tab.
+          if (large) {
+            setLatticeState(null);
+            const raw = simulationRef.current.getRawState();
+            if (raw) {
+              setRawState(raw);
+              rendererRef.current?.renderRaw(raw.width, raw.height, raw.vertices);
+            }
+          } else {
+            setRawState(null);
+            setLatticeState(data.latticeState);
+            rendererRef.current?.render(data.latticeState);
           }
         } else {
           // If no simulation exists, create one with the loaded params
@@ -411,8 +423,7 @@ function MainSimulator() {
           });
 
           // Update local state
-          setLatticeState(data.latticeState);
-          setStats(data.stats);
+          setStats(simulation.getStats());
           setLatticeSize(data.latticeState.width);
           setTemperature(data.params.temperature);
           setWeights(data.params.weights);
@@ -424,15 +435,35 @@ function MainSimulator() {
             setSeed(data.params.seed);
           }
 
-          // Set up event handlers
+          // Render the freshly imported state (large via bitmap, else objects).
+          if (large) {
+            setLatticeState(null);
+            const raw = simulation.getRawState();
+            if (raw) {
+              setRawState(raw);
+              rendererRef.current?.renderRaw(raw.width, raw.height, raw.vertices);
+            }
+          } else {
+            setRawState(null);
+            setLatticeState(data.latticeState);
+            rendererRef.current?.render(data.latticeState);
+          }
+
+          // Set up event handlers (large-aware, mirroring initializeSimulation).
           simulation.on('onStep', (newStats) => {
             setStats(newStats);
           });
 
           simulation.on('onStateChange', (newState) => {
-            setLatticeState(newState);
-            if (rendererRef.current) {
-              rendererRef.current.render(newState);
+            if (isLargeRef.current) {
+              const raw = simulationRef.current?.getRawState();
+              if (raw) {
+                setRawState(raw);
+                rendererRef.current?.renderRaw(raw.width, raw.height, raw.vertices);
+              }
+            } else {
+              setLatticeState(newState);
+              rendererRef.current?.render(newState);
             }
           });
         }

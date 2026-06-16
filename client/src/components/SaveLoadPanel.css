@@ -284,6 +284,26 @@
   font-size: 13px;
 }
 
+/* Import / Export */
+.save-load-panel__hint {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--color-text-secondary, #555);
+}
+
+.save-load-panel__io-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.save-load-panel__io-actions .save-load-panel__button {
+  flex: 1 1 auto;
+  padding: 6px 12px;
+  font-size: 13px;
+}
+
 /* Scrollbar styling */
 .save-load-panel__saves::-webkit-scrollbar {
   width: 6px;

@@ -679,10 +679,13 @@ export class MonteCarloSimulation implements SimulationController {
 
     // Reinitialize optimized simulation if needed
     const size = Math.min(data.state.width, data.state.height);
+    this.dims = { width: data.state.width, height: data.state.height };
     this.useOptimized = (this.config.useOptimized ?? true) && size > 8;
 
     if (this.useOptimized && !this.useWorker) {
-      // Recreate optimized simulation with the imported state
+      // Recreate the optimized engine, then load the imported configuration into
+      // it (previously this was a no-op, so the engine kept a default DWBC state
+      // and stepping ignored the import).
       this.optimizedSim = new OptimizedPhysicsSimulation({
         size,
         weights: data.params.weights,
@@ -691,16 +694,22 @@ export class MonteCarloSimulation implements SimulationController {
         initialState: data.params.dwbcConfig?.type === 'low' ? 'dwbc-low' : 'dwbc-high',
       });
 
-      // Set the imported state in the optimized simulation
-      if (this.optimizedSim) {
-        // Note: The optimized simulation may need a setState method
-        // For now, we'll just use the imported state directly
-        this.state = data.state;
+      // Flatten the imported vertex types into the engine's typed-array state.
+      const typeToNum: Record<string, number> = { a1: 0, a2: 1, b1: 2, b2: 3, c1: 4, c2: 5 };
+      const raw = new Int8Array(size * size);
+      for (let r = 0; r < size; r++) {
+        for (let c = 0; c < size; c++) {
+          raw[r * size + c] = typeToNum[data.state.vertices[r][c].type] ?? 0;
+        }
       }
+      this.optimizedSim.setState(raw);
+      this.stats = this.optimizedSim.getStats();
     }
 
     // Emit state change event
-    this.emit('onStateChange', this.state);
+    if (this.state) {
+      this.emit('onStateChange', this.state);
+    }
     this.emit('onStep', this.stats);
   }
 }
