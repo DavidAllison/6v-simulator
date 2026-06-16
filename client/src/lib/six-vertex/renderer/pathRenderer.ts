@@ -8,6 +8,7 @@ import { RenderMode, EdgeState, VertexType } from '../types';
 import { getPathSegments } from '../vertexShapes';
 import type { PathSegment } from '../vertexShapes';
 import { renderContinuousPaths } from './continuousPathRenderer';
+import { paintLatticeBitmap } from './latticeBitmap';
 
 /**
  * Main renderer class for the 6-vertex model
@@ -62,6 +63,22 @@ export class PathRenderer {
    */
   updateConfig(config: Partial<RenderConfig>): void {
     this.config = { ...this.config, ...config };
+  }
+
+  /**
+   * Fast path for large lattices: paint one pixel per vertex (coloured by type)
+   * from a flat typed array, sizing the canvas to the lattice. The enclosing
+   * pan/zoom transform scales the bitmap up, so cost is bounded by vertex count
+   * rather than on-screen pixels. Bypasses the per-cell path/grid drawing that
+   * is infeasible at e.g. 1024x1024.
+   */
+  renderRaw(width: number, height: number, vertices: Int8Array): void {
+    if (this.canvas.width !== width || this.canvas.height !== height) {
+      this.canvas.width = width;
+      this.canvas.height = height;
+    }
+    this.ctx.imageSmoothingEnabled = false;
+    paintLatticeBitmap(this.ctx, width, height, vertices);
   }
 
   /**

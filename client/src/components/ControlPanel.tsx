@@ -235,19 +235,36 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
             <div className="slider-with-value">
               <input
                 type="range"
-                value={latticeSize}
+                value={Math.min(latticeSize, 256)}
                 onChange={(e) => onLatticeSizeChange(parseInt(e.target.value))}
                 min={4}
-                max={100}
+                max={256}
                 step={1}
                 className="slider"
                 aria-label="Lattice size (N by N)"
                 aria-valuetext={`${latticeSize} by ${latticeSize}`}
               />
-              <output className="value-display" aria-live="polite">
-                {latticeSize}
-              </output>
+              <input
+                type="number"
+                value={latticeSize}
+                onChange={(e) => {
+                  const n = parseInt(e.target.value);
+                  if (!Number.isNaN(n)) {
+                    onLatticeSizeChange(Math.min(1024, Math.max(4, n)));
+                  }
+                }}
+                min={4}
+                max={1024}
+                step={1}
+                className="value-input"
+                aria-label="Lattice size exact value (4 to 1024)"
+              />
             </div>
+            {latticeSize > 128 && (
+              <span className="control-note">
+                Large lattice — fast bitmap view (vertices coloured by type).
+              </span>
+            )}
           </label>
         </div>
 

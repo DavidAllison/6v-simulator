@@ -1,11 +1,16 @@
 import React, { useRef, useEffect, useState, useCallback } from 'react';
-import type { LatticeState, RenderConfig } from '../lib/six-vertex/types';
+import type { LatticeState, RawLatticeState, RenderConfig } from '../lib/six-vertex/types';
 import { PathRenderer } from '../lib/six-vertex/renderer/pathRenderer';
 import './VisualizationCanvas.css';
 
 interface VisualizationCanvasProps {
   renderer: PathRenderer | null;
   latticeState: LatticeState | null;
+  /**
+   * Compact typed-array state for large lattices. When present it takes
+   * precedence over latticeState and is drawn via the fast bitmap path.
+   */
+  rawState?: RawLatticeState | null;
   onRendererReady: (renderer: PathRenderer) => void;
   renderConfig: Partial<RenderConfig>;
 }
@@ -13,6 +18,7 @@ interface VisualizationCanvasProps {
 const VisualizationCanvas: React.FC<VisualizationCanvasProps> = ({
   renderer,
   latticeState,
+  rawState,
   onRendererReady,
   renderConfig,
 }) => {
@@ -40,21 +46,24 @@ const VisualizationCanvas: React.FC<VisualizationCanvasProps> = ({
     };
   }, [renderConfig.cellSize, onRendererReady]); // Re-create renderer when cell size changes
 
-  // Update renderer config
+  // Update renderer config + draw. Large lattices use the fast raw bitmap path
+  // and take precedence over the object-based render.
   useEffect(() => {
     if (renderer) {
       renderer.updateConfig(renderConfig);
-      if (latticeState) {
+      if (rawState) {
+        renderer.renderRaw(rawState.width, rawState.height, rawState.vertices);
+      } else if (latticeState) {
         renderer.render(latticeState);
       }
     }
-  }, [renderer, renderConfig, latticeState]);
+  }, [renderer, renderConfig, latticeState, rawState]);
 
   // Handle zoom
   const handleWheel = useCallback((e: WheelEvent) => {
     e.preventDefault();
     const delta = e.deltaY > 0 ? 0.9 : 1.1;
-    setZoom((prevZoom) => Math.min(Math.max(prevZoom * delta, 0.25), 4));
+    setZoom((prevZoom) => Math.min(Math.max(prevZoom * delta, 0.1), 8));
   }, []);
 
   // Handle pan
@@ -114,25 +123,38 @@ const VisualizationCanvas: React.FC<VisualizationCanvasProps> = ({
     setPan({ x: 0, y: 0 });
   }, []);
 
+  // Canvas content dimensions in device pixels. Raw (bitmap) lattices size the
+  // canvas to the lattice itself (one pixel per vertex); object lattices use
+  // (N+1)*cellSize. These are PRIMITIVES and stay constant during a run (only the
+  // pixel data changes), so handleFitToScreen below keeps a stable identity and
+  // the auto-fit/ResizeObserver effects don't re-fire every frame.
+  const cellSize = renderConfig.cellSize || 30;
+  const contentWidth = rawState
+    ? rawState.width
+    : latticeState
+      ? (latticeState.width + 1) * cellSize
+      : 0;
+  const contentHeight = rawState
+    ? rawState.height
+    : latticeState
+      ? (latticeState.height + 1) * cellSize
+      : 0;
+
   // Fit to screen
   const handleFitToScreen = useCallback(() => {
-    if (!containerRef.current || !canvasRef.current || !latticeState) return;
+    if (!containerRef.current || !contentWidth || !contentHeight) return;
 
     const containerRect = containerRef.current.getBoundingClientRect();
-    const cellSize = renderConfig.cellSize || 30;
-    const canvasWidth = (latticeState.width + 1) * cellSize;
-    const canvasHeight = (latticeState.height + 1) * cellSize;
-
     // Fit to the container with a small margin, scaling UP for small lattices so
     // they fill the figure area instead of sitting tiny (capped to keep large
     // lattices crisp).
-    const scaleX = (containerRect.width - 48) / canvasWidth;
-    const scaleY = (containerRect.height - 48) / canvasHeight;
-    const newZoom = Math.min(Math.max(Math.min(scaleX, scaleY), 0.25), 4);
+    const scaleX = (containerRect.width - 48) / contentWidth;
+    const scaleY = (containerRect.height - 48) / contentHeight;
+    const newZoom = Math.min(Math.max(Math.min(scaleX, scaleY), 0.1), 8);
 
     setZoom(newZoom);
     setPan({ x: 0, y: 0 });
-  }, [latticeState, renderConfig.cellSize]);
+  }, [contentWidth, contentHeight]);
 
   // Add wheel event listener
   useEffect(() => {
@@ -145,7 +167,11 @@ const VisualizationCanvas: React.FC<VisualizationCanvasProps> = ({
 
   // Auto-fit the lattice on initial mount and whenever the lattice size (N) changes,
   // so it never sits tiny in a large canvas. The manual "Fit to Screen" button remains.
-  const latticeSize = latticeState ? `${latticeState.width}x${latticeState.height}` : null;
+  const latticeSize = rawState
+    ? `raw:${rawState.width}x${rawState.height}`
+    : latticeState
+      ? `${latticeState.width}x${latticeState.height}`
+      : null;
   useEffect(() => {
     if (!latticeSize) return;
     // Defer to the next frame so the container has its measured size and the
@@ -209,7 +235,7 @@ const VisualizationCanvas: React.FC<VisualizationCanvasProps> = ({
       <div className="canvas-controls">
         <button
           className="zoom-button"
-          onClick={() => setZoom((z) => Math.min(z * 1.2, 4))}
+          onClick={() => setZoom((z) => Math.min(z * 1.2, 8))}
           title="Zoom In"
         >
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
@@ -224,7 +250,7 @@ const VisualizationCanvas: React.FC<VisualizationCanvasProps> = ({
 
         <button
           className="zoom-button"
-          onClick={() => setZoom((z) => Math.max(z * 0.8, 0.25))}
+          onClick={() => setZoom((z) => Math.max(z * 0.8, 0.1))}
           title="Zoom Out"
         >
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">

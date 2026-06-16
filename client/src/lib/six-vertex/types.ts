@@ -94,6 +94,18 @@ export interface LatticeState {
 }
 
 /**
+ * Compact lattice state for large lattices: numeric vertex-type ids in a flat,
+ * row-major typed array (index = row * width + col). Avoids allocating ~width*height
+ * objects per frame, which is the bottleneck for very large N (e.g. 1024x1024).
+ * The numeric ids match the VERTEX_* constants in cStyleFlipLogic (a1=0..c2=5).
+ */
+export interface RawLatticeState {
+  width: number;
+  height: number;
+  vertices: Int8Array;
+}
+
+/**
  * Boundary conditions for the lattice
  */
 export const BoundaryCondition = {
@@ -209,6 +221,11 @@ export interface SimulationController {
   initialize(width: number, height: number, params: SimulationParams): void;
   reset(): void;
   getState(): LatticeState;
+  /**
+   * Compact typed-array snapshot for large lattices, or null when no optimized
+   * engine backs this controller (small lattices use getState() instead).
+   */
+  getRawState(): RawLatticeState | null;
   setState(state: LatticeState): void;
 
   // Simulation control

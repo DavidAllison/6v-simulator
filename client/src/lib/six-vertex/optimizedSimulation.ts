@@ -618,6 +618,13 @@ export class OptimizedPhysicsSimulation {
   }
 
   /**
+   * Linear dimension N of the (square) lattice.
+   */
+  public getSize(): number {
+    return this.size;
+  }
+
+  /**
    * Get current state as a standard LatticeState (for rendering)
    */
   public getState(): any {

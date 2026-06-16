@@ -223,6 +223,27 @@
   color: var(--color-text-primary);
 }
 
+/* Exact numeric entry beside the size slider (supports values past the slider max). */
+.value-input {
+  width: 4.5rem;
+  text-align: center;
+  padding: var(--spacing-xs) var(--spacing-sm);
+  background: var(--color-bg-tertiary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius-md);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+}
+
+/* Small contextual note under a control (e.g. large-lattice mode hint). */
+.control-note {
+  display: block;
+  margin-top: var(--spacing-xs);
+  font-size: var(--font-size-xs);
+  color: var(--color-text-secondary);
+}
+
 /* Inline label row with an info affordance */
 .control-label-row {
   display: inline-flex;
@@ -243,7 +264,10 @@
 
 .info-hint:focus-visible {
   outline: none;
-  box-shadow: var(--focus-ring, 0 0 0 3px color-mix(in srgb, var(--color-primary) 35%, transparent));
+  box-shadow: var(
+    --focus-ring,
+    0 0 0 3px color-mix(in srgb, var(--color-primary) 35%, transparent)
+  );
 }
 
 /* Teaching legend: the six vertex types */
