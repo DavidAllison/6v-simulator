@@ -92,12 +92,20 @@ function MainSimulator() {
     c2: 1.0,
   });
 
-  // FPS counter
+  // FPS counter. The rAF loop is owned by this effect and cancelled in cleanup;
+  // it must NOT self-gate on the `isRunning` closure (that value is captured at
+  // effect-run time and never updates), or the loop orphans itself and keeps
+  // scheduling forever after Pause — burning a frame's work every tick and
+  // leaking across every subsequent run.
   useEffect(() => {
+    if (!isRunning) {
+      setFps(0);
+      return;
+    }
+
     let frameCount = 0;
     let lastTime = performance.now();
-
-    const updateFps = () => {
+    let rafId = requestAnimationFrame(function tick() {
       const currentTime = performance.now();
       frameCount++;
 
@@ -107,14 +115,10 @@ function MainSimulator() {
         lastTime = currentTime;
       }
 
-      if (isRunning) {
-        requestAnimationFrame(updateFps);
-      }
-    };
+      rafId = requestAnimationFrame(tick);
+    });
 
-    if (isRunning) {
-      updateFps();
-    }
+    return () => cancelAnimationFrame(rafId);
   }, [isRunning]);
 
   // Initialize simulation

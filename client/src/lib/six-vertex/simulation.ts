@@ -79,6 +79,13 @@ export class MonteCarloSimulation implements SimulationController {
   // Set when run() is called before the (async) worker has finished initializing.
   // The worker starts its continuous loop as soon as it becomes ready.
   private pendingRun = false;
+  // Monotonic init token. Worker creation is async, so a second initialize() (or
+  // dispose()/reset()) can land while the first createWorkerSimulation() promise
+  // is still pending. Every initialize()/dispose() bumps this; the async
+  // resolution captures the token at call time and, if superseded, terminates
+  // the just-created worker instead of adopting it — otherwise the stale worker
+  // leaks a thread and keeps pushing snapshots into a discarded controller.
+  private initGeneration = 0;
 
   constructor(params?: Partial<SimulationParams>, config?: SimulationConfig) {
     this.params = this.getDefaultParams(params);
@@ -149,6 +156,8 @@ export class MonteCarloSimulation implements SimulationController {
     this.params = params;
     this.rng.setSeed(params.seed || Date.now());
     this.dims = { width, height };
+    // New init supersedes any in-flight async worker creation from a prior call.
+    const generation = ++this.initGeneration;
 
     // Determine which implementation to use based on size
     const size = Math.min(width, height);
@@ -221,6 +230,14 @@ export class MonteCarloSimulation implements SimulationController {
           },
         )
           .then((workerSim) => {
+            // A newer initialize()/dispose() ran while this promise was pending.
+            // Adopting the worker now would leak it (the controller has moved on)
+            // and clobber the current state, so terminate it and bail.
+            if (generation !== this.initGeneration) {
+              workerSim?.stop();
+              workerSim?.terminate();
+              return;
+            }
             if (workerSim) {
               this.workerSim = workerSim;
               this.workerActive = true;
@@ -239,6 +256,10 @@ export class MonteCarloSimulation implements SimulationController {
             }
           })
           .catch((error) => {
+            // Don't fall back if a newer init has already taken over.
+            if (generation !== this.initGeneration) {
+              return;
+            }
             console.warn(
               'Failed to create worker, falling back to optimized implementation',
               error,
@@ -346,6 +367,9 @@ export class MonteCarloSimulation implements SimulationController {
   dispose(): void {
     this.isRunningFlag = false;
     this.pendingRun = false;
+    // Supersede any in-flight worker creation so its async resolution terminates
+    // the worker instead of adopting it after we've torn down.
+    this.initGeneration++;
     if (this.workerSim) {
       this.workerSim.stop();
       this.workerSim.terminate();
