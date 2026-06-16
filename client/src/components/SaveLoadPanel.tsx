@@ -2,7 +2,7 @@
  * UI component for saving and loading simulations
  */
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
   storageService,
   type SavedSimulation,
@@ -10,6 +10,12 @@ import {
   type SaveResult,
   type LoadResult,
 } from '../lib/storage';
+import {
+  serializeToJson,
+  simulationToCsv,
+  deserializeSimulation,
+  SixVParseError,
+} from '../lib/six-vertex/serialization';
 import './SaveLoadPanel.css';
 
 interface SaveLoadPanelProps {
@@ -198,6 +204,72 @@ export const SaveLoadPanel: React.FC<SaveLoadPanelProps> = ({
     }).format(date);
   };
 
+  // --- Import / Export (portable files, clipboard, CSV) ---
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const triggerDownload = useCallback((contents: string, filename: string, mime: string) => {
+    const blob = new Blob([contents], { type: mime });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    link.click();
+    URL.revokeObjectURL(url);
+  }, []);
+
+  const handleExportFile = useCallback(() => {
+    const data = getCurrentData();
+    if (!data) {
+      setError('No simulation to export');
+      return;
+    }
+    const n = data.latticeState.width;
+    triggerDownload(serializeToJson(data), `6vertex-${n}x${n}.6v.json`, 'application/json');
+    setSuccess('Exported configuration file');
+  }, [getCurrentData, triggerDownload]);
+
+  const handleCopyJson = useCallback(async () => {
+    const data = getCurrentData();
+    if (!data) {
+      setError('No simulation to copy');
+      return;
+    }
+    try {
+      await navigator.clipboard.writeText(serializeToJson(data));
+      setSuccess('Configuration copied to clipboard');
+    } catch {
+      setError('Clipboard not available; use Export file instead');
+    }
+  }, [getCurrentData]);
+
+  const handleExportCsv = useCallback(() => {
+    const data = getCurrentData();
+    if (!data) {
+      setError('No simulation to export');
+      return;
+    }
+    const n = data.latticeState.width;
+    triggerDownload(simulationToCsv(data), `6vertex-${n}x${n}.csv`, 'text/csv');
+    setSuccess('Exported vertex grid as CSV');
+  }, [getCurrentData, triggerDownload]);
+
+  const handleImportFile = useCallback(
+    async (event: React.ChangeEvent<HTMLInputElement>) => {
+      const file = event.target.files?.[0];
+      event.target.value = ''; // allow re-importing the same file
+      if (!file) return;
+      try {
+        const text = await file.text();
+        const data = deserializeSimulation(text);
+        onLoadData(data);
+        setSuccess(`Imported ${data.latticeState.width}×${data.latticeState.height} lattice`);
+      } catch (err) {
+        setError(err instanceof SixVParseError ? err.message : 'Failed to import file');
+      }
+    },
+    [onLoadData],
+  );
+
   return (
     <div className="save-load-section">
       <div className="save-load-panel">
@@ -272,6 +344,52 @@ export const SaveLoadPanel: React.FC<SaveLoadPanelProps> = ({
             >
               {isLoading ? 'Saving...' : 'Save'}
             </button>
+          </div>
+        </div>
+
+        {/* Import / Export Section */}
+        <div className="save-load-panel__section">
+          <h4>Import / Export</h4>
+          <p className="save-load-panel__hint">
+            Portable <code>.6v.json</code> files (any lattice size), or a CSV of the vertex grid.
+          </p>
+          <div className="save-load-panel__io-actions">
+            <button
+              onClick={handleExportFile}
+              className="save-load-panel__button"
+              title="Download a .6v.json file of the current lattice and parameters"
+            >
+              Export file
+            </button>
+            <button
+              onClick={handleCopyJson}
+              className="save-load-panel__button"
+              title="Copy the configuration JSON to the clipboard"
+            >
+              Copy JSON
+            </button>
+            <button
+              onClick={handleExportCsv}
+              className="save-load-panel__button"
+              title="Download the vertex-type grid as CSV"
+            >
+              Export CSV
+            </button>
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              className="save-load-panel__button save-load-panel__button--primary"
+              title="Load a .6v.json file"
+            >
+              Import file
+            </button>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".json,.6v.json,application/json"
+              onChange={handleImportFile}
+              style={{ display: 'none' }}
+              aria-hidden="true"
+            />
           </div>
         </div>
 
