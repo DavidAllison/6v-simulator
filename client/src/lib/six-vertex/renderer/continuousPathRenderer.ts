@@ -4,7 +4,7 @@
  */
 
 import type { LatticeState } from '../types';
-import { renderPaperStyle } from './paperStyleRenderer';
+import { renderPaperStyle, type PaperStyleColors } from './paperStyleRenderer';
 
 /**
  * Render continuous paths through the lattice (paper style)
@@ -13,9 +13,10 @@ export function renderContinuousPaths(
   ctx: CanvasRenderingContext2D,
   state: LatticeState,
   cellSize: number,
+  colors?: PaperStyleColors,
 ): void {
   // Use the new paper-style renderer
-  renderPaperStyle(ctx, state, cellSize);
+  renderPaperStyle(ctx, state, cellSize, colors);
 }
 
 /**

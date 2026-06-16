@@ -10,23 +10,42 @@ import { VertexType } from '../types';
  * Render in the exact style of the paper's Figures 2 and 3
  * Bold lines connect edges where arrows create continuous flow
  */
+/** Theme-aware colors for the paper-style renderer (all optional; sensible
+ * light-mode defaults are used when omitted). Without these the renderer drew
+ * hardcoded black strokes on a transparent canvas, making paths invisible in
+ * dark mode (see #69). */
+export interface PaperStyleColors {
+  background?: string;
+  grid?: string;
+  pathSegment?: string;
+}
+
 export function renderPaperStyle(
   ctx: CanvasRenderingContext2D,
   state: LatticeState,
   cellSize: number,
+  colors?: PaperStyleColors,
 ): void {
-  // Clear canvas
+  const pathColor = colors?.pathSegment ?? '#000000';
+  const gridColor = colors?.grid ?? '#d0d0d0';
+
+  // Clear, then paint the themed background (transparent would leave paths
+  // unreadable on a dark page).
   ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+  if (colors?.background) {
+    ctx.fillStyle = colors.background;
+    ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+  }
 
   // Set up drawing style for bold paths
-  ctx.strokeStyle = '#000000';
+  ctx.strokeStyle = pathColor;
   ctx.lineWidth = cellSize / 8;
   ctx.lineCap = 'square';
   ctx.lineJoin = 'miter';
 
   // Draw grid first (thin lines)
   ctx.save();
-  ctx.strokeStyle = '#d0d0d0';
+  ctx.strokeStyle = gridColor;
   ctx.lineWidth = 1;
 
   // Vertical grid lines
@@ -56,7 +75,7 @@ export function renderPaperStyle(
   // - c1: L-shape left-bottom
   // - c2: L-shape top-right
 
-  ctx.strokeStyle = '#000000';
+  ctx.strokeStyle = pathColor;
   ctx.lineWidth = cellSize / 8;
 
   for (let row = 0; row < state.height; row++) {
