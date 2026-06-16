@@ -142,3 +142,32 @@ describe('equilibrium responds correctly to weights (#69 acceptance rule)', () =
     expect(adom.getStats().acceptanceRate).toBeGreaterThan(0);
   });
 });
+
+describe('energy stat is finite when a vertex type has weight 0 (#69)', () => {
+  it('does not return NaN energy for an absent zero-weight type', () => {
+    // DWBC-low contains only a1/a2/c2 — no b vertices. Setting b weights to 0
+    // means count=0 AND weight=0, which previously computed 0 * ln(0) = NaN and
+    // poisoned the whole energy readout.
+    const sim = new OptimizedPhysicsSimulation({
+      size: 8,
+      weights: { a1: 1, a2: 1, b1: 0, b2: 0, c1: 1, c2: 1 },
+      seed: 1,
+      initialState: 'dwbc-low',
+    });
+    const energy = sim.getStats().energy;
+    expect(Number.isNaN(energy)).toBe(false);
+    expect(Number.isFinite(energy)).toBe(true);
+  });
+
+  it('stays finite after stepping with a zero-weight absent type', () => {
+    const sim = new OptimizedPhysicsSimulation({
+      size: 8,
+      weights: { a1: 2, a2: 2, b1: 0, b2: 0, c1: 1, c2: 1 },
+      seed: 7,
+      initialState: 'dwbc-low',
+    });
+    sim.run(5000);
+    const energy = sim.getStats().energy;
+    expect(Number.isNaN(energy)).toBe(false);
+  });
+});
