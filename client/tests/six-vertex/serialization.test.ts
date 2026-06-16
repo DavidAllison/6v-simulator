@@ -99,6 +99,31 @@ describe('serialization format guards', () => {
     const file = serializeSimulation(makeData(8));
     expect(() => deserializeSimulation({ ...file, width: 9 })).toThrow(/length/i);
   });
+
+  it('rejects non-positive or fractional dimensions', () => {
+    const file = serializeSimulation(makeData(8));
+    expect(() => deserializeSimulation({ ...file, width: 0 })).toThrow(/positive integer/i);
+    expect(() => deserializeSimulation({ ...file, height: -8 })).toThrow(/positive integer/i);
+    expect(() => deserializeSimulation({ ...file, width: 8.5 })).toThrow(/positive integer/i);
+  });
+
+  it('rejects absurd dimensions before allocating', () => {
+    const file = serializeSimulation(makeData(8));
+    expect(() => deserializeSimulation({ ...file, width: 1_000_000, height: 1_000_000 })).toThrow(
+      /maximum supported size/i,
+    );
+  });
+
+  it('rejects out-of-range vertex codes instead of silently coercing them', () => {
+    const file = serializeSimulation(makeData(4));
+    // Corrupt one byte to 200 (invalid; valid codes are 0–5) and re-encode.
+    const raw = Uint8Array.from(atob(file.vertices), (ch) => ch.charCodeAt(0));
+    raw[0] = 200;
+    let bin = '';
+    for (const b of raw) bin += String.fromCharCode(b);
+    const corrupted = { ...file, vertices: btoa(bin) };
+    expect(() => deserializeSimulation(corrupted)).toThrow(/invalid vertex code/i);
+  });
 });
 
 describe('CSV export', () => {
