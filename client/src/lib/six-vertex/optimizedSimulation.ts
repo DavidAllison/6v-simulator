@@ -64,7 +64,11 @@ class FastRNG {
 
     this.state[0] = t ^ s ^ (s >>> 19);
 
-    return (this.state[0] + this.state[1]) / 4294967296;
+    // Mask the sum back to uint32 before normalizing. Without `>>> 0` the sum of
+    // two uint32 words reaches ~2^33, so this returned values in [0, ~2.0) — half
+    // of all draws were >= 1.0, which silently biased every acceptance test and
+    // made nextInt() return out-of-bounds indices. Now strictly in [0, 1).
+    return ((this.state[0] + this.state[1]) >>> 0) / 4294967296;
   }
 
   nextInt(max: number): number {
