@@ -184,8 +184,13 @@ export class PathRenderer {
    * Draw paths (bold edges) - Paper style with continuous paths
    */
   private drawPaths(state: LatticeState): void {
-    // Use the new continuous path renderer that matches the paper style
-    renderContinuousPaths(this.ctx, state, this.config.cellSize);
+    // Use the new continuous path renderer that matches the paper style.
+    // Pass theme colors so paths/grid/background are legible in dark mode (#69).
+    renderContinuousPaths(this.ctx, state, this.config.cellSize, {
+      background: this.config.colors?.background,
+      grid: this.config.colors?.grid,
+      pathSegment: this.config.colors?.pathSegment,
+    });
   }
 
   /**
