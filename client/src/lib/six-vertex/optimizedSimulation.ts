@@ -566,10 +566,16 @@ export class OptimizedPhysicsSimulation {
       vertexCounts[this.vertices[i]]++;
     }
 
-    // Calculate energy
+    // Calculate energy E = -Σ count_i · ln(w_i). Skip empty types: a type with
+    // zero count contributes nothing, and including it would compute
+    // 0 · ln(0) = NaN whenever a forbidden (weight-0) type is simply absent —
+    // poisoning the whole energy readout. A weight-0 type that IS present still
+    // yields +Infinity, which is the physically correct "forbidden config" cost.
     let energy = 0;
     for (let i = 0; i < 6; i++) {
-      energy -= vertexCounts[i] * Math.log(this.weights[i]);
+      if (vertexCounts[i] > 0) {
+        energy -= vertexCounts[i] * Math.log(this.weights[i]);
+      }
     }
 
     const acceptanceRate = this.attemptedFlips > 0 ? this.successfulFlips / this.attemptedFlips : 0;

@@ -244,10 +244,10 @@ const StatisticsPanel: React.FC<StatisticsPanelProps> = ({
           <div className="stats-grid">
             <div
               className="stat-item"
-              title="Height-function value tracked by the model as flips occur (related to the number of c-type vertices); grows as the disordered region fills in."
+              title="Number of c₂ vertices in the lattice — a scalar order parameter the engine tracks incrementally and uses as the convergence observable. (This is a c₂ count, not the model's 2D height function.)"
             >
-              <span className="stat-label">Height</span>
-              <span className="stat-value">{stats.height?.toFixed(2) ?? 'N/A'}</span>
+              <span className="stat-label">c₂ Count</span>
+              <span className="stat-value">{stats.height?.toFixed(0) ?? 'N/A'}</span>
             </div>
             {delta !== undefined && delta !== null && (
               <div

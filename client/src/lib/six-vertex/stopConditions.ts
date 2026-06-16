@@ -41,10 +41,12 @@ export interface StopConditionDescriptor {
 const EPSILON = 1e-9;
 
 /**
- * Macroscopic observable used to compare instances. Prefers the engine-reported
- * height when present, otherwise falls back to the c2 vertex count. This is a
- * COARSE proxy for the macroscopic configuration (height ~ Arctic-curve volume);
- * relative spread (below) handles its scale, so no normalization is needed.
+ * Macroscopic observable used to compare instances: the c₂ vertex count. The
+ * optimized engine reports this incrementally as `stats.height` (a scalar order
+ * parameter, NOT the model's 2D height function); we fall back to the directly
+ * counted c₂ total when that field is absent. It is a COARSE proxy for the
+ * macroscopic configuration; relative spread (below) handles its scale, so no
+ * normalization is needed.
  */
 export function heightObservable(stats: SimulationStats): number {
   if (typeof stats.height === 'number') {
