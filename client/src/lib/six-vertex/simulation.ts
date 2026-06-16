@@ -333,7 +333,9 @@ export class MonteCarloSimulation implements SimulationController {
    * Perform a single Monte Carlo step
    */
   step(): void {
-    if (!this.state) {
+    // Large lattices keep this.state null (object form is built lazily), so guard
+    // on the optimized engine too — otherwise stepping silently no-ops for big N.
+    if (!this.state && !this.optimizedSim) {
       console.error('Simulation not initialized - cannot step');
       return; // Don't throw, just return silently
     }
@@ -369,14 +371,18 @@ export class MonteCarloSimulation implements SimulationController {
       return; // Stats and state updates handled by callbacks
     }
 
-    // Original implementation
+    // Original (non-optimized) implementation. Only reached when no optimized
+    // engine/worker is present, in which case this.state is always populated.
+    if (!this.state) return;
+    const state = this.state;
+
     // Choose a random position
-    const row = this.rng.randomInt(0, this.state.height);
-    const col = this.rng.randomInt(0, this.state.width);
+    const row = this.rng.randomInt(0, state.height);
+    const col = this.rng.randomInt(0, state.width);
     const position: Position = { row, col };
 
     // Find valid flips at this position
-    const flips = findValidFlips(this.state, position);
+    const flips = findValidFlips(state, position);
 
     if (flips.length === 0) {
       this.stats.flipAttempts++;
@@ -387,7 +393,7 @@ export class MonteCarloSimulation implements SimulationController {
     const flip = this.rng.choice(flips);
 
     // Calculate energy change
-    const deltaE = calculateFlipEnergyChange(this.state, flip, this.params.weights);
+    const deltaE = calculateFlipEnergyChange(state, flip, this.params.weights);
 
     // Metropolis acceptance criterion
     const acceptProbability = Math.min(1, Math.exp(-this.params.beta * deltaE));
@@ -396,9 +402,7 @@ export class MonteCarloSimulation implements SimulationController {
 
     if (this.rng.random() < acceptProbability) {
       // Accept the flip
-      if (this.state) {
-        this.state = executeFlip(this.state, flip);
-      }
+      this.state = executeFlip(state, flip);
       this.stats.successfulFlips++;
       this.emit('onFlip', flip);
       this.emit('onStateChange', this.state);
@@ -413,7 +417,7 @@ export class MonteCarloSimulation implements SimulationController {
    * Run simulation for a specified number of steps
    */
   async run(steps: number): Promise<void> {
-    if (!this.state) {
+    if (!this.state && !this.optimizedSim) {
       throw new Error('Simulation not initialized');
     }
 
@@ -422,7 +426,8 @@ export class MonteCarloSimulation implements SimulationController {
 
     // Use optimized batch processing if available
     if (this.optimizedSim) {
-      const batchSize = this.state.width <= 24 ? 1000 : this.state.width <= 50 ? 500 : 100;
+      const n = this.optimizedSim.getSize();
+      const batchSize = n <= 24 ? 1000 : n <= 50 ? 500 : 100;
       let remaining = steps;
 
       while (remaining > 0 && this.isRunningFlag && !this.isPaused) {
