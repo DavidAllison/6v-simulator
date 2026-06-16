@@ -171,3 +171,19 @@ describe('energy stat is finite when a vertex type has weight 0 (#69)', () => {
     expect(Number.isNaN(energy)).toBe(false);
   });
 });
+
+describe('single-step contract shared by main-thread and worker step (#69)', () => {
+  it('run(1) advances the step counter by exactly one', () => {
+    const sim = new OptimizedPhysicsSimulation({
+      size: 16,
+      weights: EQUAL,
+      seed: 3,
+      initialState: 'dwbc-high',
+    });
+    expect(sim.getStats().step).toBe(0);
+    sim.run(1);
+    expect(sim.getStats().step).toBe(1);
+    sim.run(1);
+    expect(sim.getStats().step).toBe(2);
+  });
+});

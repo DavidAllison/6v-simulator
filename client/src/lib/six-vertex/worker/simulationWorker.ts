@@ -117,9 +117,6 @@ type WorkerResponse =
 let simulation: OptimizedPhysicsSimulation | null = null;
 let continuousRunning = false;
 let animationFrame: number | null = null;
-// Batch size used for a single 'step' message and for continuous animate ticks.
-// Kept in sync with the engine's configured batchSize when available.
-let stepBatchSize = 100;
 
 /**
  * Handle messages from the main thread
@@ -178,7 +175,6 @@ self.addEventListener('message', (event: MessageEvent<WorkerMessage>) => {
  */
 function handleInit(config: OptimizedSimConfig): void {
   simulation = new OptimizedPhysicsSimulation(config);
-  stepBatchSize = config.batchSize && config.batchSize > 0 ? config.batchSize : 100;
   sendResponse({ type: 'ready' });
   sendStats();
   sendRawState();
@@ -222,7 +218,11 @@ function handleStep(): void {
     return;
   }
 
-  simulation.run(stepBatchSize);
+  // A single 'step' message must advance exactly one Monte Carlo step, matching
+  // the main-thread path (optimizedSim.run(1)). Previously the worker ran a full
+  // batch (~100), so the Step button jumped ~100x further on large (worker)
+  // lattices than on small ones — inconsistent, surprising step semantics.
+  simulation.run(1);
   sendStats();
   sendRawState();
 }
