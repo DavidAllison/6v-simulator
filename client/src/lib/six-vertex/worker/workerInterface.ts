@@ -1,6 +1,9 @@
 /**
  * Main thread interface for the simulation Web Worker
- * Provides a clean API for controlling the simulation running in a background thread
+ * Provides a clean API for controlling the simulation running in a background thread.
+ *
+ * State crosses the boundary as a compact Int8Array carried on a transferable
+ * ArrayBuffer (both directions), never as the object-graph LatticeState.
  */
 
 import type { OptimizedSimConfig } from '../optimizedSimulation';
@@ -8,7 +11,7 @@ import type { WorkerMessage, WorkerResponse } from './simulationWorker';
 
 export interface WorkerSimulationCallbacks {
   onStats?: (stats: any) => void;
-  onState?: (state: any) => void;
+  onRawState?: (vertices: Int8Array, width: number, height: number) => void;
   onProgress?: (progress: number, stats: any) => void;
   onError?: (error: string) => void;
   onReady?: () => void;
@@ -21,7 +24,7 @@ export class WorkerSimulation {
   private worker: Worker | null = null;
   private callbacks: WorkerSimulationCallbacks = {};
   private isInitialized = false;
-  private pendingMessages: WorkerMessage[] = [];
+  private pendingMessages: { message: WorkerMessage; transfer?: Transferable[] }[] = [];
 
   constructor(callbacks?: WorkerSimulationCallbacks) {
     if (callbacks) {
@@ -59,9 +62,9 @@ export class WorkerSimulation {
 
         // Process any pending messages
         while (this.pendingMessages.length > 0) {
-          const msg = this.pendingMessages.shift();
-          if (msg) {
-            this.sendMessage(msg);
+          const pending = this.pendingMessages.shift();
+          if (pending) {
+            this.sendMessage(pending.message, pending.transfer);
           }
         }
 
@@ -87,6 +90,14 @@ export class WorkerSimulation {
   }
 
   /**
+   * Run a single batch of steps (step-by-step control). Updates arrive via the
+   * onStats / onRawState callbacks.
+   */
+  step(): void {
+    this.sendMessage({ type: 'step' });
+  }
+
+  /**
    * Start continuous simulation
    */
   startContinuous(targetFPS: number = 60): void {
@@ -108,10 +119,18 @@ export class WorkerSimulation {
   }
 
   /**
-   * Request current state
+   * Request the current raw state. The response arrives via onRawState.
    */
-  getState(): void {
-    this.sendMessage({ type: 'getState' });
+  getRawState(): void {
+    this.sendMessage({ type: 'getRawState' });
+  }
+
+  /**
+   * Adopt an externally-supplied state in the worker engine. The buffer is
+   * transferred (zero-copy), so the caller must pass a buffer it no longer uses.
+   */
+  setState(vertices: Int8Array): void {
+    this.sendMessage({ type: 'setState', vertices }, [vertices.buffer]);
   }
 
   /**
@@ -142,18 +161,22 @@ export class WorkerSimulation {
   /**
    * Send message to worker
    */
-  private sendMessage(message: WorkerMessage): void {
+  private sendMessage(message: WorkerMessage, transfer?: Transferable[]): void {
     if (!this.worker) {
       throw new Error('Worker not initialized');
     }
 
     if (!this.isInitialized && message.type !== 'init') {
       // Queue message until initialized
-      this.pendingMessages.push(message);
+      this.pendingMessages.push({ message, transfer });
       return;
     }
 
-    this.worker.postMessage(message);
+    if (transfer && transfer.length > 0) {
+      this.worker.postMessage(message, transfer);
+    } else {
+      this.worker.postMessage(message);
+    }
   }
 
   /**
@@ -169,9 +192,9 @@ export class WorkerSimulation {
         }
         break;
 
-      case 'state':
-        if (this.callbacks.onState) {
-          this.callbacks.onState(response.state);
+      case 'rawState':
+        if (this.callbacks.onRawState) {
+          this.callbacks.onRawState(response.vertices, response.width, response.height);
         }
         break;
 

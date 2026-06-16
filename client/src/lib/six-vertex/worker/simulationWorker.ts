@@ -1,10 +1,28 @@
 /**
  * Web Worker for running the optimized simulation in a background thread
- * Allows the main thread to remain responsive while running large simulations
+ * Allows the main thread to remain responsive while running large simulations.
+ *
+ * State is exchanged as a compact, flat Int8Array (row-major, id = row*size+col;
+ * ids match cStyleFlipLogic a1=0..c2=5) and posted with the buffer in the
+ * transfer list. We NEVER post the object-graph LatticeState (~N*N objects),
+ * which is prohibitively expensive to structured-clone for large N.
  */
 
 import { OptimizedPhysicsSimulation } from '../optimizedSimulation';
 import type { OptimizedSimConfig } from '../optimizedSimulation';
+
+// The project tsconfig includes the DOM lib, so the global `self` is typed as a
+// Window whose postMessage(transfer) overload differs from the worker scope's.
+// At runtime this file only ever runs inside a DedicatedWorkerGlobalScope, so we
+// post through this narrowly-typed helper to get the transferable-list overload.
+const postToMain = (message: unknown, transfer?: Transferable[]): void => {
+  const post = self.postMessage as (msg: unknown, transfer?: Transferable[]) => void;
+  if (transfer && transfer.length > 0) {
+    post(message, transfer);
+  } else {
+    post(message);
+  }
+};
 
 // Message types for communication with main thread
 interface InitMessage {
@@ -15,6 +33,10 @@ interface InitMessage {
 interface RunMessage {
   type: 'run';
   steps: number;
+}
+
+interface StepMessage {
+  type: 'step';
 }
 
 interface StartContinuousMessage {
@@ -30,8 +52,13 @@ interface ResetMessage {
   type: 'reset';
 }
 
-interface GetStateMessage {
-  type: 'getState';
+interface GetRawStateMessage {
+  type: 'getRawState';
+}
+
+interface SetStateMessage {
+  type: 'setState';
+  vertices: Int8Array;
 }
 
 interface GetStatsMessage {
@@ -41,21 +68,27 @@ interface GetStatsMessage {
 type WorkerMessage =
   | InitMessage
   | RunMessage
+  | StepMessage
   | StartContinuousMessage
   | StopMessage
   | ResetMessage
-  | GetStateMessage
+  | GetRawStateMessage
+  | SetStateMessage
   | GetStatsMessage;
 
 // Response types
 interface StatsResponse {
   type: 'stats';
+  // The optimized engine returns a loosely-typed stats object (matches existing
+  // style); the main thread re-narrows it before handing it to consumers.
   stats: any;
 }
 
-interface StateResponse {
-  type: 'state';
-  state: any;
+interface RawStateResponse {
+  type: 'rawState';
+  vertices: Int8Array;
+  width: number;
+  height: number;
 }
 
 interface ErrorResponse {
@@ -75,7 +108,7 @@ interface ProgressResponse {
 
 type WorkerResponse =
   | StatsResponse
-  | StateResponse
+  | RawStateResponse
   | ErrorResponse
   | ReadyResponse
   | ProgressResponse;
@@ -84,6 +117,9 @@ type WorkerResponse =
 let simulation: OptimizedPhysicsSimulation | null = null;
 let continuousRunning = false;
 let animationFrame: number | null = null;
+// Batch size used for a single 'step' message and for continuous animate ticks.
+// Kept in sync with the engine's configured batchSize when available.
+let stepBatchSize = 100;
 
 /**
  * Handle messages from the main thread
@@ -101,6 +137,10 @@ self.addEventListener('message', (event: MessageEvent<WorkerMessage>) => {
         handleRun(message.steps);
         break;
 
+      case 'step':
+        handleStep();
+        break;
+
       case 'startContinuous':
         handleStartContinuous(message.targetFPS);
         break;
@@ -113,8 +153,12 @@ self.addEventListener('message', (event: MessageEvent<WorkerMessage>) => {
         handleReset();
         break;
 
-      case 'getState':
-        handleGetState();
+      case 'getRawState':
+        handleGetRawState();
+        break;
+
+      case 'setState':
+        handleSetState(message.vertices);
         break;
 
       case 'getStats':
@@ -134,8 +178,10 @@ self.addEventListener('message', (event: MessageEvent<WorkerMessage>) => {
  */
 function handleInit(config: OptimizedSimConfig): void {
   simulation = new OptimizedPhysicsSimulation(config);
+  stepBatchSize = config.batchSize && config.batchSize > 0 ? config.batchSize : 100;
   sendResponse({ type: 'ready' });
-  sendResponse({ type: 'stats', stats: simulation.getStats() });
+  sendStats();
+  sendRawState();
 }
 
 /**
@@ -163,7 +209,22 @@ function handleRun(steps: number): void {
     });
   }
 
-  sendResponse({ type: 'stats', stats: simulation.getStats() });
+  sendStats();
+  sendRawState();
+}
+
+/**
+ * Run a single batch of steps (used for step-by-step control).
+ */
+function handleStep(): void {
+  if (!simulation) {
+    sendError('Simulation not initialized');
+    return;
+  }
+
+  simulation.run(stepBatchSize);
+  sendStats();
+  sendRawState();
 }
 
 /**
@@ -196,11 +257,10 @@ function handleStartContinuous(targetFPS: number): void {
       // Run the simulation
       simulation.run(stepsPerFrame);
 
-      // Send stats update
-      sendResponse({
-        type: 'stats',
-        stats: simulation.getStats(),
-      });
+      // Send stats + a raw snapshot for rendering. One snapshot per animate tick
+      // is acceptable: rendering (not transfer) is the main-thread bottleneck.
+      sendStats();
+      sendRawState();
 
       lastTime = currentTime;
     }
@@ -234,19 +294,33 @@ function handleReset(): void {
   }
 
   simulation.reset();
-  sendResponse({ type: 'stats', stats: simulation.getStats() });
+  sendStats();
+  sendRawState();
 }
 
 /**
- * Get current state
+ * Send the current raw state on demand.
  */
-function handleGetState(): void {
+function handleGetRawState(): void {
   if (!simulation) {
     sendError('Simulation not initialized');
     return;
   }
+  sendRawState();
+}
 
-  sendResponse({ type: 'state', state: simulation.getState() });
+/**
+ * Adopt an externally-supplied state (e.g. an imported configuration).
+ * The transferred buffer is owned by the worker after this message.
+ */
+function handleSetState(vertices: Int8Array): void {
+  if (!simulation) {
+    sendError('Simulation not initialized');
+    return;
+  }
+  simulation.setState(vertices);
+  sendStats();
+  sendRawState();
 }
 
 /**
@@ -257,15 +331,40 @@ function handleGetStats(): void {
     sendError('Simulation not initialized');
     return;
   }
+  sendStats();
+}
 
+/**
+ * Post the current stats to the main thread.
+ */
+function sendStats(): void {
+  if (!simulation) return;
   sendResponse({ type: 'stats', stats: simulation.getStats() });
 }
 
 /**
- * Send response to main thread
+ * Post a fresh raw-state snapshot, transferring its backing buffer so no copy is
+ * made during structured clone. getRawState() already returns a fresh copy, so
+ * the engine keeps ownership of its own vertices array.
+ */
+function sendRawState(): void {
+  if (!simulation) return;
+  const vertices = new Int8Array(simulation.getRawState());
+  const size = simulation.getSize();
+  const resp: RawStateResponse = {
+    type: 'rawState',
+    vertices,
+    width: size,
+    height: size,
+  };
+  postToMain(resp, [resp.vertices.buffer]);
+}
+
+/**
+ * Send response to main thread (no transfer list)
  */
 function sendResponse(response: WorkerResponse): void {
-  self.postMessage(response);
+  postToMain(response);
 }
 
 /**

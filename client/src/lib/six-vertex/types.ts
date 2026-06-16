@@ -235,6 +235,12 @@ export interface SimulationController {
   resume(): void;
   isRunning(): boolean;
 
+  /**
+   * Release background resources (e.g. terminate the Web Worker). Call when
+   * discarding a controller so worker threads don't leak across re-inits.
+   */
+  dispose?(): void;
+
   // Configuration
   updateParams(params: Partial<SimulationParams>): void;
   getParams(): SimulationParams;

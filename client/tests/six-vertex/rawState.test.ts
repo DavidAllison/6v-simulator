@@ -46,6 +46,40 @@ describe('getRawState (typed-array snapshot)', () => {
     }
   });
 
+  // The Web Worker boundary relies on two engine guarantees: setState() adopts an
+  // external Int8Array exactly, and getRawState() returns a FRESH copy (so the
+  // engine keeps ownership when the worker transfers its buffer). We verify those
+  // semantics directly here; the worker message wiring itself (import.meta.url,
+  // transferables) is verified in-browser since ts-jest cannot load the worker.
+  it('setState + getRawState round-trips exactly and returns a fresh copy', () => {
+    const N = 16;
+    const sim = new OptimizedPhysicsSimulation({ size: N, weights: WEIGHTS, seed: 99 });
+
+    // Build a valid configuration to import (use a fresh engine's DWBC-low state).
+    const source = new OptimizedPhysicsSimulation({
+      size: N,
+      weights: WEIGHTS,
+      seed: 1,
+      initialState: 'dwbc-low',
+    });
+    const imported = source.getRawState();
+
+    sim.setState(imported);
+    const after = sim.getRawState();
+
+    expect(after.length).toBe(imported.length);
+    for (let i = 0; i < imported.length; i++) {
+      expect(after[i]).toBe(imported[i]);
+    }
+
+    // getRawState() must be a copy: mutating it must not corrupt engine state,
+    // which is what makes transferring the returned buffer safe in the worker.
+    after[0] = (after[0] + 1) % 6;
+    const again = sim.getRawState();
+    expect(again[0]).toBe(imported[0]);
+    expect(again[0]).not.toBe(after[0]);
+  });
+
   it('handles large lattices (1024) and stays consistent after stepping', () => {
     const N = 1024;
     const sim = new OptimizedPhysicsSimulation({ size: N, weights: WEIGHTS, seed: 7 });
