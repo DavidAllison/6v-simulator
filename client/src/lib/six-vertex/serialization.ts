@@ -13,6 +13,11 @@ import { getVertexConfiguration } from './types';
 export const SIXV_FORMAT = '6v-lattice';
 export const SIXV_VERSION = 1;
 
+// Upper bound on a single lattice dimension when parsing untrusted input, to
+// reject absurd sizes before allocating width*height bytes. Generously above
+// the app's 1024×1024 working ceiling.
+export const MAX_DIMENSION = 4096;
+
 // Numeric vertex ids ↔ VertexType, matching cStyleFlipLogic (a1=0 … c2=5).
 const NUM_TO_TYPE: VertexType[] = ['a1', 'a2', 'b1', 'b2', 'c1', 'c2'] as VertexType[];
 const TYPE_TO_NUM: Record<string, number> = { a1: 0, a2: 1, b1: 2, b2: 3, c1: 4, c2: 5 };
@@ -116,9 +121,34 @@ export function deserializeSimulation(input: unknown): SimulationData {
   ) {
     throw new SixVParseError('File is missing required fields.');
   }
+  // Validate dimensions BEFORE decoding: reject non-positive/fractional values
+  // and absurd sizes (this input may come from an untrusted file or
+  // localStorage; width*height bounds the allocation below).
+  if (
+    !Number.isInteger(file.width) ||
+    !Number.isInteger(file.height) ||
+    file.width <= 0 ||
+    file.height <= 0
+  ) {
+    throw new SixVParseError('Lattice dimensions must be positive integers.');
+  }
+  if (file.width > MAX_DIMENSION || file.height > MAX_DIMENSION) {
+    throw new SixVParseError(
+      `Lattice dimensions exceed the maximum supported size (${MAX_DIMENSION}).`,
+    );
+  }
   const bytes = base64ToBytes(file.vertices);
   if (bytes.length !== file.width * file.height) {
     throw new SixVParseError('Vertex data length does not match width × height.');
+  }
+  // Every byte must be a valid vertex code (0–5). Previously out-of-range bytes
+  // were silently coerced to a1, masking corrupt/malicious input.
+  for (let i = 0; i < bytes.length; i++) {
+    if (bytes[i] > 5) {
+      throw new SixVParseError(
+        `Vertex data contains an invalid vertex code ${bytes[i]} at index ${i} (expected 0–5).`,
+      );
+    }
   }
   const latticeState = bytesToLattice(bytes, file.width, file.height);
   return {
