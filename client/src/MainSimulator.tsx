@@ -2,12 +2,13 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import type {
   SimulationController,
   LatticeState,
+  RawLatticeState,
   SimulationParams,
   SimulationStats,
   RenderConfig,
 } from './lib/six-vertex/types';
 import { RenderMode, BoundaryCondition } from './lib/six-vertex/types';
-import { createSimulation } from './lib/six-vertex/simulation';
+import { createSimulation, LARGE_LATTICE_THRESHOLD } from './lib/six-vertex/simulation';
 import type { SimulationConfig } from './lib/six-vertex/simulation';
 import { PathRenderer } from './lib/six-vertex/renderer/pathRenderer';
 import ControlPanel from './components/ControlPanel';
@@ -37,9 +38,37 @@ function MainSimulator() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [stats, setStats] = useState<SimulationStats | null>(null);
   const [latticeState, setLatticeState] = useState<LatticeState | null>(null);
+  // Compact typed-array state used for large lattices (avoids ~N*N object churn).
+  const [rawState, setRawState] = useState<RawLatticeState | null>(null);
   const [latticeSize, setLatticeSize] = useState(10);
   const [fps, setFps] = useState(0);
   const [stepsPerFrame, setStepsPerFrame] = useState(10);
+
+  // Large lattices render from the raw typed array rather than the object form.
+  const isLarge = latticeSize > LARGE_LATTICE_THRESHOLD;
+  const isLargeRef = useRef(isLarge);
+  isLargeRef.current = isLarge;
+
+  // Pull the latest compact snapshot from the engine into React state so the
+  // canvas redraws via the fast bitmap path. Used for large lattices instead of
+  // the per-step onStateChange object payload.
+  const pullRawState = useCallback(() => {
+    const raw = simulationRef.current?.getRawState();
+    if (raw) {
+      setRawState(raw);
+    }
+  }, []);
+
+  // Refs mirror the latest state so callbacks (notably onRendererReady) can read
+  // them without changing identity every frame. Without this, a renderer-ready
+  // callback that closed over rawState/latticeState would be recreated each
+  // frame during a run, re-running the renderer-creation effect and allocating a
+  // fresh PathRenderer (and large canvas context) per frame — which crashes the
+  // tab for big lattices.
+  const latticeStateRef = useRef<LatticeState | null>(null);
+  latticeStateRef.current = latticeState;
+  const rawStateRef = useRef<RawLatticeState | null>(null);
+  rawStateRef.current = rawState;
 
   // Simulation parameters
   const [temperature, setTemperature] = useState(1.0);
@@ -113,20 +142,37 @@ function MainSimulator() {
       simulation.initialize(latticeSize, latticeSize, params);
 
       if (simulation) {
-        const state = simulation.getState();
-        setLatticeState(state);
+        const large = latticeSize > LARGE_LATTICE_THRESHOLD;
         setStats(simulation.getStats());
-
-        if (rendererRef.current) {
-          rendererRef.current.render(state);
+        if (large) {
+          // Large lattices render from the compact typed array; never build the
+          // ~N*N object form or draw per-cell paths.
+          setLatticeState(null);
+          const raw = simulation.getRawState();
+          if (raw) {
+            setRawState(raw);
+            rendererRef.current?.renderRaw(raw.width, raw.height, raw.vertices);
+          }
+        } else {
+          setRawState(null);
+          const state = simulation.getState();
+          setLatticeState(state);
+          rendererRef.current?.render(state);
         }
       }
 
       // Set up event handlers
       simulation.on('onStateChange', (state: LatticeState) => {
-        setLatticeState(state);
-        if (rendererRef.current) {
-          rendererRef.current.render(state);
+        if (isLargeRef.current) {
+          // Ignore the object payload; pull the compact snapshot instead.
+          const raw = simulationRef.current?.getRawState();
+          if (raw) {
+            setRawState(raw);
+            rendererRef.current?.renderRaw(raw.width, raw.height, raw.vertices);
+          }
+        } else {
+          setLatticeState(state);
+          rendererRef.current?.render(state);
         }
       });
 
@@ -155,16 +201,17 @@ function MainSimulator() {
     };
   }, [latticeSize, boundaryCondition, dwbcType, seed, initializeSimulation]); // Re-initialize on these changes
 
-  // Handle renderer ready
-  const handleRendererReady = useCallback(
-    (renderer: PathRenderer) => {
-      rendererRef.current = renderer;
-      if (latticeState) {
-        renderer.render(latticeState);
-      }
-    },
-    [latticeState],
-  );
+  // Handle renderer ready. Stable identity (empty deps + refs) so the
+  // renderer-creation effect in VisualizationCanvas does not re-run every frame.
+  const handleRendererReady = useCallback((renderer: PathRenderer) => {
+    rendererRef.current = renderer;
+    const raw = rawStateRef.current;
+    if (raw) {
+      renderer.renderRaw(raw.width, raw.height, raw.vertices);
+    } else if (latticeStateRef.current) {
+      renderer.render(latticeStateRef.current);
+    }
+  }, []);
 
   // Update weight
   const handleWeightChange = useCallback(
@@ -191,6 +238,10 @@ function MainSimulator() {
     try {
       if (simulationRef.current) {
         simulationRef.current.step();
+        // Large lattices don't emit an object onStateChange; pull raw to redraw.
+        if (isLargeRef.current) {
+          pullRawState();
+        }
       } else {
         console.error('Simulation not initialized');
         // Don't call initializeSimulation here to avoid circular dependency
@@ -199,7 +250,7 @@ function MainSimulator() {
       console.error('Error during step:', error);
       setErrorMessage(`Error during step: ${error}`);
     }
-  }, []);
+  }, [pullRawState]);
 
   const runSimulation = useCallback(() => {
     if (!simulationRef.current || !isRunning) return;
@@ -210,6 +261,12 @@ function MainSimulator() {
         if (simulationRef.current) {
           simulationRef.current.step();
         }
+      }
+
+      // Large lattices skip the per-step object onStateChange; pull the compact
+      // snapshot once per frame to redraw via the fast bitmap path.
+      if (isLargeRef.current) {
+        pullRawState();
       }
 
       animationFrameRef.current = requestAnimationFrame(() => runSimulation());
@@ -223,7 +280,7 @@ function MainSimulator() {
       // Don't show alert in animation loop to avoid spam
       console.error('Simulation stopped due to error:', error);
     }
-  }, [isRunning, stepsPerFrame]);
+  }, [isRunning, stepsPerFrame, pullRawState]);
 
   const handlePause = useCallback(() => {
     setIsRunning(false);
@@ -251,8 +308,8 @@ function MainSimulator() {
     (config: PresetConfig) => {
       handlePause();
 
-      // Clamp lattice size to the bounds the ControlPanel slider enforces (4–100).
-      const clampedSize = Math.min(100, Math.max(4, Math.round(config.latticeSize)));
+      // Clamp lattice size to the bounds the ControlPanel enforces (4–1024).
+      const clampedSize = Math.min(1024, Math.max(4, Math.round(config.latticeSize)));
 
       setBoundaryCondition(config.boundaryCondition);
       setDwbcType(config.dwbcType);
@@ -471,7 +528,8 @@ function MainSimulator() {
 
         <VisualizationCanvas
           renderer={rendererRef.current}
-          latticeState={latticeState}
+          latticeState={isLarge ? null : latticeState}
+          rawState={isLarge ? rawState : null}
           onRendererReady={handleRendererReady}
           renderConfig={renderConfig}
         />

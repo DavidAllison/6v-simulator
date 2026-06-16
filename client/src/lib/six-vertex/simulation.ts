@@ -8,6 +8,7 @@
 
 import type {
   LatticeState,
+  RawLatticeState,
   SimulationParams,
   SimulationStats,
   SimulationController,
@@ -35,10 +36,23 @@ export interface SimulationConfig {
 }
 
 /**
+ * Above this linear size (N), the facade stops rebuilding the object LatticeState
+ * (~N*N Vertex objects) on every step and instead exposes a compact typed-array
+ * snapshot via getRawState(). Callers render large lattices from the raw buffer;
+ * the object form is rebuilt lazily only if getState() is actually called.
+ */
+export const LARGE_LATTICE_THRESHOLD = 128;
+
+/**
  * Main simulation engine implementation with automatic optimization
  */
 export class MonteCarloSimulation implements SimulationController {
   private state: LatticeState | null = null;
+  // For large lattices the object state is rebuilt lazily; this marks it stale.
+  private stateDirty = false;
+  // Lattice dimensions, tracked separately so reset() works even when the object
+  // state is null (large lattices defer building it).
+  private dims: { width: number; height: number } | null = null;
   private params: SimulationParams;
   private rng: SeededRNG;
   private stats: SimulationStats;
@@ -123,6 +137,7 @@ export class MonteCarloSimulation implements SimulationController {
   initialize(width: number, height: number, params: SimulationParams): void {
     this.params = params;
     this.rng.setSeed(params.seed || Date.now());
+    this.dims = { width, height };
 
     // Determine which implementation to use based on size
     const size = Math.min(width, height);
@@ -146,7 +161,7 @@ export class MonteCarloSimulation implements SimulationController {
         batchSize: size <= 24 ? 100 : size <= 50 ? 50 : 20,
         initialState: params.dwbcConfig?.type === 'low' ? 'dwbc-low' : 'dwbc-high',
       });
-      this.state = this.optimizedSim.getState();
+      this.adoptOptimizedState();
     }
     // Initialize worker if needed
     else if (this.useWorker) {
@@ -222,7 +237,7 @@ export class MonteCarloSimulation implements SimulationController {
       batchSize: size <= 24 ? 100 : size <= 50 ? 50 : 20,
       initialState: params.dwbcConfig?.type === 'low' ? 'dwbc-low' : 'dwbc-high',
     });
-    this.state = this.optimizedSim.getState();
+    this.adoptOptimizedState();
   }
 
   private generateInitialState(width: number, height: number, params: SimulationParams): void {
@@ -235,6 +250,12 @@ export class MonteCarloSimulation implements SimulationController {
   }
 
   private updateStats(): void {
+    // Large lattices: emit stats only (no object payload); callers pull raw state.
+    if (this.isLargeLattice() && this.optimizedSim) {
+      this.stats = this.optimizedSim.getStats();
+      this.emit('onStep', this.stats);
+      return;
+    }
     if (this.state) {
       this.updateStatistics();
       this.emit('onStateChange', this.state);
@@ -245,9 +266,9 @@ export class MonteCarloSimulation implements SimulationController {
    * Reset the simulation
    */
   reset(): void {
-    if (!this.state) return;
+    if (!this.dims) return;
 
-    const { width, height } = this.state;
+    const { width, height } = this.dims;
     this.initialize(width, height, this.params);
   }
 
@@ -255,10 +276,48 @@ export class MonteCarloSimulation implements SimulationController {
    * Get current lattice state
    */
   getState(): LatticeState {
+    // For large lattices the object form is only rebuilt on demand (e.g. for
+    // save/export), not on every step. Rebuild it here if it has gone stale.
+    if (this.stateDirty && this.optimizedSim) {
+      this.state = this.optimizedSim.getState();
+      this.stateDirty = false;
+    }
     if (!this.state) {
       throw new Error('Simulation not initialized');
     }
     return this.state;
+  }
+
+  /**
+   * Whether this controller is running a large lattice on the optimized engine,
+   * in which case callers should render from getRawState() rather than getState().
+   */
+  private isLargeLattice(): boolean {
+    return !!this.optimizedSim && this.optimizedSim.getSize() > LARGE_LATTICE_THRESHOLD;
+  }
+
+  getRawState(): RawLatticeState | null {
+    if (!this.optimizedSim) {
+      return null;
+    }
+    const size = this.optimizedSim.getSize();
+    return { width: size, height: size, vertices: this.optimizedSim.getRawState() };
+  }
+
+  /**
+   * After (re)initializing the optimized engine, adopt its state. Large lattices
+   * defer the ~N*N object build (rendered from getRawState() instead); smaller
+   * ones build the object form eagerly as before.
+   */
+  private adoptOptimizedState(): void {
+    if (!this.optimizedSim) return;
+    if (this.optimizedSim.getSize() > LARGE_LATTICE_THRESHOLD) {
+      this.state = null;
+      this.stateDirty = true;
+    } else {
+      this.state = this.optimizedSim.getState();
+      this.stateDirty = false;
+    }
   }
 
   /**
@@ -274,7 +333,9 @@ export class MonteCarloSimulation implements SimulationController {
    * Perform a single Monte Carlo step
    */
   step(): void {
-    if (!this.state) {
+    // Large lattices keep this.state null (object form is built lazily), so guard
+    // on the optimized engine too — otherwise stepping silently no-ops for big N.
+    if (!this.state && !this.optimizedSim) {
       console.error('Simulation not initialized - cannot step');
       return; // Don't throw, just return silently
     }
@@ -283,10 +344,16 @@ export class MonteCarloSimulation implements SimulationController {
       // Use optimized implementation if available
       if (this.optimizedSim) {
         this.optimizedSim.run(1);
-        this.state = this.optimizedSim.getState();
         this.stats = this.optimizedSim.getStats();
-        if (this.state) {
-          this.emit('onStateChange', this.state);
+        if (this.isLargeLattice()) {
+          // Skip the ~N*N object rebuild and heavy onStateChange payload; callers
+          // render from getRawState(). The object form is rebuilt lazily if needed.
+          this.stateDirty = true;
+        } else {
+          this.state = this.optimizedSim.getState();
+          if (this.state) {
+            this.emit('onStateChange', this.state);
+          }
         }
         this.emit('onStep', this.stats);
         return;
@@ -304,14 +371,18 @@ export class MonteCarloSimulation implements SimulationController {
       return; // Stats and state updates handled by callbacks
     }
 
-    // Original implementation
+    // Original (non-optimized) implementation. Only reached when no optimized
+    // engine/worker is present, in which case this.state is always populated.
+    if (!this.state) return;
+    const state = this.state;
+
     // Choose a random position
-    const row = this.rng.randomInt(0, this.state.height);
-    const col = this.rng.randomInt(0, this.state.width);
+    const row = this.rng.randomInt(0, state.height);
+    const col = this.rng.randomInt(0, state.width);
     const position: Position = { row, col };
 
     // Find valid flips at this position
-    const flips = findValidFlips(this.state, position);
+    const flips = findValidFlips(state, position);
 
     if (flips.length === 0) {
       this.stats.flipAttempts++;
@@ -322,7 +393,7 @@ export class MonteCarloSimulation implements SimulationController {
     const flip = this.rng.choice(flips);
 
     // Calculate energy change
-    const deltaE = calculateFlipEnergyChange(this.state, flip, this.params.weights);
+    const deltaE = calculateFlipEnergyChange(state, flip, this.params.weights);
 
     // Metropolis acceptance criterion
     const acceptProbability = Math.min(1, Math.exp(-this.params.beta * deltaE));
@@ -331,9 +402,7 @@ export class MonteCarloSimulation implements SimulationController {
 
     if (this.rng.random() < acceptProbability) {
       // Accept the flip
-      if (this.state) {
-        this.state = executeFlip(this.state, flip);
-      }
+      this.state = executeFlip(state, flip);
       this.stats.successfulFlips++;
       this.emit('onFlip', flip);
       this.emit('onStateChange', this.state);
@@ -348,7 +417,7 @@ export class MonteCarloSimulation implements SimulationController {
    * Run simulation for a specified number of steps
    */
   async run(steps: number): Promise<void> {
-    if (!this.state) {
+    if (!this.state && !this.optimizedSim) {
       throw new Error('Simulation not initialized');
     }
 
@@ -357,16 +426,21 @@ export class MonteCarloSimulation implements SimulationController {
 
     // Use optimized batch processing if available
     if (this.optimizedSim) {
-      const batchSize = this.state.width <= 24 ? 1000 : this.state.width <= 50 ? 500 : 100;
+      const n = this.optimizedSim.getSize();
+      const batchSize = n <= 24 ? 1000 : n <= 50 ? 500 : 100;
       let remaining = steps;
 
       while (remaining > 0 && this.isRunningFlag && !this.isPaused) {
         const batch = Math.min(batchSize, remaining);
         this.optimizedSim.run(batch);
-        this.state = this.optimizedSim.getState();
         this.stats = this.optimizedSim.getStats();
-        if (this.state) {
-          this.emit('onStateChange', this.state);
+        if (this.isLargeLattice()) {
+          this.stateDirty = true;
+        } else {
+          this.state = this.optimizedSim.getState();
+          if (this.state) {
+            this.emit('onStateChange', this.state);
+          }
         }
         this.emit('onStep', this.stats);
 
