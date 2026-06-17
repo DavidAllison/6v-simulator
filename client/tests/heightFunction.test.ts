@@ -181,9 +181,9 @@ describe('Height Function Calculator', () => {
 
       const contribution = getVertexHeightContribution(vertex);
 
-      // b1 has In from left and right, Out to top and bottom
-      expect(contribution.fromLeft).toBe(1);
-      expect(contribution.fromTop).toBe(0);
+      // b1 has In from right and top, Out to left and bottom (Fig. 1)
+      expect(contribution.fromLeft).toBe(0);
+      expect(contribution.fromTop).toBe(1);
       expect(contribution.total).toBe(1);
     });
   });

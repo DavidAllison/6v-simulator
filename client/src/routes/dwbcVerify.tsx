@@ -7,6 +7,7 @@ import {
   generateDWBCHigh,
   generateDWBCLow,
   validateIceRule,
+  findEdgeInconsistencies,
 } from '../lib/six-vertex/initialStates';
 import { createRenderer, PathRenderer } from '../lib/six-vertex/renderer/pathRenderer';
 import { PhysicsSimulation } from '../lib/six-vertex/physicsSimulation';
@@ -161,69 +162,50 @@ export function DWBCVerify() {
     setShowPhysicsTest(true);
   };
 
-  const analyzeState = (state: LatticeState, type: 'high' | 'low') => {
+  // DWBC fixes the SAME boundary for both High and Low (they are the maximal and
+  // minimal height states inside that boundary): arrows point IN at the top and
+  // bottom, and OUT at the left and right. Count how many boundary edges match.
+  const analyzeState = (state: LatticeState) => {
     if (!state) return null;
 
-    // Analyze boundary arrows
-    const topIn = [];
-    const bottomOut = [];
-    const leftOut = [];
-    const rightIn = [];
+    let topIn = 0;
+    let bottomIn = 0;
+    let leftOut = 0;
+    let rightOut = 0;
 
-    // Check top boundary
     for (let col = 0; col < state.width; col++) {
-      const vertex = state.vertices[0][col];
-      if (vertex.configuration.top === 'out') {
-        topIn.push(col);
-      }
+      if (state.vertices[0][col].configuration.top === 'in') topIn++;
+      if (state.vertices[state.height - 1][col].configuration.bottom === 'in') bottomIn++;
     }
-
-    // Check bottom boundary
-    for (let col = 0; col < state.width; col++) {
-      const vertex = state.vertices[state.height - 1][col];
-      if (vertex.configuration.bottom === 'out') {
-        bottomOut.push(col);
-      }
-    }
-
-    // Check left boundary
     for (let row = 0; row < state.height; row++) {
-      const vertex = state.vertices[row][0];
-      if (vertex.configuration.left === 'in') {
-        leftOut.push(row);
-      }
-    }
-
-    // Check right boundary
-    for (let row = 0; row < state.height; row++) {
-      const vertex = state.vertices[row][state.width - 1];
-      if (vertex.configuration.right === 'out') {
-        rightIn.push(row);
-      }
+      if (state.vertices[row][0].configuration.left === 'out') leftOut++;
+      if (state.vertices[row][state.width - 1].configuration.right === 'out') rightOut++;
     }
 
     return {
-      topIn: topIn.length,
-      bottomOut: bottomOut.length,
-      leftOut: leftOut.length,
-      rightIn: rightIn.length,
-      expectedTop: type === 'high' ? state.width : 0,
-      expectedBottom: type === 'high' ? state.width : 0,
-      expectedLeft: type === 'high' ? state.height : 0,
-      expectedRight: type === 'high' ? state.height : 0,
+      topIn,
+      bottomIn,
+      leftOut,
+      rightOut,
+      expectedHorizontal: state.width,
+      expectedVertical: state.height,
+      inconsistencies: findEdgeInconsistencies(state).length,
     };
   };
 
-  const highAnalysis = highState ? analyzeState(highState, 'high') : null;
-  const lowAnalysis = lowState ? analyzeState(lowState, 'low') : null;
+  const highAnalysis = highState ? analyzeState(highState) : null;
+  const lowAnalysis = lowState ? analyzeState(lowState) : null;
 
   return (
     <PageShell title="DWBC Patterns" subtitle="The domain-wall boundary configurations">
       <div className="dwbc-verify">
         <p>
-          This tool verifies that Domain Wall Boundary Conditions are correctly implemented. High
-          DWBC should have arrows pointing in from top/right and out to bottom/left. Low DWBC should
-          have the opposite pattern.
+          This tool verifies that Domain Wall Boundary Conditions are correctly implemented. DWBC
+          fixes the <em>same</em> boundary for both High and Low (they are the maximal and minimal
+          height states within it): arrows point <strong>in</strong> at the top and bottom and{' '}
+          <strong>out</strong> at the left and right. High places its c₂ vertices on the
+          anti-diagonal; Low places them on the main diagonal. Every shared interior edge must carry
+          one consistent arrow (0 inconsistencies).
         </p>
 
         <div className="controls">
@@ -309,17 +291,18 @@ export function DWBCVerify() {
             {highAnalysis && (
               <div className="boundary-analysis">
                 <p>
-                  Top boundary (in): {highAnalysis.topIn}/{highAnalysis.expectedTop}
+                  Top boundary (in): {highAnalysis.topIn}/{highAnalysis.expectedHorizontal}
                 </p>
                 <p>
-                  Bottom boundary (out): {highAnalysis.bottomOut}/{highAnalysis.expectedBottom}
+                  Bottom boundary (in): {highAnalysis.bottomIn}/{highAnalysis.expectedHorizontal}
                 </p>
                 <p>
-                  Left boundary (out): {highAnalysis.leftOut}/{highAnalysis.expectedLeft}
+                  Left boundary (out): {highAnalysis.leftOut}/{highAnalysis.expectedVertical}
                 </p>
                 <p>
-                  Right boundary (in): {highAnalysis.rightIn}/{highAnalysis.expectedRight}
+                  Right boundary (out): {highAnalysis.rightOut}/{highAnalysis.expectedVertical}
                 </p>
+                <p>Edge inconsistencies: {highAnalysis.inconsistencies}</p>
               </div>
             )}
 
@@ -350,17 +333,18 @@ export function DWBCVerify() {
             {lowAnalysis && (
               <div className="boundary-analysis">
                 <p>
-                  Top boundary (out): {lowAnalysis.topIn}/{lowAnalysis.expectedTop}
+                  Top boundary (in): {lowAnalysis.topIn}/{lowAnalysis.expectedHorizontal}
                 </p>
                 <p>
-                  Bottom boundary (in): {lowAnalysis.bottomOut}/{lowAnalysis.expectedBottom}
+                  Bottom boundary (in): {lowAnalysis.bottomIn}/{lowAnalysis.expectedHorizontal}
                 </p>
                 <p>
-                  Left boundary (in): {lowAnalysis.leftOut}/{lowAnalysis.expectedLeft}
+                  Left boundary (out): {lowAnalysis.leftOut}/{lowAnalysis.expectedVertical}
                 </p>
                 <p>
-                  Right boundary (out): {lowAnalysis.rightIn}/{lowAnalysis.expectedRight}
+                  Right boundary (out): {lowAnalysis.rightOut}/{lowAnalysis.expectedVertical}
                 </p>
+                <p>Edge inconsistencies: {lowAnalysis.inconsistencies}</p>
               </div>
             )}
 

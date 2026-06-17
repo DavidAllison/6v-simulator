@@ -4,19 +4,28 @@
  */
 
 /**
- * Vertex types based on the 6 allowed ice configurations
- * Named according to the paper conventions:
- * - a1, a2: Source/sink configurations (2 in, 2 out or vice versa)
- * - b1, b2: Straight-through configurations (horizontal or vertical flow)
- * - c1, c2: Turn configurations (flow changes direction)
+ * Vertex types based on the 6 allowed ice configurations.
+ *
+ * Arrow directions (In = toward the vertex, Out = away) are taken from Fig. 1 of
+ * Allison & Reshetikhin (2005), arXiv:cond-mat/0502314v1, in the renderer's
+ * coordinate frame (row 0 at the top, y increasing downward, so "top" = North).
+ * This table is the single source of truth for the whole app and is verified by
+ * three independent checks (see tests/six-vertex/edgeConsistency.test.ts):
+ *   1. every shared edge of the DWBC High/Low grids is consistent (0 violations),
+ *   2. the implied thick-edge set matches main.c draw_vertex, and
+ *   3. the DWBC boundary is "in at top/bottom, out at left/right".
+ *
+ * - a1, a2: straight, parallel through-flow (weight a)
+ * - b1, b2: straight, anti-parallel through-flow (weight b)
+ * - c1, c2: sources / sinks where the path turns (weight c)
  */
 export const VertexType = {
-  a1: 'a1', // In: left, top    | Out: right, bottom
-  a2: 'a2', // In: right, bottom | Out: left, top
-  b1: 'b1', // In: left, right   | Out: top, bottom
-  b2: 'b2', // In: top, bottom   | Out: left, right
-  c1: 'c1', // In: left, bottom  | Out: right, top
-  c2: 'c2', // In: right, top    | Out: left, bottom
+  a1: 'a1', // In: left, top     | Out: right, bottom
+  a2: 'a2', // In: right, bottom  | Out: left, top
+  b1: 'b1', // In: right, top     | Out: left, bottom
+  b2: 'b2', // In: left, bottom   | Out: right, top
+  c1: 'c1', // In: left, right    | Out: top, bottom  (horizontal source/sink)
+  c2: 'c2', // In: top, bottom    | Out: left, right  (vertical source/sink)
 } as const;
 
 export type VertexType = (typeof VertexType)[keyof typeof VertexType];
@@ -274,15 +283,19 @@ export function getVertexType(config: VertexConfiguration): VertexType | null {
     return null;
   }
 
-  // Determine vertex type based on configuration
-  if (left === EdgeState.In && top === EdgeState.In) return VertexType.a1;
-  if (right === EdgeState.In && bottom === EdgeState.In) return VertexType.a2;
-  if (left === EdgeState.In && right === EdgeState.In) return VertexType.b1;
-  if (top === EdgeState.In && bottom === EdgeState.In) return VertexType.b2;
-  if (left === EdgeState.In && bottom === EdgeState.In) return VertexType.c1;
-  if (right === EdgeState.In && top === EdgeState.In) return VertexType.c2;
-
-  return null;
+  // Determine vertex type from the configuration. This MUST stay the exact
+  // inverse of getVertexConfiguration() below.
+  //   - both horizontal edges in  -> c1 (horizontal source/sink)
+  //   - both horizontal edges out -> c2 (vertical source/sink)
+  //   - otherwise exactly one horizontal edge is in (an a/b type), split by top
+  if (left === EdgeState.In && right === EdgeState.In) return VertexType.c1;
+  if (left === EdgeState.Out && right === EdgeState.Out) return VertexType.c2;
+  if (left === EdgeState.In) {
+    // left In, right Out
+    return top === EdgeState.In ? VertexType.a1 : VertexType.b2;
+  }
+  // left Out, right In
+  return top === EdgeState.In ? VertexType.b1 : VertexType.a2;
 }
 
 /**
@@ -306,31 +319,31 @@ export function getVertexConfiguration(type: VertexType): VertexConfiguration {
       };
     case VertexType.b1:
       return {
-        left: EdgeState.In,
         right: EdgeState.In,
-        top: EdgeState.Out,
+        top: EdgeState.In,
+        left: EdgeState.Out,
         bottom: EdgeState.Out,
       };
     case VertexType.b2:
       return {
-        top: EdgeState.In,
-        bottom: EdgeState.In,
-        left: EdgeState.Out,
-        right: EdgeState.Out,
-      };
-    case VertexType.c1:
-      return {
         left: EdgeState.In,
         bottom: EdgeState.In,
         right: EdgeState.Out,
         top: EdgeState.Out,
       };
+    case VertexType.c1:
+      return {
+        left: EdgeState.In,
+        right: EdgeState.In,
+        top: EdgeState.Out,
+        bottom: EdgeState.Out,
+      };
     case VertexType.c2:
       return {
-        right: EdgeState.In,
         top: EdgeState.In,
+        bottom: EdgeState.In,
         left: EdgeState.Out,
-        bottom: EdgeState.Out,
+        right: EdgeState.Out,
       };
   }
 }

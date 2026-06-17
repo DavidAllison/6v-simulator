@@ -9,7 +9,7 @@
  * - Object pooling to reduce GC pressure
  */
 
-import { VertexType } from './types';
+import { VertexType, getVertexConfiguration } from './types';
 import { FlipDirection } from './physicsFlips';
 import {
   isFlipValidCStyle as isFlipValid,
@@ -644,19 +644,11 @@ export class OptimizedPhysicsSimulation {
   }
 
   /**
-   * Get vertex configuration from type
+   * Get vertex configuration from type. Delegates to the single source of truth
+   * in types.ts so the object-snapshot arrows match the rest of the app.
    */
-  private getVertexConfiguration(type: VertexType): any {
-    // Simplified configuration for compatibility
-    const configs: Record<VertexType, any> = {
-      [VertexType.a1]: { left: 'in', right: 'out', top: 'in', bottom: 'out' },
-      [VertexType.a2]: { left: 'out', right: 'in', top: 'out', bottom: 'in' },
-      [VertexType.b1]: { left: 'in', right: 'in', top: 'out', bottom: 'out' },
-      [VertexType.b2]: { left: 'out', right: 'out', top: 'in', bottom: 'in' },
-      [VertexType.c1]: { left: 'in', right: 'out', top: 'out', bottom: 'in' },
-      [VertexType.c2]: { left: 'out', right: 'in', top: 'in', bottom: 'out' },
-    };
-    return configs[type];
+  private getVertexConfiguration(type: VertexType) {
+    return getVertexConfiguration(type);
   }
 
   /**

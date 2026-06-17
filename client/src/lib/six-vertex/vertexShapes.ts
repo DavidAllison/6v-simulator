@@ -6,13 +6,14 @@
  * - Bold edges (thick lines) represent paths where arrows point in opposite directions
  * - Thin edges represent arrows pointing in the same direction
  *
- * Vertex type mappings from main.c:
- * - 0 = a1: arrows in from left & top, out to right & bottom
- * - 1 = a2: arrows in from right & bottom, out to left & top
- * - 2 = b1: arrows in from left & right, out to top & bottom
- * - 3 = b2: arrows in from top & bottom, out to left & right
- * - 4 = c1: arrows in from left & bottom, out to right & top
- * - 5 = c2: arrows in from right & top, out to left & bottom
+ * Vertex type mappings (arrow In/Out from the single source of truth,
+ * getVertexConfiguration in types.ts; numeric ids match main.c):
+ * - 0 = a1: in from left & top,     out to right & bottom
+ * - 1 = a2: in from right & bottom, out to left & top
+ * - 2 = b1: in from right & top,    out to left & bottom
+ * - 3 = b2: in from left & bottom,  out to right & top
+ * - 4 = c1: in from left & right,   out to top & bottom   (horizontal source/sink)
+ * - 5 = c2: in from top & bottom,   out to left & right   (vertical source/sink)
  */
 
 import { VertexType, EdgeDirection } from './types';
@@ -108,13 +109,13 @@ export function getVertexASCII(vertexType: VertexType): string[] {
     case VertexType.a2:
       return ['  ↑  ', '← ○ ←', '  ↑  '];
     case VertexType.b1:
-      return ['  ↑  ', '→ ○ →', '  ↓  '];
+      return ['  ↓  ', '← ○ ←', '  ↓  '];
     case VertexType.b2:
-      return ['  ↓  ', '← ○ ←', '  ↑  '];
+      return ['  ↑  ', '→ ○ →', '  ↑  '];
     case VertexType.c1:
-      return ['  ↑  ', '→ ○ ←', '  ↑  '];
+      return ['  ↑  ', '→ ○ ←', '  ↓  '];
     case VertexType.c2:
-      return ['  ↓  ', '→ ○ ←', '  ↓  '];
+      return ['  ↓  ', '← ○ →', '  ↑  '];
   }
 }
 

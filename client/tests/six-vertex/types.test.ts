@@ -30,9 +30,9 @@ describe('6-Vertex Model Types', () => {
 
     it('should correctly identify vertex type b1', () => {
       const config: VertexConfiguration = {
-        left: EdgeState.In,
         right: EdgeState.In,
-        top: EdgeState.Out,
+        top: EdgeState.In,
+        left: EdgeState.Out,
         bottom: EdgeState.Out,
       };
       expect(getVertexType(config)).toBe(VertexType.b1);
@@ -40,10 +40,10 @@ describe('6-Vertex Model Types', () => {
 
     it('should correctly identify vertex type b2', () => {
       const config: VertexConfiguration = {
-        top: EdgeState.In,
+        left: EdgeState.In,
         bottom: EdgeState.In,
-        left: EdgeState.Out,
         right: EdgeState.Out,
+        top: EdgeState.Out,
       };
       expect(getVertexType(config)).toBe(VertexType.b2);
     });
@@ -51,19 +51,19 @@ describe('6-Vertex Model Types', () => {
     it('should correctly identify vertex type c1', () => {
       const config: VertexConfiguration = {
         left: EdgeState.In,
-        bottom: EdgeState.In,
-        right: EdgeState.Out,
+        right: EdgeState.In,
         top: EdgeState.Out,
+        bottom: EdgeState.Out,
       };
       expect(getVertexType(config)).toBe(VertexType.c1);
     });
 
     it('should correctly identify vertex type c2', () => {
       const config: VertexConfiguration = {
-        right: EdgeState.In,
         top: EdgeState.In,
+        bottom: EdgeState.In,
         left: EdgeState.Out,
-        bottom: EdgeState.Out,
+        right: EdgeState.Out,
       };
       expect(getVertexType(config)).toBe(VertexType.c2);
     });

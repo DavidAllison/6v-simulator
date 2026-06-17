@@ -10,7 +10,12 @@ import {
   isFlippable,
   getAllFlippablePositions,
 } from '../../src/lib/six-vertex/physicsFlips';
-import { generateDWBCLow, generateRandomIceState } from '../../src/lib/six-vertex/initialStates';
+import {
+  generateDWBCLow,
+  generateRandomIceState,
+  validateIceRule,
+  findEdgeInconsistencies,
+} from '../../src/lib/six-vertex/initialStates';
 import { VertexType } from '../../src/lib/six-vertex/types';
 import { SeededRNG } from '../../src/lib/six-vertex/rng';
 
@@ -233,12 +238,12 @@ describe('Heat-Bath Probability Tests', () => {
         [VertexType.c2]: 1,
       };
 
-      // NOTE: the initial-state seed must yield a configuration with at least
-      // one flippable plaquette, otherwise the Markov chain is frozen and only
-      // a single vertex type is ever observed. Seed 54321 produces an all-a1
-      // uniform state on a 3x3 lattice (zero flippable positions); seed 1 gives
-      // a genuinely flippable starting configuration so the chain actually mixes.
-      let state = generateRandomIceState(3, 3, 1);
+      // Use an 8x8 lattice: it mixes freely under the local flip dynamics, so all
+      // six vertex types are visited with comparable frequency. (A 3x3 lattice is
+      // too small — its flip-connected sector can exclude a type entirely, which
+      // is a finite-size artefact, not a convergence failure.)
+      const N = 8;
+      let state = generateRandomIceState(N, N, 1);
       const vertexCounts = new Map<VertexType, number>();
 
       // Run simulation for many steps
@@ -281,8 +286,12 @@ describe('Heat-Bath Probability Tests', () => {
 
         // Count vertex types after burn-in
         if (step >= burnIn) {
-          for (let row = 0; row < 3; row++) {
-            for (let col = 0; col < 3; col++) {
+          // Every visited state must remain a valid, edge-consistent ice state:
+          // the flip dynamics must never corrupt the lattice.
+          expect(validateIceRule(state)).toBe(true);
+          expect(findEdgeInconsistencies(state)).toHaveLength(0);
+          for (let row = 0; row < N; row++) {
+            for (let col = 0; col < N; col++) {
               const type = state.vertices[row][col].type;
               vertexCounts.set(type, (vertexCounts.get(type) || 0) + 1);
             }
@@ -290,18 +299,16 @@ describe('Heat-Bath Probability Tests', () => {
         }
       }
 
-      // With equal weights, all vertex types should appear with similar frequency
-      // (though not exactly equal due to ice rule constraints)
+      // With equal weights, all six vertex types should appear with comparable
+      // frequency (though not exactly equal due to ice-rule / boundary effects).
       const totalCounts = Array.from(vertexCounts.values()).reduce((a, b) => a + b, 0);
 
-      // Guard: the chain must actually mix. A frozen initial state would only
-      // ever show one vertex type, which would make the frequency bounds below
-      // vacuously (or never) satisfiable. Require genuine diversity.
-      expect(vertexCounts.size).toBeGreaterThan(1);
+      // The chain must mix across all six types, not sit in a frozen sector.
+      expect(vertexCounts.size).toBe(6);
 
       for (const count of vertexCounts.values()) {
         const frequency = count / totalCounts;
-        // Should be roughly 1/6 ≈ 0.167, but with significant variance
+        // Should be roughly 1/6 ≈ 0.167, but with significant variance.
         expect(frequency).toBeGreaterThan(0.05);
         expect(frequency).toBeLessThan(0.5);
       }
