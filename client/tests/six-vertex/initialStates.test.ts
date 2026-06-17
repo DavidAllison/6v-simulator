@@ -87,24 +87,16 @@ describe('Initial States - DWBC Pattern Tests', () => {
     it('should have correct boundary conditions', () => {
       const state = generateDWBCHigh(8);
 
-      // Top boundary: all arrows point down (into lattice)
+      // DWBC fixes the same boundary for High and Low (checked via the canonical
+      // per-vertex configuration, the source of truth): arrows point IN at the
+      // top and bottom, OUT at the left and right.
       for (let col = 0; col < 8; col++) {
-        expect(state.verticalEdges[0][col]).toBe(EdgeState.In);
+        expect(state.vertices[0][col].configuration.top).toBe(EdgeState.In);
+        expect(state.vertices[7][col].configuration.bottom).toBe(EdgeState.In);
       }
-
-      // Bottom boundary: all arrows point down (out of lattice)
-      for (let col = 0; col < 8; col++) {
-        expect(state.verticalEdges[8][col]).toBe(EdgeState.Out);
-      }
-
-      // Left boundary: all arrows point right (into lattice)
       for (let row = 0; row < 8; row++) {
-        expect(state.horizontalEdges[row][0]).toBe(EdgeState.Out);
-      }
-
-      // Right boundary: all arrows point right (out of lattice)
-      for (let row = 0; row < 8; row++) {
-        expect(state.horizontalEdges[row][8]).toBe(EdgeState.In);
+        expect(state.vertices[row][0].configuration.left).toBe(EdgeState.Out);
+        expect(state.vertices[row][7].configuration.right).toBe(EdgeState.Out);
       }
     });
 
@@ -187,24 +179,16 @@ describe('Initial States - DWBC Pattern Tests', () => {
     it('should have correct boundary conditions', () => {
       const state = generateDWBCLow(8);
 
-      // Top boundary: all arrows point up (out of lattice)
+      // DWBC Low has the SAME fixed boundary as High (it is the minimal height
+      // state within it): arrows IN at top/bottom, OUT at left/right. Verified
+      // via the canonical per-vertex configuration.
       for (let col = 0; col < 8; col++) {
-        expect(state.verticalEdges[0][col]).toBe(EdgeState.Out);
+        expect(state.vertices[0][col].configuration.top).toBe(EdgeState.In);
+        expect(state.vertices[7][col].configuration.bottom).toBe(EdgeState.In);
       }
-
-      // Bottom boundary: all arrows point up (into lattice)
-      for (let col = 0; col < 8; col++) {
-        expect(state.verticalEdges[8][col]).toBe(EdgeState.In);
-      }
-
-      // Left boundary: all arrows point left (into boundary)
       for (let row = 0; row < 8; row++) {
-        expect(state.horizontalEdges[row][0]).toBe(EdgeState.In);
-      }
-
-      // Right boundary: all arrows point left (out of boundary)
-      for (let row = 0; row < 8; row++) {
-        expect(state.horizontalEdges[row][8]).toBe(EdgeState.Out);
+        expect(state.vertices[row][0].configuration.left).toBe(EdgeState.Out);
+        expect(state.vertices[row][7].configuration.right).toBe(EdgeState.Out);
       }
     });
 

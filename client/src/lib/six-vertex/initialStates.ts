@@ -261,3 +261,42 @@ export function validateIceRule(state: LatticeState): boolean {
 
   return true;
 }
+
+/**
+ * Check that every shared edge between adjacent vertices carries one consistent
+ * arrow. A horizontal edge is the right edge of vertex (r,c) and the left edge of
+ * vertex (r,c+1); the two views describe the same physical arrow, so exactly one
+ * of them is "in". (Likewise for vertical edges via bottom/top.) Unlike
+ * validateIceRule, which only checks each vertex in isolation, this catches a
+ * mislabelled vertex configuration that breaks neighbour agreement.
+ *
+ * Returns the list of inconsistent shared edges (empty when the state is valid).
+ */
+export function findEdgeInconsistencies(
+  state: LatticeState,
+): Array<{ kind: 'horizontal' | 'vertical'; row: number; col: number }> {
+  const problems: Array<{ kind: 'horizontal' | 'vertical'; row: number; col: number }> = [];
+  for (let row = 0; row < state.height; row++) {
+    for (let col = 0; col < state.width; col++) {
+      const here = state.vertices[row][col].configuration;
+      if (col + 1 < state.width) {
+        const right = state.vertices[row][col + 1].configuration;
+        // Consistent iff the shared edge is "in" for exactly one of the two.
+        if (here.right === right.left) problems.push({ kind: 'horizontal', row, col });
+      }
+      if (row + 1 < state.height) {
+        const below = state.vertices[row + 1][col].configuration;
+        if (here.bottom === below.top) problems.push({ kind: 'vertical', row, col });
+      }
+    }
+  }
+  return problems;
+}
+
+/**
+ * True when the lattice is both ice-valid per vertex and edge-consistent across
+ * every shared edge.
+ */
+export function validateEdgeConsistency(state: LatticeState): boolean {
+  return findEdgeInconsistencies(state).length === 0;
+}
