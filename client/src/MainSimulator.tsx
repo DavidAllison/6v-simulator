@@ -16,6 +16,8 @@ import StatisticsPanel from './components/StatisticsPanel';
 import { anisotropyDelta } from './lib/six-vertex/observables';
 import VisualizationCanvas from './components/VisualizationCanvas';
 import { SaveLoadPanel } from './components/SaveLoadPanel';
+import { ShareConfigButton } from './components/ShareConfigButton';
+import { readConfigFromSearch } from './lib/six-vertex/configUrl';
 import { CollapsiblePanel } from './components/CollapsiblePanel';
 import IntroPanel from './components/IntroPanel';
 import PresetBar from './components/PresetBar';
@@ -23,6 +25,11 @@ import type { PresetConfig } from './components/PresetBar';
 import type { SimulationData } from './lib/storage';
 import { useTheme } from './hooks/useTheme';
 import { getThemeColors } from './lib/six-vertex/themeColors';
+
+// Decode a shareable config from the page URL once at module load, so the state
+// initializers below can seed from a shared link (issue #60). Invalid/absent
+// params fall through to the defaults.
+const urlConfig = readConfigFromSearch(typeof window !== 'undefined' ? window.location.search : '');
 
 function MainSimulator() {
   // Get theme context
@@ -41,9 +48,9 @@ function MainSimulator() {
   const [latticeState, setLatticeState] = useState<LatticeState | null>(null);
   // Compact typed-array state used for large lattices (avoids ~N*N object churn).
   const [rawState, setRawState] = useState<RawLatticeState | null>(null);
-  const [latticeSize, setLatticeSize] = useState(10);
+  const [latticeSize, setLatticeSize] = useState(() => urlConfig.latticeSize ?? 10);
   const [fps, setFps] = useState(0);
-  const [stepsPerFrame, setStepsPerFrame] = useState(10);
+  const [stepsPerFrame, setStepsPerFrame] = useState(() => urlConfig.stepsPerFrame ?? 10);
 
   // Large lattices render from the raw typed array rather than the object form.
   const isLarge = latticeSize > LARGE_LATTICE_THRESHOLD;
@@ -72,25 +79,30 @@ function MainSimulator() {
   rawStateRef.current = rawState;
 
   // Simulation parameters
-  const [temperature, setTemperature] = useState(1.0);
+  const [temperature, setTemperature] = useState(() => urlConfig.temperature ?? 1.0);
   const [boundaryCondition, setBoundaryCondition] = useState<BoundaryCondition>(
-    BoundaryCondition.DWBC,
+    () => urlConfig.boundaryCondition ?? BoundaryCondition.DWBC,
   );
-  const [dwbcType, setDwbcType] = useState<'high' | 'low'>('high');
-  const [renderMode, setRenderMode] = useState<RenderMode>(RenderMode.Paths);
-  const [showGrid, setShowGrid] = useState(true);
-  const [animateFlips, setAnimateFlips] = useState(false);
-  const [seed, setSeed] = useState(12345);
+  const [dwbcType, setDwbcType] = useState<'high' | 'low'>(() => urlConfig.dwbcType ?? 'high');
+  const [renderMode, setRenderMode] = useState<RenderMode>(
+    () => urlConfig.renderMode ?? RenderMode.Paths,
+  );
+  const [showGrid, setShowGrid] = useState(() => urlConfig.showGrid ?? true);
+  const [animateFlips, setAnimateFlips] = useState(() => urlConfig.animateFlips ?? false);
+  const [seed, setSeed] = useState(() => urlConfig.seed ?? 12345);
 
   // Vertex weights
-  const [weights, setWeights] = useState({
-    a1: 1.0,
-    a2: 1.0,
-    b1: 1.0,
-    b2: 1.0,
-    c1: 1.0,
-    c2: 1.0,
-  });
+  const [weights, setWeights] = useState(
+    () =>
+      urlConfig.weights ?? {
+        a1: 1.0,
+        a2: 1.0,
+        b1: 1.0,
+        b2: 1.0,
+        c1: 1.0,
+        c2: 1.0,
+      },
+  );
 
   // FPS counter. The rAF loop is owned by this effect and cancelled in cleanup;
   // it must NOT self-gate on the `isRunning` closure (that value is captured at
@@ -604,6 +616,20 @@ function MainSimulator() {
           <SaveLoadPanel
             getCurrentData={getCurrentSimulationData}
             onLoadData={loadSimulationData}
+          />
+          <ShareConfigButton
+            getConfig={() => ({
+              latticeSize,
+              stepsPerFrame,
+              temperature,
+              boundaryCondition,
+              dwbcType,
+              renderMode,
+              showGrid,
+              animateFlips,
+              seed,
+              weights,
+            })}
           />
         </CollapsiblePanel>
       </div>
