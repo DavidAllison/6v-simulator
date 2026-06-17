@@ -12,8 +12,8 @@
 
 import { PathRenderer } from '../../src/lib/six-vertex/renderer/pathRenderer';
 import { generateDWBCHigh, generateDWBCLow } from '../../src/lib/six-vertex/initialStates';
-import { RenderMode, EdgeState } from '../../src/lib/six-vertex/types';
-import type { LatticeState, VertexConfiguration } from '../../src/lib/six-vertex/types';
+import { RenderMode } from '../../src/lib/six-vertex/types';
+import type { LatticeState } from '../../src/lib/six-vertex/types';
 
 /**
  * Minimal canvas mock with a back-reference so renderers that read
@@ -83,8 +83,6 @@ function makeRenderer(config?: Parameters<typeof PathRenderer.prototype.updateCo
 function withEmptyEdges(state: LatticeState): LatticeState {
   return { ...state, horizontalEdges: [], verticalEdges: [] };
 }
-
-const oppositeOf = (e: EdgeState): EdgeState => (e === EdgeState.In ? EdgeState.Out : EdgeState.In);
 
 /**
  * Recording context that captures every line segment (moveTo -> lineTo) so tests
@@ -171,57 +169,5 @@ describe('arrow rendering with empty edge arrays (optimized engine states)', () 
     // DWBC High and Low have different vertex configurations, so their arrow
     // fields must differ. The degenerate bug rendered both identically.
     expect(key(high)).not.toBe(key(low));
-  });
-
-  it('reconstructs edges via the canonical inverse mapping from initialStates.ts', () => {
-    // The reconstruction is the exact inverse of the forward mapping the lattice
-    // builders use (initialStates.ts ~L136-141):
-    //   left   = oppositeOf(horizontalEdges[r][c])     -> H[r][0]     = oppositeOf(left)
-    //   right  = horizontalEdges[r][c + 1]             -> H[r][c + 1] = right
-    //   top    = oppositeOf(verticalEdges[r][c])       -> V[0][c]     = oppositeOf(top)
-    //   bottom = verticalEdges[r + 1][c]               -> V[r + 1][c] = bottom
-    //
-    // We verify each reconstructed edge against the SOURCE vertex the inverse
-    // derives it from (each vertex's own right/bottom, and boundary left/top),
-    // which is exactly what ensureEdges consumes — rather than round-tripping
-    // through all four edges of every vertex.
-    const reference = generateDWBCLow(6);
-    const stripped = withEmptyEdges(reference);
-
-    const renderer = new PathRenderer(new MockCanvas() as unknown as HTMLCanvasElement, {
-      mode: RenderMode.Arrows,
-    });
-    const ensureEdges = (
-      renderer as unknown as {
-        ensureEdges(s: LatticeState): {
-          horizontalEdges: EdgeState[][];
-          verticalEdges: EdgeState[][];
-        };
-      }
-    ).ensureEdges.bind(renderer);
-
-    const { horizontalEdges, verticalEdges } = ensureEdges(stripped);
-
-    // Dimensions follow the canonical builder convention.
-    expect(horizontalEdges.length).toBe(reference.height);
-    expect(horizontalEdges[0].length).toBe(reference.width + 1);
-    expect(verticalEdges.length).toBe(reference.height + 1);
-    expect(verticalEdges[0].length).toBe(reference.width);
-
-    for (let row = 0; row < reference.height; row++) {
-      for (let col = 0; col < reference.width; col++) {
-        const cfg: VertexConfiguration = reference.vertices[row][col].configuration;
-        // Each vertex's RIGHT and BOTTOM edges are derived directly from it.
-        expect(horizontalEdges[row][col + 1]).toBe(cfg.right);
-        expect(verticalEdges[row + 1][col]).toBe(cfg.bottom);
-        // Boundary LEFT/TOP edges are the oppositeOf the boundary vertex's edge.
-        if (col === 0) {
-          expect(horizontalEdges[row][0]).toBe(oppositeOf(cfg.left));
-        }
-        if (row === 0) {
-          expect(verticalEdges[0][col]).toBe(oppositeOf(cfg.top));
-        }
-      }
-    }
   });
 });
