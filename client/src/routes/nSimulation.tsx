@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
 import { PageShell } from '../components/PageShell';
 import VisualizationCanvas from '../components/VisualizationCanvas';
+import { NSimDiffView } from '../components/NSimDiffView';
 import { PathRenderer } from '../lib/six-vertex/renderer/pathRenderer';
 import { NSimulationManager } from '../lib/six-vertex/nSimulation';
 import type {
@@ -617,6 +618,16 @@ export function NSimulation() {
             />
           ))}
         </div>
+
+        {controllers.length >= 2 && (
+          <div className={styles.panel}>
+            <NSimDiffView
+              controllers={controllers}
+              labels={controllers.map((_, idx) => activeInstances[idx]?.label ?? `Sim ${idx + 1}`)}
+              isDark={isDarkMode}
+            />
+          </div>
+        )}
 
         <div className={styles.panel}>
           <h3>About N-Simulation Comparison</h3>
