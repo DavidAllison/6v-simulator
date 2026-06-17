@@ -201,6 +201,11 @@ export function NSimulation() {
   const animationFrameRef = useRef<number | null>(null);
   const isRunningRef = useRef(false);
   isRunningRef.current = isRunning;
+  // Throttle React state updates (chart + readout re-renders) to ~10 Hz. The MC
+  // loop still steps every animation frame; only the UI publish cadence is
+  // capped, so a long run doesn't re-render the whole route 60×/s.
+  const lastPublishRef = useRef(0);
+  const PUBLISH_INTERVAL_MS = 100;
 
   // Build the active stop predicate from the current selection.
   const stopPredicate = useMemo<StopPredicate>(() => {
@@ -220,12 +225,21 @@ export function NSimulation() {
   const stopPredicateRef = useRef(stopPredicate);
   stopPredicateRef.current = stopPredicate;
 
+  // Publish readouts from a single snapshot sweep. Pass pre-computed snapshots
+  // (from the tick) to avoid a second getStats() pass; omit for one-shot callers.
+  const publishReadouts = useCallback(
+    (manager: NSimulationManager, snaps = manager.getSnapshots()) => {
+      setSpread(manager.getRelativeSpread(snaps));
+      setSnapshots(snaps.map((s) => s.stats));
+    },
+    [],
+  );
+
   const refreshReadouts = useCallback(() => {
     const manager = managerRef.current;
     if (!manager) return;
-    setSpread(manager.getRelativeSpread());
-    setSnapshots(manager.getSnapshots().map((s) => s.stats));
-  }, []);
+    publishReadouts(manager);
+  }, [publishReadouts]);
 
   // Build (or rebuild) the manager from the current draft config.
   const applyConfig = useCallback(() => {
@@ -250,9 +264,8 @@ export function NSimulation() {
     setControllers(manager.getControllers());
     setActiveInstances(manager.getInstanceConfigs());
     setIsLargeActive(manager.isLarge());
-    setSpread(manager.getRelativeSpread());
-    setSnapshots(manager.getSnapshots().map((s) => s.stats));
-  }, [size, temperature, weights, instances]);
+    publishReadouts(manager);
+  }, [size, temperature, weights, instances, publishReadouts]);
 
   // Build on mount and dispose on unmount (terminating workers).
   useEffect(() => {
@@ -281,18 +294,26 @@ export function NSimulation() {
       }
     }
 
-    manager.pushHistory();
-    refreshReadouts();
+    // One snapshot sweep per frame, reused for history, stop check and readouts.
+    const snaps = manager.pushHistory();
 
-    if (manager.evaluateStop(stopPredicateRef.current)) {
-      setConvergedAtStep(manager.getStep());
+    if (manager.evaluateStop(stopPredicateRef.current, snaps)) {
+      publishReadouts(manager, snaps); // always publish the final state
+      setConvergedAtStep(manager.getStep(snaps));
       setIsRunning(false);
       manager.pause();
       return;
     }
 
+    // Throttle UI publishing; the simulation itself keeps stepping every frame.
+    const now = performance.now();
+    if (now - lastPublishRef.current >= PUBLISH_INTERVAL_MS) {
+      lastPublishRef.current = now;
+      publishReadouts(manager, snaps);
+    }
+
     animationFrameRef.current = requestAnimationFrame(tick);
-  }, [stepsPerFrame, refreshReadouts]);
+  }, [stepsPerFrame, publishReadouts]);
 
   // Start/stop the run loop.
   useEffect(() => {
@@ -300,6 +321,7 @@ export function NSimulation() {
     if (!manager) return;
     if (isRunning) {
       setConvergedAtStep(null);
+      lastPublishRef.current = 0; // publish on the very first frame of the run
       if (manager.isLarge()) {
         manager.run();
       }
