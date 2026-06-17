@@ -155,9 +155,13 @@ export class NSimulationManager {
     });
   }
 
-  /** Append the current observables to each instance's history (capped). */
-  pushHistory(): void {
-    const snapshots = this.getSnapshots();
+  /**
+   * Append the current observables to each instance's history (capped).
+   * Accepts pre-computed snapshots so a caller already holding them (e.g. the
+   * render loop) doesn't trigger another full getStats() sweep. Returns the
+   * snapshots used, so the caller can reuse them for readouts + stop checks.
+   */
+  pushHistory(snapshots: NSimSnapshot[] = this.getSnapshots()): NSimSnapshot[] {
     for (let i = 0; i < snapshots.length; i++) {
       if (!this.history[i]) this.history[i] = [];
       const series = this.history[i];
@@ -166,6 +170,7 @@ export class NSimulationManager {
         series.shift();
       }
     }
+    return snapshots;
   }
 
   /** Copy of the per-instance observable history (oldest -> newest). */
@@ -174,26 +179,25 @@ export class NSimulationManager {
   }
 
   /** Current cross-instance relative spread (the live convergence readout). */
-  getRelativeSpread(): number {
-    const observables = this.getSnapshots().map((s) => s.observable);
-    return relativeSpread(observables);
+  getRelativeSpread(snapshots: NSimSnapshot[] = this.getSnapshots()): number {
+    return relativeSpread(snapshots.map((s) => s.observable));
   }
 
   /** Max step across instances (used as the global step for stop conditions). */
-  getStep(): number {
-    return this.getSnapshots().reduce((max, s) => Math.max(max, s.step), 0);
+  getStep(snapshots: NSimSnapshot[] = this.getSnapshots()): number {
+    return snapshots.reduce((max, s) => Math.max(max, s.step), 0);
   }
 
-  private buildStopContext(): StopContext {
+  private buildStopContext(snapshots: NSimSnapshot[]): StopContext {
     return {
-      step: this.getStep(),
-      instances: this.getSnapshots(),
+      step: this.getStep(snapshots),
+      instances: snapshots,
       history: this.history,
     };
   }
 
   /** Evaluate a stop predicate against the current snapshots + history. */
-  evaluateStop(predicate: StopPredicate): boolean {
-    return predicate(this.buildStopContext());
+  evaluateStop(predicate: StopPredicate, snapshots: NSimSnapshot[] = this.getSnapshots()): boolean {
+    return predicate(this.buildStopContext(snapshots));
   }
 }
